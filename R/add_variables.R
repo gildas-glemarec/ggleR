@@ -1,11 +1,11 @@
 #' Add variables to the extracted EM dataset
-#' Take in the BlackBox data from the BBimport function and adds a number of important parameters
+#' Take in the Black Box data from the BBimport function and adds a number of important parameters
 #' @param x Data output from function BBimport
 #' @param give_me_more Should optional variables not relevant for RDBES be created too (default is TRUE)?
-#' @return Same dataste with additional columns
+#' @return Same dataset with additional columns
 #' @export
 add_variables <- function(x = data_work, give_me_more = give_me_more) {
-  data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
+  . <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
   x$rnum <- as.integer(row.names(x))
   data.table::setDT(x,'rnum')
   x$vessel <- as.factor(x$vessel)

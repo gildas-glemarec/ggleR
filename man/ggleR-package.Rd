@@ -4,12 +4,8 @@
 \name{ggleR-package}
 \alias{ggleR}
 \alias{ggleR-package}
-\title{ggleR: What the Package Does (One Line, Title Case)}
+\title{ggleR: Extracts raw BlackBox bycatch data to fit the RDBES data format}
 \description{
-What the package does (one paragraph).
-}
-\author{
-\strong{Maintainer}: First Last \email{first.last@example.com} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
-
+This script uses raw data from BlackBox to create a new "simpler" data frame (and csv file). Requirements. 1. All vessel data (annotations & notes) are in the same directory. 2. Each file should use the vessel name or the year name. 3. For now, the script extracts all the data, but I might add a time window in the future. Output. A dataframe where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row). The script also generates IDs for each hauls such as IDhaul = Vessel.Date.haulNr, and IDs for bycatch in the corresponding haul such as IDbird = Vessel.Date.haulNr.bcNr.
 }
 \keyword{internal}

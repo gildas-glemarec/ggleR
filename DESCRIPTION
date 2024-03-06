@@ -1,12 +1,24 @@
 Package: ggleR
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Type: Package
+Title: Extracts raw BlackBox bycatch data to fit the RDBES data format
+Version: 0.1.0
+Author: Gildas Glemarec <ggle@aqua.dtu.dk>
+Maintainer: Gildas Glemarec <ggle@aqua.dtu.dk>
+Description: This script uses raw data from BlackBox to create a new "simpler" data frame (and csv file).    Requirements.    1. All vessel data (annotations & notes) are in the same directory.    2. Each file should use the vessel name or the year name.    3. For now, the script extracts all the data, but I might add a time window in the future.    Output.    A dataframe where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).    The script also generates IDs for each hauls such as IDhaul = Vessel.Date.haulNr, and IDs for bycatch in the corresponding haul such as IDbird = Vessel.Date.haulNr.bcNr.
+License: AGPL (>= 3) + file LICENSE
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
+LazyData: true
 RoxygenNote: 7.3.1
+Imports: 
+    data.table,
+    dplyr,
+    forcats,
+    lazyeval,
+    lubridate,
+    mapplots,
+    rlang,
+    sf,
+    stringr,
+    terra,
+    tidyr,
+    utils

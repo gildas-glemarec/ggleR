@@ -3,7 +3,7 @@
 \name{add_variables}
 \alias{add_variables}
 \title{Add variables to the extracted EM dataset
-Take in the BlackBox data from the BBimport function and adds a number of important parameters}
+Take in the Black Box data from the BBimport function and adds a number of important parameters}
 \usage{
 add_variables(x = data_work, give_me_more = give_me_more)
 }
@@ -13,9 +13,9 @@ add_variables(x = data_work, give_me_more = give_me_more)
 \item{give_me_more}{Should optional variables not relevant for RDBES be created too (default is TRUE)?}
 }
 \value{
-Same dataste with additional columns
+Same dataset with additional columns
 }
 \description{
 Add variables to the extracted EM dataset
-Take in the BlackBox data from the BBimport function and adds a number of important parameters
+Take in the Black Box data from the BBimport function and adds a number of important parameters
 }

@@ -3,8 +3,8 @@
 \name{get.depth}
 \alias{get.depth}
 \title{Extract depth from pre-made raster file
-This scripts extracts the depth (metres) for each point in a dataset
-It also adds the ICES subrectangle these points are in}
+This scripts extracts the depth (metres) for each point in a dataset.
+It also adds the ICES subrectangle these points are in.}
 \usage{
 get.depth(
   x,
@@ -21,6 +21,6 @@ Same dataset with added variables
 }
 \description{
 Extract depth from pre-made raster file
-This scripts extracts the depth (metres) for each point in a dataset
-It also adds the ICES subrectangle these points are in
+This scripts extracts the depth (metres) for each point in a dataset.
+It also adds the ICES subrectangle these points are in.
 }

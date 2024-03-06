@@ -8,7 +8,7 @@ Read, format, and merge Notes and Annotations from Black Box Analyzer}
 load_data(x)
 }
 \arguments{
-\item{x}{path to the directory where the logbook/salesnotes are stored as .csv}
+\item{x}{path to the directory where the logbook & sales notes are stored as .csv}
 }
 \value{
 A list of data frames

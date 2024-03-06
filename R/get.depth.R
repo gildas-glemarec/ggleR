@@ -1,6 +1,6 @@
 #' Extract depth from pre-made raster file
-#' This scripts extracts the depth (metres) for each point in a dataset
-#' It also adds the ICES subrectangle these points are in
+#' This scripts extracts the depth (metres) for each point in a dataset.
+#' It also adds the ICES subrectangle these points are in.
 #' @param x dataset with geographic coordinates in decimal as lon/lat
 #' @param path.to.raster Path to the a raster file with depth info
 #' @return Same dataset with added variables
