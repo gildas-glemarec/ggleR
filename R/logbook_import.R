@@ -1,10 +1,12 @@
 #' Format logbook / landings data to merge with EM data
 #' Dataset preparations
 #' @param x path to the directory where the logbook & sales notes are stored as .csv
+#' @param path.to.raster path to the directory where the depth raster is
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @export
-logbook_import <- function(x){
-  . <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
+logbook_import <- function(x,
+                           path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif"){
+  . <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
   `%notin%` <- Negate(`%in%`)
   logbook <- ggleR::load_data(x)
 
@@ -85,7 +87,7 @@ logbook_import <- function(x){
                                      TRUE ~ as.character(vessel.length)
                     )
     ) %>%
-    mutate(oal = if_else(vessel.length < 15,
+    dplyr::mutate(oal = if_else(vessel.length < 15,
                          '<15m',
                          '>15m'))
 
@@ -230,7 +232,8 @@ logbook_import <- function(x){
   logbook$lat <- mapplots::ices.rect(logbook$icesrect)[,2]
 
   ## Calculate depth and distance to shore of the ICES rect centroids
-  logbook <- ggleR::get.depth(logbook)
+  logbook <- ggleR::get.depth(logbook,
+                              path.to.raster = path.to.raster)
 
   ## Create an ID for each (unique) fishing day (FD)
   logbook <- logbook %>%
@@ -310,4 +313,6 @@ logbook_import <- function(x){
   ## species for that fishing day
   logbook[, target := lapply(.SD, function(x) if(base::any(target == 'Cyclopterus lumpus'))
     'Cyclopterus lumpus' else target), by = .(IDFD)]
+
+  return(logbook)
 }

@@ -4,8 +4,6 @@
 #' @param by.year Are the files sorted by year (default)?
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @import data.table
-#' @import dplyr
-#' @import rlang
 #' @export
 BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/annotations_notes/",
                      by.year = TRUE) {
