@@ -7,13 +7,22 @@ Dataset preparations}
 \usage{
 logbook_import(
   x,
-  path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif"
+  path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif",
+  path_to_harbour_list = "Q:/scientific-projects/cctv-monitoring/data/harbours/by.year",
+  path_to_harbour_shp = "Q:/scientific-projects/cctv-monitoring/data/harbours/XYhavn.shp",
+  restrict_study_period = NULL
 )
 }
 \arguments{
 \item{x}{path to the directory where the logbook & sales notes are stored as .csv}
 
 \item{path.to.raster}{path to the directory where the depth raster is}
+
+\item{path_to_harbour_list}{path to the directory where the list of vessels per harbour per year is located}
+
+\item{path_to_harbour_shp}{path to the directory where the harbours' shapefile is located}
+
+\item{restrict_study_period}{A vector of years - e.g., c(2010:2020) - default is NULL}
 }
 \value{
 A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).

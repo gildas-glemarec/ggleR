@@ -2,10 +2,16 @@
 #' Dataset preparations
 #' @param x path to the directory where the logbook & sales notes are stored as .csv
 #' @param path.to.raster path to the directory where the depth raster is
+#' @param path_to_harbour_list path to the directory where the list of vessels per harbour per year is located
+#' @param path_to_harbour_shp path to the directory where the harbours' shapefile is located
+#' @param restrict_study_period A vector of years - e.g., c(2010:2020) - default is NULL
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @export
 logbook_import <- function(x,
-                           path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif"){
+                           path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif",
+                           path_to_harbour_list = "Q:/scientific-projects/cctv-monitoring/data/harbours/by.year",
+                           path_to_harbour_shp = "Q:/scientific-projects/cctv-monitoring/data/harbours/XYhavn.shp",
+                           restrict_study_period = NULL){
   . <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
   `%notin%` <- Negate(`%in%`)
   logbook <- ggleR::load_data(x)
@@ -19,7 +25,7 @@ logbook_import <- function(x,
   study_period <- c(min(logbook$y):max(logbook$y))
   ## Restrict the study period?
   logbook <- data.table::data.table(logbook)
-  if(exists("restrict_study_period")){
+  if(is.numeric(restrict_study_period)){
     logbook <- logbook[y %in% restrict_study_period]
   } else(logbook <- logbook[y %in% study_period]
   )
@@ -180,7 +186,7 @@ logbook_import <- function(x,
                                                               '120-200mm'))]
   ## Assume that vessels are fishing closest to their home harbour if they do not
   ## indicate fishing location (icesrect) in Danish logbooks
-  harbours <- load_data('Q:/dfad/users/ggle/home/WD/dfadudv_gillnet/harbours')
+  harbours <- ggleR::load_data(path_to_harbour_list)
   harbours <- data.table::data.table(harbours, key = 'fid')
   harbours <- merge(unique(logbook, by = 'fid')[, c('fid','oal')],
                     harbours,
@@ -193,7 +199,7 @@ logbook_import <- function(x,
   data.table::setkey(harbours, 'lplads')
 
   ## Assign coordinates to harbour locations
-  harbours.locations <- data.table::as.data.table(sf::st_read("H:/Maps/39337/harbours/XYhavn.shp"))
+  harbours.locations <- data.table::as.data.table(sf::st_read(path_to_harbour_shp))
   harbours.locations <- harbours.locations[lplads %in% c(harbours$lplads)]
   data.table::setkey(harbours.locations, 'lplads')
 
@@ -215,21 +221,13 @@ logbook_import <- function(x,
                                          lat_home:= i.lat]
 
   ### Assign a fishing location ('square') if there are none
-  logbook[, icesrect := ifelse(square == '99A9',# | square == 'NANANA',
+  logbook[, icesrect := ifelse(square == '99A9' | square == 'NANANA',
                                yes = mapplots::ices.rect2(lon_home, lat_home),
                                no = square)]
 
-  ## Some problems remain with a few rows. Note that the following removes 33034 rows
-  # table(logbook$icesrect)
-  logbook <- logbook[icesrect %notin% c('99A9','NANANA', ## No location
-                                        '15J3', ## Northern Atlantic
-                                        '61F7','63F8', ## Black Sea
-                                        '44F4','44F5','44F6', ## ICES IVa
-                                        '39G3','37G2','38G2')] ## ICES 24d
-
   ## Register fishing location as centroid of ICES stat. rect.
-  logbook$lon <- mapplots::ices.rect(logbook$icesrect)[,1]
-  logbook$lat <- mapplots::ices.rect(logbook$icesrect)[,2]
+  logbook[, lon := mapplots::ices.rect(logbook$icesrect)[,1]]
+  logbook[, lat := mapplots::ices.rect(logbook$icesrect)[,2]]
 
   ## Calculate depth and distance to shore of the ICES rect centroids
   logbook <- ggleR::get.depth(logbook,
