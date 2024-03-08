@@ -26,7 +26,7 @@ add_bycatch_records <- function(x = data_work, y = NULL, print_errors = TRUE){
                                  'haul',
                                  'spp',
                                  'status',
-                                 'time.bc',
+                                 'time.bc.picture',
                                  'lon.bc',
                                  'lat.bc',
                                  'seen_drop',
@@ -74,11 +74,11 @@ add_bycatch_records <- function(x = data_work, y = NULL, print_errors = TRUE){
     data.table::setDT(x, key = 'IDbc')
 
     merged_data <- merge(y[, c("FishingActivity","haul",
-                                           # "time.bc","lon.bc","lat.bc",
-                                           "name","comments","preID",
-                                           "Date","date","IDhaul","vessel") := NULL],
-                                     x, # x[, time.bc := NULL],
-                                     all = TRUE)
+                               # "time.bc.picture","lon.bc","lat.bc",
+                               "name","comments","preID",
+                               "Date","date","IDhaul","vessel") := NULL],
+                         x, # x[, time.bc := NULL],
+                         all = TRUE)
     data.table::setcolorder(merged_data, c("review.info", "date", "IDFD", "IDhaul",
                                            "IDbc", "spp", "status", "netlength", "soak",
                                            "std_effort", "mesh.colour", "vessel"))
