@@ -95,7 +95,8 @@ logbook_import <- function(x,
     ) %>%
     dplyr::mutate(oal = if_else(vessel.length < 15,
                          '<15m',
-                         '>15m'))
+                         '>15m')) %>%
+    data.table::data.table
 
   ## Eyeballing the mesh size + registered gear + target species,
   ## there are issues. Let's fix the obvious
