@@ -17,7 +17,7 @@ get.depth <- function(x,
     ## Add the variable ICES rectangle and ICES subRectangle #----
     x[, icesrect:= data.table::fifelse(!is.na(lon.haul) & !is.na(lat.haul),
                            mapplots::ices.rect2(lon.haul, lat.haul),
-                           NA)]
+                           NA_character_)]
     suppressWarnings(
       x <- x %>%
         dplyr::rowwise() %>%
@@ -28,7 +28,7 @@ get.depth <- function(x,
            ## Add the variable ICES rectangle and ICES subRectangle #----
            x[, icesrect:= data.table::fifelse(!is.na(lon) & !is.na(lat),
                                   mapplots::ices.rect2(lon, lat),
-                                  NA)]
+                                  NA_character_)]
     suppressWarnings(
       x <- x %>%
         dplyr::rowwise() %>%
