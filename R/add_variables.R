@@ -31,7 +31,7 @@ add_variables <- function(x = data_work, give_me_more = give_me_more) {
                                ifelse(m %in% c(7,8,9), 'Q3',
                                       'Q4')))]
   x$quarter <- factor(x$quarter, levels= c('Q1','Q2','Q3','Q4'))
-
+  x[, time.bc := NULL]
   x <- x %>%
     dplyr::rowwise() %>%
     dplyr::mutate(lat.haul = sum(lat.start,lat.stop)/2,

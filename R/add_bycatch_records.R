@@ -26,7 +26,7 @@ add_bycatch_records <- function(x = data_work, y = NULL, print_errors = TRUE){
                                  'haul',
                                  'spp',
                                  'status',
-                                 'time.bc.picture',
+                                 'time.bc',
                                  'lon.bc',
                                  'lat.bc',
                                  'seen_drop',
@@ -77,7 +77,7 @@ add_bycatch_records <- function(x = data_work, y = NULL, print_errors = TRUE){
                                # "time.bc.picture","lon.bc","lat.bc",
                                "name","comments","preID",
                                "Date","date","IDhaul","vessel") := NULL],
-                         x, # x[, time.bc := NULL],
+                         x[, time.bc := NULL],
                          all = TRUE)
     data.table::setcolorder(merged_data, c("review.info", "date", "IDFD", "IDhaul",
                                            "IDbc", "spp", "status", "netlength", "soak",
