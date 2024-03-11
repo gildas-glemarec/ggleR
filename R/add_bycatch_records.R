@@ -26,7 +26,7 @@ add_bycatch_records <- function(x = data_work, y = NULL, print_errors = TRUE){
                                  'haul',
                                  'spp',
                                  'status',
-                                 'time.bc.picture',
+                                 'time.bc',
                                  'lon.bc',
                                  'lat.bc',
                                  'seen_drop',
