@@ -112,6 +112,7 @@ add_bycatch_records <- function(x = data_work, y = NULL, rm_errors = TRUE){
                         colour.name == 'Blue' & !spp %in% is.bird)
       errors2 <- merged_data[is.na(merged_data$review.info), ]
       errors <- rbind(errors2, errors1)
+      assign("errors", errors, envir = .GlobalEnv)
       utils::View(errors)
       message("
       ####!!!####!!!####!!!####!!!####
