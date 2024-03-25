@@ -46,12 +46,15 @@ add_bycatch_records <- function(x = data_work, y = NULL, print_errors = TRUE){
     y$date <- y$time.bc
     y$time.bc <- lubridate::dmy_hms(y$time.bc)
     y$Date <- as.Date(lubridate::dmy_hms(y$date))
+    setorderv(y, cols = c("vessel","time.bc"), c(1, 1))
     y <- y %>%
       tidyr::separate(Date, c("y","m","d")) %>%
       tidyr::unite(col = Date, c(d,m,y), sep = "-") %>%
       ## Create variable "preID" (as vessel.dd-mm-yyyy)
       tidyr::unite(preID, c(vessel, Date), sep = ".", remove = FALSE) %>%
       dplyr::mutate(IDhaul = paste(preID, haul, sep = "."))
+
+
 
     ## Rarely, there only one entry in CQ (i.e. one image) for multiple animals
     ## of the same spp/status. In this case we need to duplicate that row by
@@ -77,7 +80,7 @@ add_bycatch_records <- function(x = data_work, y = NULL, print_errors = TRUE){
                                # "time.bc.picture","lon.bc","lat.bc",
                                "name","comments","preID",
                                "Date","date","IDhaul","vessel") := NULL],
-                         x[, time.bc := NULL],
+                         x, # x[, time.bc := NULL],
                          all = TRUE)
     data.table::setcolorder(merged_data, c("review.info", "date", "IDFD", "IDhaul",
                                            "IDbc", "spp", "status", "netlength", "soak",
