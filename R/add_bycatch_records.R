@@ -1,10 +1,10 @@
 #' Add bycatch records from catch quantification data in Analyzer
 #' @param x A data frame. Usually the output of BBimport("path_to_files")
 #' @param y A data frame. Usually the output of fix.CQ("path_to_bycatch_data")
-#' @param print_errors Defaults to TRUE. Print the problematic bycatch events (those to fix manually)
+#' @param rm_errors Defaults to TRUE. Removes the problematic bycatch events (those to fix manually) and prints them
 #' @return data.frame object
 #' @export
-add_bycatch_records <- function(x = data_work, y = NULL, print_errors = TRUE){
+add_bycatch_records <- function(x = data_work, y = NULL, rm_errors = TRUE){
   data_work <- Date <- d <- m <- quarter <- preID <- vessel <- haul <- IDhaul <- ID3 <- time.start <- mesh.colour <- idx <- review.info <- ind <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
   if(missing(y) | missing(x)) {
     print("You forgot to indicate the path to your EM data file(s).")
@@ -46,7 +46,7 @@ add_bycatch_records <- function(x = data_work, y = NULL, print_errors = TRUE){
     y$date <- y$time.bc
     y$time.bc <- lubridate::dmy_hms(y$time.bc)
     y$Date <- as.Date(lubridate::dmy_hms(y$date))
-    setorderv(y, cols = c("vessel","time.bc"), c(1, 1))
+    data.table::setorderv(y, cols = c("vessel","time.bc"), c(1, 1))
     y <- y %>%
       tidyr::separate(Date, c("y","m","d")) %>%
       tidyr::unite(col = Date, c(d,m,y), sep = "-") %>%
@@ -100,18 +100,30 @@ add_bycatch_records <- function(x = data_work, y = NULL, print_errors = TRUE){
     merged_data <- merged_data[, idx := .N, by = IDhaul][idx == 1 | is.na(review.info) | idx > 1 & ind != TRUE,]
     merged_data[, c("idx","Count","Id","ind") := NULL]
 
-    if(print_errors == FALSE){
+    if(rm_errors == FALSE){
       return(merged_data)
     }else{
-      errors <- merged_data[is.na(merged_data$review.info), ]
+      is.bird <- c('Ag','Alcidae','Anatidae','At','Bird','Fg','Ga','Gaviidae','Gi','Gua','Lar','Larus','Lm','Mb','Mel','Melanitta','Mf','Mn','NA','NI','Pc','Pg','Podic','Sm','Ua')
+      is.mammal <- c('Ba','Hg','La','Mammal','NI','Pp','Pv','Se','Seal')
+      is.elasmo <- c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','NI','Ray','Rb','Rc','Rm','Sa','Sc','Shark')
+      errors1 <- merged_data %>%
+        dplyr::filter(colour.name == 'Aqua' & !spp %in% is.elasmo |
+                        colour.name == 'Black' & !spp %in% is.mammal |
+                        colour.name == 'Blue' & !spp %in% is.bird)
+      errors2 <- merged_data[is.na(merged_data$review.info), ]
+      errors <- rbind(errors2, errors1)
       utils::View(errors)
       message("
       ####!!!####!!!####!!!####!!!####
       ####!!!####!!!####!!!####!!!####
-A dataset with the missing bycatch spp was saved to the workspace (and it is called errors).\nThe missing matches between activity and bycatch data are listed and must be fixed in BB ANalyzer / Catch quantification.\nThen, re-extract the catch quantification, and finally re-run this script.
+A dataset with the missing bycatch spp was saved to the workspace (and it is called errors).\nThe missing matches between activity and bycatch data are listed and must be fixed in BB ANalyzer / Catch quantification.\nThen, re-extract the catch quantification, and finally re-run this script.\nON Windows, you can try: write.csv(errors,'C:/Users/user/Desktop/errors.csv')
       ####!!!####!!!####!!!####!!!####
       ####!!!####!!!####!!!####!!!####")
-      merged_data <- merged_data[!is.na(merged_data$review.info), ]
+      merged_data <- merged_data[!is.na(merged_data$review.info), ][
+        !(colour.name == 'Aqua' & !spp %in% is.elasmo)][
+          !(colour.name == 'Black' & !spp %in% is.mammal)][
+            !(colour.name == 'Blue' & !spp %in% is.bird)
+          ]
       data.table::setorder(merged_data, vessel, time.start)
       return(merged_data)
     }
