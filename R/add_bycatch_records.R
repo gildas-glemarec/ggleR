@@ -103,7 +103,7 @@ add_bycatch_records <- function(x = data_work, y = NULL, rm_errors = TRUE){
     if(rm_errors == FALSE){
       return(merged_data)
     }else{
-      is.bird <- c('Ag','Alcidae','Anatidae','At','Bird','Fg','Ga','Gaviidae','Gi','Gua','Lar','Larus','Lm','Mb','Mel','Melanitta','Mf','Mn','NA','NI','Pc','Pg','Podic','Sm','Ua')
+      is.bird <- c('Ag','Alcidae','Anatidae','At','Bird','Fg','Ga','Gar','Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta','Mf','Mn','NA','NI','Pc','Pc','Pg','Sm','Ua')
       is.mammal <- c('Ba','Hg','La','Mammal','NI','Pp','Pv','Se','Seal')
       is.elasmo <- c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','NI','Ray','Rb','Rc','Rm','Sa','Sc','Shark')
       errors1 <- merged_data %>%
