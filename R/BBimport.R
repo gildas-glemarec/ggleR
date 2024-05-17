@@ -161,16 +161,9 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
   BBdata <- data.table::rbindlist(list_BBdata)
 
   ## Some soak time info is missing (not found in BB). Manual fix based on a
-  ## prior extraction:
-  if( by.year == FALSE ){
-    soak_files <- list.files(y, pattern = "^[A-Za-z]", full.names = TRUE,
-                             recursive = FALSE)
-    soak_files <- soak_files[!file.info(soak_files)$isdir]
-  } else{
-    soak_files <- list.files(y, pattern = "^20", full.names = TRUE,
-                             recursive = FALSE)
-    soak_files <- soak_files[!file.info(soak_files)$isdir]
-  }
+  ## prior extraction (this is assuming the smae files format than previously):
+  soak_files <- list.files(y, pattern = "*csv", full.names = TRUE,
+                           recursive = FALSE)
   list_soak <- lapply(soak_files,
                       utils::read.csv,
                       header=TRUE, sep = ";",

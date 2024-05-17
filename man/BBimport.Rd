@@ -8,11 +8,14 @@ Read, format, and merge Notes and Annotations from Black Box Analyzer}
 BBimport(
   x =
     "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/annotations_notes/",
+  y = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/soak/",
   by.year = TRUE
 )
 }
 \arguments{
-\item{x}{A dataset with geographic coordinates in decimal as lon/lat}
+\item{x}{EM data annotations/notes with geographic coordinates in decimal as lon/lat}
+
+\item{y}{Datasets with fixed soak times and IDhaul}
 
 \item{by.year}{Are the files sorted by year (default)?}
 }
