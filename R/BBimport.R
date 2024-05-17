@@ -1,11 +1,13 @@
 #' Extracts Notes and Annotations
 #' Read, format, and merge Notes and Annotations from Black Box Analyzer
-#' @param x A dataset with geographic coordinates in decimal as lon/lat
+#' @param x EM data annotations/notes with geographic coordinates in decimal as lon/lat
+#' @param y Datasets with fixed soak times and IDhaul
 #' @param by.year Are the files sorted by year (default)?
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @import data.table
 #' @export
 BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/annotations_notes/",
+                     y = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/soak/",
                      by.year = TRUE) {
   review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- IDevent <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- NULL
   `%notin%` <- Negate(`%in%`)
@@ -131,8 +133,8 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       dplyr::group_by(IDhaul) %>%
       tidyr::fill(mitigation) %>%
       dplyr::mutate(mitigation = dplyr::if_else(is.na(mitigation),
-                                         0,
-                                         mitigation)) %>%
+                                                0,
+                                                mitigation)) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(mitigation_type = dplyr::case_when(
         colour.name == "Yellow" ~ 'pinger',
@@ -143,8 +145,8 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       dplyr::group_by(IDhaul) %>%
       tidyr::fill(mitigation_type) %>%
       dplyr::mutate(mitigation_type = dplyr::if_else(is.na(mitigation_type),
-                                              "no mitigation",
-                                              mitigation_type)) %>%
+                                                     "no mitigation",
+                                                     mitigation_type)) %>%
       dplyr::ungroup() %>%
       ## Create an event ID
       dplyr::group_by(IDhaul) %>%
@@ -157,6 +159,26 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
   list_BBdata)
 
   BBdata <- data.table::rbindlist(list_BBdata)
+
+  ## Some soak time info is missing (not found in BB). Manual fix based on a
+  ## prior extraction:
+  if( by.year == FALSE ){
+    soak_files <- list.files(y, pattern = "^[A-Za-z]", full.names = TRUE,
+                             recursive = FALSE)
+    soak_files <- soak_files[!file.info(soak_files)$isdir]
+  } else{
+    soak_files <- list.files(y, pattern = "^20", full.names = TRUE,
+                             recursive = FALSE)
+    soak_files <- soak_files[!file.info(soak_files)$isdir]
+  }
+  list_soak <- lapply(soak_files,
+                      utils::read.csv,
+                      header=TRUE, sep = ";",
+                      stringsAsFactors = FALSE, quote = "")
+  soakdata <- data.table::rbindlist(list_soak)
+  BBdata <- merge(BBdata, soakdata, by = 'IDhaul', all.x = TRUE)
+
+  ## Add variable IDbc
   tmp.bc <- BBdata %>%
     dplyr::select(c(haul_number, IDhaul, IDevent, colour.name)) %>%
     dplyr::filter(colour.name %notin% c( "","Brown","DarkKhaki","DeepPink",
@@ -169,8 +191,8 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
     dplyr::mutate(IDbc = paste(IDhaul, ID3, sep = ".")) %>%
     dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name)
 
-  BBdata2 <- merge(BBdata, tmp.bc, by = 'IDevent', all.x = TRUE) %>%
+  BBdata <- merge(BBdata, tmp.bc, by = 'IDevent', all.x = TRUE) %>%
     dplyr::arrange(vessel, as.Date(date), IDevent)
 
-  return(BBdata2)
+  return(BBdata)
 }
