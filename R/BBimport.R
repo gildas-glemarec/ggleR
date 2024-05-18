@@ -1,13 +1,11 @@
 #' Extracts Notes and Annotations
 #' Read, format, and merge Notes and Annotations from Black Box Analyzer
 #' @param x EM data annotations/notes with geographic coordinates in decimal as lon/lat
-#' @param y Datasets with fixed soak times and IDhaul
 #' @param by.year Are the files sorted by year (default)?
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @import data.table
 #' @export
 BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/annotations_notes/",
-                     y = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/soak/",
                      by.year = TRUE) {
   review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- IDevent <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- NULL
   `%notin%` <- Negate(`%in%`)
