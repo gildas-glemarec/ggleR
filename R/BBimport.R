@@ -157,19 +157,7 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       dplyr::select(-ID3)
   },
   list_BBdata)
-
   BBdata <- data.table::rbindlist(list_BBdata)
-
-  ## Some soak time info is missing (not found in BB). Manual fix based on a
-  ## prior extraction (this is assuming the smae files format than previously):
-  soak_files <- list.files(y, pattern = "*csv", full.names = TRUE,
-                           recursive = FALSE)
-  list_soak <- lapply(soak_files,
-                      utils::read.csv,
-                      header=TRUE, sep = ";",
-                      stringsAsFactors = FALSE, quote = "")
-  soakdata <- data.table::rbindlist(list_soak)
-  BBdata <- merge(BBdata, soakdata, by = 'IDhaul', all.x = TRUE)
 
   ## Add variable IDbc
   tmp.bc <- BBdata %>%
