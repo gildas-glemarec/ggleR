@@ -111,15 +111,20 @@ add_bycatch_records <- function(x = data_work, y = NULL, rm_errors = TRUE){
                         colour.name == 'Black' & !spp %in% is.mammal |
                         colour.name == 'Blue' & !spp %in% is.bird)
       errors2 <- merged_data[is.na(merged_data$review.info), ]
-      errors <- rbind(errors2, errors1)
-      assign("errors", errors, envir = .GlobalEnv)
-      utils::View(errors)
-      message("
+      if(dim(errors1)[1]==0 & dim(errors2)[1]==0){
+        message("No error detected in the input data. Congratulations!")
+      }else{
+        errors <- rbind(errors2, errors1)
+        assign("errors", errors, envir = .GlobalEnv)
+        utils::View(errors)
+        message("
       ####!!!####!!!####!!!####!!!####
       ####!!!####!!!####!!!####!!!####
 A dataset with the missing bycatch spp was saved to the workspace (and it is called errors).\nThe missing matches between activity and bycatch data are listed and must be fixed in BB ANalyzer / Catch quantification.\nThen, re-extract the catch quantification, and finally re-run this script.\nON Windows, you can try: write.csv(errors,'Q:/scientific-projects/cctv-monitoring/data/errors.csv')
       ####!!!####!!!####!!!####!!!####
       ####!!!####!!!####!!!####!!!####")
+      }
+
       merged_data <- merged_data[!is.na(merged_data$review.info), ][
         !(colour.name == 'Aqua' & !spp %in% is.elasmo)][
           !(colour.name == 'Black' & !spp %in% is.mammal)][
