@@ -12,7 +12,7 @@ logbook_import <- function(x,
                            path_to_harbour_list = "Q:/scientific-projects/cctv-monitoring/data/harbours/by.year",
                            path_to_harbour_shp = "Q:/scientific-projects/cctv-monitoring/data/harbours/XYhavn.shp",
                            restrict_study_period = NULL){
-  . <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- metier_level6_new <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
+  . <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- metier_level_6_new <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
   `%notin%` <- Negate(`%in%`)
   logbook <- ggleR::load_data(x)
 
@@ -102,82 +102,82 @@ logbook_import <- function(x,
   ## there are issues. Let's fix the obvious
   logbook$maske <- as.numeric(as.character(logbook$maske))
   logbook[, maske := ifelse(maske>=400, NA, maske)]
-  logbook$metier_level6_new <- as.character(logbook$metier_level6_new)
+  logbook$metier_level_6_new <- as.character(logbook$metier_level_6_new)
   # logbook[, metier_level6_ret := ifelse(latin == "Clupea harengus" &
   #                                         metier_level6_ret != "GNS_SPF_32-109_0_0",
   #                                       "GNS_SPF_32-109_0_0", metier_level6_ret)]
   ## Some rows have info on metier, but not on mesh. We can assume that they use
   ## they use the minimal mesh size in the category
-  # table(logbook[is.na(maske)]$metier_level6_new)
-  logbook[, maske := ifelse(metier_level6_new == "GNS_SPF_>=220_0_0" & maske < 220 |
-                              metier_level6_new == "GNS_DEF_>=220_0_0" & maske < 220,
+  # table(logbook[is.na(maske)]$metier_level_6_new)
+  logbook[, maske := ifelse(metier_level_6_new == "GNS_SPF_>=220_0_0" & maske < 220 |
+                              metier_level_6_new == "GNS_DEF_>=220_0_0" & maske < 220,
                             230,
-                            ifelse(metier_level6_new=="GND_ANA_>=157_0_0" & maske < 157 |
-                                     metier_level6_new=="GNS_ANA_>=157_0_0"& maske < 157 |
-                                     metier_level6_new=="GNS_SPF_>=157_0_0"& maske < 157 |
-                                     metier_level6_new=="GNS_DEF_>=157_0_0"& maske < 157,
+                            ifelse(metier_level_6_new=="GND_ANA_>=157_0_0" & maske < 157 |
+                                     metier_level_6_new=="GNS_ANA_>=157_0_0"& maske < 157 |
+                                     metier_level_6_new=="GNS_SPF_>=157_0_0"& maske < 157 |
+                                     metier_level_6_new=="GNS_DEF_>=157_0_0"& maske < 157,
                                    157,
-                                   ifelse(metier_level6_new=="GNS_SPF_120-219_0_0"& maske < 120|
-                                            metier_level6_new=="GND_DEF_120-219_0_0"& maske < 120|
-                                            metier_level6_new=="GNS_DEF_120-219_0_0" & maske < 120,
+                                   ifelse(metier_level_6_new=="GNS_SPF_120-219_0_0"& maske < 120|
+                                            metier_level_6_new=="GND_DEF_120-219_0_0"& maske < 120|
+                                            metier_level_6_new=="GNS_DEF_120-219_0_0" & maske < 120,
                                           120,
-                                          ifelse(metier_level6_new=="GNS_ANA_110-156_0_0" & maske < 110|
-                                                   metier_level6_new=="GNS_DEF_110-156_0_0"& maske < 110|
-                                                   metier_level6_new=="GNS_SPF_110-156_0_0"& maske < 110,
+                                          ifelse(metier_level_6_new=="GNS_ANA_110-156_0_0" & maske < 110|
+                                                   metier_level_6_new=="GNS_DEF_110-156_0_0"& maske < 110|
+                                                   metier_level_6_new=="GNS_SPF_110-156_0_0"& maske < 110,
                                                  110,
-                                                 ifelse(metier_level6_new=="GNS_DEF_100-119_0_0" & maske < 100|
-                                                          metier_level6_new=="GNS_SPF_100-119_0_0" & maske < 100,
+                                                 ifelse(metier_level_6_new=="GNS_DEF_100-119_0_0" & maske < 100|
+                                                          metier_level_6_new=="GNS_SPF_100-119_0_0" & maske < 100,
                                                         100,
-                                                        ifelse(metier_level6_new=="GNS_DEF_90-109_0_0"& maske<90|
-                                                                 metier_level6_new=="GNS_ANA_90-109_0_0"& maske<90|
-                                                                 metier_level6_new=="GNS_SPF_90-99_0_0" & maske<90|
-                                                                 metier_level6_new=="GNS_DEF_90-99_0_0" & maske<90,
+                                                        ifelse(metier_level_6_new=="GNS_DEF_90-109_0_0"& maske<90|
+                                                                 metier_level_6_new=="GNS_ANA_90-109_0_0"& maske<90|
+                                                                 metier_level_6_new=="GNS_SPF_90-99_0_0" & maske<90|
+                                                                 metier_level_6_new=="GNS_DEF_90-99_0_0" & maske<90,
                                                                90,
-                                                               ifelse(metier_level6_new=="GNS_FWS_>0_0_0"& maske<18|
-                                                                        metier_level6_new=='GNS_CRU_>0_0_0'& maske<18,
+                                                               ifelse(metier_level_6_new=="GNS_FWS_>0_0_0"& maske<18|
+                                                                        metier_level_6_new=='GNS_CRU_>0_0_0'& maske<18,
                                                                       18,
-                                                                      ifelse(metier_level6_new=="GNS_SPF_32-109_0_0"& maske<32,
+                                                                      ifelse(metier_level_6_new=="GNS_SPF_32-109_0_0"& maske<32,
                                                                              32,
-                                                                             ifelse(metier_level6_new=="GNS_SPF_10-30_0_0" & maske<10,
+                                                                             ifelse(metier_level_6_new=="GNS_SPF_10-30_0_0" & maske<10,
                                                                                     10,
-                                                                                    ifelse(metier_level6_new=='GND_SPF_50-70_0_0' & maske<50|
-                                                                                             metier_level6_new=='GNS_SPF_50-70_0_0' & maske<50,
+                                                                                    ifelse(metier_level_6_new=='GND_SPF_50-70_0_0' & maske<50|
+                                                                                             metier_level_6_new=='GNS_SPF_50-70_0_0' & maske<50,
                                                                                            50,
                                                                                            maske
                                                                                     ))))))))))]
   logbook[, mesh := ifelse(test = !is.na(maske), yes = maske,
-                           ifelse(metier_level6_new == "GNS_SPF_>=220_0_0" |
-                                    metier_level6_new == "GNS_DEF_>=220_0_0",
+                           ifelse(metier_level_6_new == "GNS_SPF_>=220_0_0" |
+                                    metier_level_6_new == "GNS_DEF_>=220_0_0",
                                   230, # Mean value for these metiers
-                                  ifelse(metier_level6_new == "GND_ANA_>=157_0_0" |
-                                           metier_level6_new == "GNS_ANA_>=157_0_0" |
-                                           metier_level6_new == "GNS_SPF_>=157_0_0" |
-                                           metier_level6_new == "GNS_DEF_>=157_0_0" |
-                                           metier_level6_new ==  "GNS_SPF_120-219_0_0" |
-                                           metier_level6_new ==  "GND_DEF_120-219_0_0" |
-                                           metier_level6_new ==  "GNS_DEF_120-219_0_0",
+                                  ifelse(metier_level_6_new == "GND_ANA_>=157_0_0" |
+                                           metier_level_6_new == "GNS_ANA_>=157_0_0" |
+                                           metier_level_6_new == "GNS_SPF_>=157_0_0" |
+                                           metier_level_6_new == "GNS_DEF_>=157_0_0" |
+                                           metier_level_6_new ==  "GNS_SPF_120-219_0_0" |
+                                           metier_level_6_new ==  "GND_DEF_120-219_0_0" |
+                                           metier_level_6_new ==  "GNS_DEF_120-219_0_0",
                                          170, # Mean value for these metiers
-                                         ifelse(metier_level6_new == "GNS_ANA_110-156_0_0" |
-                                                  metier_level6_new == "GNS_DEF_110-156_0_0" |
-                                                  metier_level6_new == "GNS_SPF_110-156_0_0",
+                                         ifelse(metier_level_6_new == "GNS_ANA_110-156_0_0" |
+                                                  metier_level_6_new == "GNS_DEF_110-156_0_0" |
+                                                  metier_level_6_new == "GNS_SPF_110-156_0_0",
                                                 130, # Mean value for these metiers
-                                                ifelse(metier_level6_new == "GNS_DEF_100-119_0_0"|
-                                                         metier_level6_new == "GNS_SPF_100-119_0_0",
+                                                ifelse(metier_level_6_new == "GNS_DEF_100-119_0_0"|
+                                                         metier_level_6_new == "GNS_SPF_100-119_0_0",
                                                        110, # Mean value for these metiers
-                                                       ifelse(metier_level6_new == "GNS_DEF_90-109_0_0" |
-                                                                metier_level6_new == "GNS_ANA_90-109_0_0" |
-                                                                metier_level6_new == "GNS_SPF_90-99_0_0" |
-                                                                metier_level6_new == "GNS_DEF_90-99_0_0" |
-                                                                metier_level6_new ==  "GNS_FWS_>0_0_0",
+                                                       ifelse(metier_level_6_new == "GNS_DEF_90-109_0_0" |
+                                                                metier_level_6_new == "GNS_ANA_90-109_0_0" |
+                                                                metier_level_6_new == "GNS_SPF_90-99_0_0" |
+                                                                metier_level_6_new == "GNS_DEF_90-99_0_0" |
+                                                                metier_level_6_new ==  "GNS_FWS_>0_0_0",
                                                               90, # Mean value for these metiers
-                                                              ifelse(metier_level6_new == "GNS_SPF_32-109_0_0",
+                                                              ifelse(metier_level_6_new == "GNS_SPF_32-109_0_0",
                                                                      50, # Mean value for this metiers
-                                                                     ifelse(metier_level6_new == "GNS_SPF_10-30_0_0",
+                                                                     ifelse(metier_level_6_new == "GNS_SPF_10-30_0_0",
                                                                             20, # Mean value for this metiers),
-                                                                            ifelse(metier_level6_new == 'GND_SPF_50-70_0_0' |
-                                                                                     metier_level6_new == 'GNS_SPF_50-70_0_0',
+                                                                            ifelse(metier_level_6_new == 'GND_SPF_50-70_0_0' |
+                                                                                     metier_level_6_new == 'GNS_SPF_50-70_0_0',
                                                                                    60,
-                                                                                   ifelse(metier_level6_new == 'GNS_CRU_>0_0_0',
+                                                                                   ifelse(metier_level_6_new == 'GNS_CRU_>0_0_0',
                                                                                           160,
                                                                                           as.numeric(NA))
                                                                             )))))))))]
