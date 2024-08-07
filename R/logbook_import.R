@@ -102,7 +102,7 @@ logbook_import <- function(x,
   ## there are issues. Let's fix the obvious
   logbook$maske <- as.numeric(as.character(logbook$maske))
   logbook[, maske := ifelse(maske>=400, NA, maske)]
-  logbook$metier_level_6_new <- as.character(logbook$metier_level_6_new)
+  # logbook$metier_level_6_new <- as.character(logbook$metier_level_6_new)
   # logbook[, metier_level6_ret := ifelse(latin == "Clupea harengus" &
   #                                         metier_level6_ret != "GNS_SPF_32-109_0_0",
   #                                       "GNS_SPF_32-109_0_0", metier_level6_ret)]
