@@ -19,5 +19,5 @@ fix.CQ <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox ext
     dat <- subset(dat, Species %notin% c("Cl"))
   },
   filenames)
-  CQdata <- data.table::rbindlist(list_CQdata)
+  CQdata <- data.table::rbindlist(list_CQdata, fill = TRUE)
   return(CQdata)}
