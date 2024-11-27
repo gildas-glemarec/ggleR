@@ -2,7 +2,8 @@
 #' @param x Path to the catch quantification files sorted by year or by vessel
 #' @return a dataset
 #' @export
-fix.CQ <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/catch_quantification/"){
+fix.CQ <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/catch_quantification/",
+                   incl.fish = FALSE){
   Species <- NULL
   `%notin%` <- Negate(`%in%`)
   filenames <- list.files(x,
@@ -16,7 +17,9 @@ fix.CQ <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox ext
     dat <- utils::read.csv2(textConnection(tmp), header=FALSE) # read tmp in as a csv
     names(dat) <- strsplit(header, ';')[[1]] # add headers
     dat <- dat[-1,]
-    dat <- subset(dat, Species %notin% c("Cl"))
+    if(incl.fish = FALSE){
+      dat <- subset(dat, Species %notin% c("Cl"))
+    }
   },
   filenames)
   CQdata <- data.table::rbindlist(list_CQdata, fill = TRUE)
