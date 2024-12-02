@@ -17,7 +17,7 @@ fix.CQ <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox ext
     dat <- utils::read.csv2(textConnection(tmp), header=FALSE) # read tmp in as a csv
     names(dat) <- strsplit(header, ';')[[1]] # add headers
     dat <- dat[-1,]
-    if(incl.fish = FALSE){
+    if(incl.fish == FALSE){
       dat <- subset(dat, Species %notin% c("Cl"))
     }
   },
