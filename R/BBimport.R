@@ -162,15 +162,16 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
   tmp.bc <- BBdata %>%
     dplyr::select(c(haul_number, IDhaul, IDevent, colour.name)) %>%
     ### Include only the bycatch groups we are interested in
-    # dplyr::filter(colour.name %notin% c( "",
-    #                                      "LawnGreen", ## Pearl net start
-    #                                      "Brown", ## Pearl net stop
-    #                                      "DeepPink", ## Seal damage
-    #                                      "Gray","Grey","DarkKhaki","Thistle", ## Used for fish
-    #                                      "Orange", ## Other (Andet), incl. some fish
-    #                                      "Purple", ## Plastic
+    #                                      "Aqua" ## Elasmobranchs
+    #                                      "Black" ## Mammal
+    #                                      "Blue" ## Bird
+    #                                      "LawnGreen" ## Pearl net start
+    #                                      "Brown" ## Pearl net stop
+    #                                      "DeepPink" ## Seal damage
+    #                                      "Gray","Grey","DarkKhaki","Thistle" ## Used for fish
+    #                                      "Orange" ## Other (Andet), incl. some fish
+    #                                      "Purple" ## Plastic
     #                                      "Yellow" ## Pingers
-    #                                      )) %>%
     dplyr::filter(colour.name %in% c("Black","Blue","Aqua")) %>%
     dplyr::group_by(IDhaul) %>%
     dplyr::mutate(ID3 = rank(haul_number,

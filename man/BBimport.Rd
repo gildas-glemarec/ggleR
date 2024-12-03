@@ -8,16 +8,13 @@ Read, format, and merge Notes and Annotations from Black Box Analyzer}
 BBimport(
   x =
     "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/annotations_notes/",
-  by.year = TRUE,
-  fish.count = FALSE
+  by.year = TRUE
 )
 }
 \arguments{
 \item{x}{EM data annotations/notes with geographic coordinates in decimal as lon/lat}
 
 \item{by.year}{Are the files sorted by year (default)?}
-
-\item{fish.count}{Count the number of individual fish catches in each haul (NB. all fish are counted together regardless of the species)}
 }
 \value{
 A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
