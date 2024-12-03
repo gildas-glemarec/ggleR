@@ -161,8 +161,10 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
   tmp.bc <- BBdata %>%
     dplyr::select(c(haul_number, IDhaul, IDevent, colour.name)) %>%
     dplyr::filter(colour.name %notin% c( "","Brown","DarkKhaki","DeepPink",
-                                         "Gray","LawnGreen","Orange","Purple",
-                                         "Yellow")) %>%
+                                         "Gray","Grey","Thistle", ## Used for fish
+                                         "LawnGreen","Orange","Purple",
+                                         "Yellow" ## Used by default or for pingers
+                                         )) %>%
     dplyr::group_by(IDhaul) %>%
     dplyr::mutate(ID3 = rank(haul_number,
                              ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
