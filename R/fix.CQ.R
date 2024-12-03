@@ -18,7 +18,7 @@ fix.CQ <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox ext
     names(dat) <- strsplit(header, ';')[[1]] # add headers
     dat <- dat[-1,]
     if(incl.fish == FALSE){
-      dat <- subset(dat, Species %notin% c("Cl"))
+      dat <- subset(dat, Species %notin% c("Cl","Scsc"))
     }
   },
   filenames)
