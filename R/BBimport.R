@@ -2,11 +2,13 @@
 #' Read, format, and merge Notes and Annotations from Black Box Analyzer
 #' @param x EM data annotations/notes with geographic coordinates in decimal as lon/lat
 #' @param by.year Are the files sorted by year (default)?
+#' @param fish.count Count the number of individual fish catches in each haul (NB. all fish are counted together regardless of the species)
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @import data.table
 #' @export
 BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/annotations_notes/",
-                     by.year = TRUE) {
+                     by.year = TRUE,
+                     fish.count = FALSE) {
   review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- IDevent <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- NULL
   `%notin%` <- Negate(`%in%`)
   if( by.year == FALSE ){
@@ -66,6 +68,7 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       dplyr::filter(Activity.type != 'Gear out') %>%
       dplyr::filter(Note.type %notin% c('Anchor 1', 'Anchor 2', 'Start', 'Stop')) %>%
       dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon', 'Green', 'Red')) %>%
+      dplyr::filter(Color.name %notin% "MediumTurquoise") %>%
       dplyr::rename(haul_number = Haul.no) %>%
       dplyr::mutate(Mesh.color = na_if(Mesh.color,"")) %>%
       dplyr::arrange(Vesselid, time.start) %>%
@@ -153,6 +156,15 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       dplyr::mutate(IDevent = paste(IDhaul, "event", ID3, sep = ".")) %>%
       dplyr::ungroup() %>%
       dplyr::select(-ID3)
+
+    if(fish.count == FALSE){x <- x}else{
+      x <- x %>%
+        dplyr::group_by(IDhaul) %>%
+        dplyr::mutate(fish_count = sum( dplyr::case_when(
+          colour.name %in% c("Gray","Grey","DarkKhaki","Thistle") ~ 1,
+          colour.name == "Orange" & stringr::str_detect(comments, 'lump') ~ 1,
+          .default = 0)))
+    }
   },
   list_BBdata)
   BBdata <- data.table::rbindlist(list_BBdata)
@@ -160,10 +172,14 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
   ## Add variable IDbc
   tmp.bc <- BBdata %>%
     dplyr::select(c(haul_number, IDhaul, IDevent, colour.name)) %>%
-    dplyr::filter(colour.name %notin% c( "","Brown","DarkKhaki","DeepPink",
-                                         "Gray","Grey","Thistle", ## Used for fish
-                                         "LawnGreen","Orange","Purple",
-                                         "Yellow" ## Used by default or for pingers
+    dplyr::filter(colour.name %notin% c( "",
+                                         "LawnGreen", ## Pearl net start
+                                         "Brown", ## Pearl net stop
+                                         "DeepPink", ## Seal damage
+                                         "Gray","Grey","DarkKhaki","Thistle", ## Used for fish
+                                         "Orange", ## Other (Andet), incl. some fish
+                                         "Purple", ## Plastic
+                                         "Yellow" ## Pingers
                                          )) %>%
     dplyr::group_by(IDhaul) %>%
     dplyr::mutate(ID3 = rank(haul_number,
