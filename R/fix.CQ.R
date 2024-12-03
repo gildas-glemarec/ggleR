@@ -19,7 +19,7 @@ fix.CQ <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox ext
     dat <- dat[-1,]
     if(incl.fish == FALSE){
       dat <- subset(dat, Species %notin% c("Cl","Scsc"))
-    }
+    }else{dat <- dat}
   },
   filenames)
   CQdata <- data.table::rbindlist(list_CQdata, fill = TRUE)
