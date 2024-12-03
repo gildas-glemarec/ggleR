@@ -6,7 +6,8 @@
 \usage{
 fix.CQ(
   x =
-    "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/catch_quantification/"
+    "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/catch_quantification/",
+  incl.fish = FALSE
 )
 }
 \arguments{
