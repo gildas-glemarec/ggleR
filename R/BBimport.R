@@ -160,7 +160,7 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
 
   ## Add variable IDbc
   tmp.bc <- BBdata %>%
-    dplyr::select(c(haul_number, IDhaul, IDevent, colour.name)) %>%
+    dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
     ### Include only the bycatch groups we are interested in
     #                                      "Aqua" ## Elasmobranchs
     #                                      "Black" ## Mammal
