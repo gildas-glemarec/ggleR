@@ -179,7 +179,7 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
                              ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
     dplyr::ungroup() %>%
     dplyr::mutate(IDbc = paste(IDhaul, ID3, sep = ".")) %>%
-    dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name)
+    dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
 
   BBdata <- merge(BBdata, tmp.bc, by = 'IDevent', all.x = TRUE) %>%
     dplyr::arrange(vessel, as.Date(date), IDevent)
