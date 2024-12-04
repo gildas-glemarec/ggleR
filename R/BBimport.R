@@ -173,7 +173,7 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
     #                                      "Purple" ## Plastic
     #                                      "Yellow" ## Pingers
     dplyr::filter(colour.name %in% c("Black","Blue","Aqua")) %>%
-    dplyr::filter(Note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
+    dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
     dplyr::group_by(IDhaul) %>%
     dplyr::mutate(ID3 = rank(haul_number,
                              ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
