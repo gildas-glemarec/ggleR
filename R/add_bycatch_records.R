@@ -4,12 +4,35 @@
 #' @param rm_errors Defaults to TRUE. Removes the problematic bycatch events (those to fix manually) and prints them
 #' @return data.frame object
 #' @export
-add_bycatch_records <- function(x = data_work, y = NULL, rm_errors = TRUE){
+add_bycatch_records <- function(x = data_work,
+                                y = NULL,
+                                alt_spp_list = F,
+                                rm_errors = TRUE){
   data_work <- Date <- d <- m <- quarter <- preID <- vessel <- haul <- IDhaul <- ID3 <- time.start <- mesh.colour <- idx <- review.info <- ind <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
   if(missing(y) | missing(x)) {
     print("You forgot to indicate the path to your EM data file(s).")
   } else {
-    ## Format input data and merge
+    if(alt_spp_list == F){
+      is.bird <- c('Ag','Alcidae','Anatidae','At','Bird','Fg','Ga','Gad','Gar',
+                   'Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta',
+                   'Mf','Mn','NA','Pc','Pc','Pg','Sm','Ua')
+      is.mammal <- c('Ba','Hg','La','Mammal','Pp','Pv','Se','Seal')
+      is.elasmo <- c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','Ray','Rb',
+                     'Rc','Rm','Sa','Sc','Shark')
+      is.fish <- c('Cl','Scsc')
+      is.not.id <- 'NI'
+    }else{
+      if(missing(path_to_spp_lists)) {
+        print("You forgot to load the path to your species list file(s)./nFor
+              instance, use path_to_spp_lists = 'Q:/scientific-projects/cctv-monitoring/data/species lists/'
+              before loading this function")}else{
+          list_spp <- ggleR::spp.list(path_to_spp_lists)
+          for(i in length(list_spp)){
+            assign(paste0("is.", names(list_spp[i])), unlist(list_spp[i]))
+          }
+        }
+    }
+        ## Format input data and merge
     data.table::setDT(y, key = 'SpecieslistId')
     data.table::setnames(x = y,
                          old = c('HarbourNumber',
@@ -82,9 +105,10 @@ add_bycatch_records <- function(x = data_work, y = NULL, rm_errors = TRUE){
                                "Date","date","IDhaul","vessel") := NULL],
                          x, # x[, time.bc := NULL],
                          all = TRUE)
-    data.table::setcolorder(merged_data, c("review.info", "date", "IDFD", "IDhaul",
-                                           "IDbc", "spp", "status", "netlength", "soak",
-                                           "std_effort", "mesh.colour", "vessel"))
+    data.table::setcolorder(merged_data, c("review.info", "date", "IDFD",
+                                           "IDhaul", "IDbc", "spp", "status",
+                                           "netlength", "soak", "std_effort",
+                                           "mesh.colour", "vessel"))
     merged_data[, c("y","m","d") := NULL]
     data.table::setorder(merged_data, vessel, time.start)
     merged_data <- merged_data %>%
@@ -103,11 +127,14 @@ add_bycatch_records <- function(x = data_work, y = NULL, rm_errors = TRUE){
     if(rm_errors == FALSE){
       return(merged_data)
     }else{
-      is.bird <- c('Ag','Alcidae','Anatidae','At','Bird','Fg','Ga','Gar','Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta','Mf','Mn','NA','Pc','Pc','Pg','Sm','Ua')
-      is.mammal <- c('Ba','Hg','La','Mammal','Pp','Pv','Se','Seal')
-      is.elasmo <- c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','Ray','Rb','Rc','Rm','Sa','Sc','Shark')
-      is.fish <- c('Cl','Scsc')
-      is.not.id <- 'NI'
+      # is.bird <- c('Ag','Alcidae','Anatidae','At','Bird','Fg','Ga','Gad','Gar',
+      #              'Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta',
+      #              'Mf','Mn','NA','Pc','Pc','Pg','Sm','Ua')
+      # is.mammal <- c('Ba','Hg','La','Mammal','Pp','Pv','Se','Seal')
+      # is.elasmo <- c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','Ray','Rb',
+      #                'Rc','Rm','Sa','Sc','Shark')
+      # is.fish <- c('Cl','Scsc')
+      # is.not.id <- 'NI'
       errors1 <- merged_data %>%
         dplyr::filter(colour.name == 'Aqua' & !spp %in% is.elasmo |
                         colour.name == 'Black' & !spp %in% is.mammal |

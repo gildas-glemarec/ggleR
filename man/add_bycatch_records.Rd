@@ -4,7 +4,12 @@
 \alias{add_bycatch_records}
 \title{Add bycatch records from catch quantification data in Analyzer}
 \usage{
-add_bycatch_records(x = data_work, y = NULL, rm_errors = TRUE)
+add_bycatch_records(
+  x = data_work,
+  y = NULL,
+  alt_spp_list = F,
+  rm_errors = TRUE
+)
 }
 \arguments{
 \item{x}{A data frame. Usually the output of BBimport("path_to_files")}
