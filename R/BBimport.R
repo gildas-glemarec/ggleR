@@ -36,15 +36,19 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
     x <- x %>%
       dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon',
                                          'Green', 'Red'))
-    x$time.start <- as.character(strptime(x$Start.time.local..log.,
-                                          "%d-%m-%Y %H:%M:%S"))
-    x$time.stop <- as.character(strptime(x$End.time.local..log.,
-                                         "%d-%m-%Y %H:%M:%S"))
+
+
+    x$date <- as.Date(lubridate::dmy_hms(x$Start.time.local..log.))
+    x$Start.time.local..log. <- strptime(x$Start.time.local..log.,
+                                         "%d-%m-%Y %H:%M:%S")
+    x$End.time.local..log. <- strptime(x$End.time.local..log.,
+                                       "%d-%m-%Y %H:%M:%S")
+    x$time.start <- as.character(x$Start.time.local..log.)
+    x$time.stop <- as.character(x$End.time.local..log.)
+
     x <- x %>%
       dplyr::mutate(gps = if_else(is.na(Start.latitude),
                                   0, 1))
-
-
     x <- x[with(x, order(x$Vesselid,x$time.start)),]
     x <- x[!x$Type == "Videofile",]
     x <- x[!x$Type == "Trip",]
@@ -56,7 +60,6 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
     x$Start.longitude <- as.numeric(x$Start.longitude) ## in decimal
     x$End.latitude <- as.numeric(x$End.latitude) ## in decimal
     x$End.longitude <- as.numeric(x$End.longitude) ## in decimal
-    x$date <- as.Date(lubridate::dmy_hms(x$Start.time.local..log.))
 
     x <- x %>%
       tidyr::separate(date, c("y","m","d")) %>%
@@ -76,14 +79,32 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
                                               .default = NA)) %>%
       ## Copy the haul characteristics (stored as Activity down in the corresponding Notes)
       dplyr::arrange(Vesselid, time.start) %>%
-      tidyr::fill(IDhaul) %>%
+      tidyr::fill(IDhaul)
+    ## Fix the problem where the first pinger appears before the beginning of the activity
+    for(i in 1:(length(x$Id)-1)){
+      if(x$Type[i] == 'Note' &
+         x$Type[i+1] == 'Activity' &
+         x$time.start[i] < x$time.start[i+1] &
+         x$time.stop[i] > x$time.start[i+1]){
+        # x <- x[-i, ] ##Removes the row
+        x$IDhaul[i] <- x$IDhaul[i+1]
+        x$haul_number[i] <- x$haul_number[i+1]
+        x$Gear.type[i] <- x$Gear.type[i+1]
+        x$Distance..m.[i] <- x$Distance..m.[i+1]
+        x$Soaking.time..h.[i] <- x$Soaking.time..h.[i+1]
+        x$Mesh.color[i] <- x$Mesh.color[i+1]
+        x$Review.info[i] <- x$Review.info[i+1]
+        }
+    }
+
+    x <- x %>%
+      dplyr::group_by(IDhaul) %>%
       tidyr::fill(haul_number) %>%
       tidyr::fill(Gear.type) %>%
       tidyr::fill(Distance..m.) %>%
       tidyr::fill(Soaking.time..h.) %>%
       tidyr::fill(Mesh.color) %>%
       tidyr::fill(Review.info) %>%
-
       dplyr::mutate(haul.lon.start = NA,
                     haul.lat.start = NA,
                     haul.lon.stop = NA,
@@ -92,7 +113,7 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
                     haul.lat.start = dplyr::case_when(Activity.type == 'Gear in'~Start.latitude,.default = NA_integer_),
                     haul.lon.stop = dplyr::case_when(Activity.type == 'Gear in'~End.longitude,.default = NA_integer_),
                     haul.lat.stop = dplyr::case_when(Activity.type == 'Gear in'~End.latitude,.default = NA_integer_)) %>%
-      dplyr::group_by(IDhaul) %>%
+      # dplyr::group_by(IDhaul) %>%
       tidyr::fill(haul.lon.start) %>%
       tidyr::fill(haul.lat.start) %>%
       tidyr::fill(haul.lon.stop) %>%
@@ -134,14 +155,12 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
                                               dplyr::n()), 1, review.info)
       ) %>%
       dplyr::ungroup() %>%
+      ## If there is at least one pinger in a haul, consider that there is mitigation in place
       dplyr::mutate(mitigation = dplyr::case_when(
         colour.name == "Yellow" ~ 1,
-        .default = NA_integer_)) %>%
+        .default = 0)) %>%
       dplyr::group_by(IDhaul) %>%
       tidyr::fill(mitigation) %>%
-      dplyr::mutate(mitigation = dplyr::if_else(is.na(mitigation),
-                                                0,
-                                                mitigation)) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(mitigation_type = dplyr::case_when(
         colour.name == "Yellow" ~ 'pinger',
