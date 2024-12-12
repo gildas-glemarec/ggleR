@@ -29,18 +29,22 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
     x <- x[!x$Vesselid == "",]
     x <- x[!is.na(x$Vesselid),]
     x <- x[!x$Vesselid == "HAV01",]
-
+    ## Keep only notes and annotations
     x <- x %>%
       dplyr::filter(substr(Id,1,1) == "a" | substr(Id,1,1) == "n")
-
+    ## Remove the Green/Red and PaleGreen/LightSalmon notes (manual markings of start/stop)
     x <- x %>%
-      dplyr::mutate(gps = if_else(is.na(Start.latitude),
-                                  0, 1))
-
+      dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon',
+                                         'Green', 'Red'))
     x$time.start <- as.character(strptime(x$Start.time.local..log.,
                                           "%d-%m-%Y %H:%M:%S"))
     x$time.stop <- as.character(strptime(x$End.time.local..log.,
                                          "%d-%m-%Y %H:%M:%S"))
+    x <- x %>%
+      dplyr::mutate(gps = if_else(is.na(Start.latitude),
+                                  0, 1))
+
+
     x <- x[with(x, order(x$Vesselid,x$time.start)),]
     x <- x[!x$Type == "Videofile",]
     x <- x[!x$Type == "Trip",]
@@ -53,14 +57,12 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
     x$End.latitude <- as.numeric(x$End.latitude) ## in decimal
     x$End.longitude <- as.numeric(x$End.longitude) ## in decimal
     x$date <- as.Date(lubridate::dmy_hms(x$Start.time.local..log.))
+
     x <- x %>%
       tidyr::separate(date, c("y","m","d")) %>%
       tidyr::unite(col = date, c(d,m,y), sep = "-") %>%
       dplyr::mutate(Date = date)
     x$IDFD <- paste(x$Vesselid, x$Date, sep = ".")
-    x <- x %>%
-      tidyr::separate(date, c("y","m","d")) %>%
-      tidyr::unite(col = date, c(d,m,y), sep = "-")
 
     x <- x %>%
       dplyr::filter(Activity.type != 'Gear out') %>%
@@ -69,11 +71,19 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       dplyr::filter(Color.name %notin% "MediumTurquoise") %>%
       dplyr::rename(haul_number = Haul.no) %>%
       dplyr::mutate(Mesh.color = na_if(Mesh.color,"")) %>%
+      ## Create IDhaul for Activities (i.e. hauling)
+      dplyr::mutate(IDhaul = dplyr::case_when(Activity.type == 'Gear in' ~ paste(IDFD, haul_number, sep = "."),
+                                              .default = NA)) %>%
+      ## Copy the haul characteristics (stored as Activity down in the corresponding Notes)
       dplyr::arrange(Vesselid, time.start) %>%
+      tidyr::fill(IDhaul) %>%
       tidyr::fill(haul_number) %>%
-      dplyr::group_by(IDFD) %>%
-      dplyr::mutate(IDhaul = paste(IDFD, haul_number, sep = ".")) %>%
-      dplyr::ungroup() %>%
+      tidyr::fill(Gear.type) %>%
+      tidyr::fill(Distance..m.) %>%
+      tidyr::fill(Soaking.time..h.) %>%
+      tidyr::fill(Mesh.color) %>%
+      tidyr::fill(Review.info) %>%
+
       dplyr::mutate(haul.lon.start = NA,
                     haul.lat.start = NA,
                     haul.lon.stop = NA,
@@ -87,8 +97,6 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       tidyr::fill(haul.lat.start) %>%
       tidyr::fill(haul.lon.stop) %>%
       tidyr::fill(haul.lat.stop) %>%
-      tidyr::fill(Distance..m.) %>%
-      tidyr::fill(Soaking.time..h.) %>%
       dplyr::ungroup() %>%
       dplyr::select(vessel = Vesselid,
                     date,
@@ -154,6 +162,12 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       dplyr::mutate(IDevent = paste(IDhaul, "event", ID3, sep = ".")) %>%
       dplyr::ungroup() %>%
       dplyr::select(-ID3)
+
+    ## Remove duplicated IDhaul if there is at least one note
+    x <- x %>%
+      group_by(IDhaul) %>%
+      filter(if (n() > 1) row_number() != 1 else TRUE) %>%
+      ungroup()
   },
   list_BBdata)
   BBdata <- data.table::rbindlist(list_BBdata)
