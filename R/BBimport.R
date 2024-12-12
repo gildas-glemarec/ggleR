@@ -77,6 +77,14 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       ## Create IDhaul for Activities (i.e. hauling)
       dplyr::mutate(IDhaul = dplyr::case_when(Activity.type == 'Gear in' ~ paste(IDFD, haul_number, sep = "."),
                                               .default = NA)) %>%
+      dplyr::mutate(haul.lon.start = NA,
+                    haul.lat.start = NA,
+                    haul.lon.stop = NA,
+                    haul.lat.stop = NA) %>%
+      dplyr::mutate(haul.lon.start = dplyr::case_when(Activity.type == 'Gear in'~Start.longitude,.default = NA_integer_),
+                    haul.lat.start = dplyr::case_when(Activity.type == 'Gear in'~Start.latitude,.default = NA_integer_),
+                    haul.lon.stop = dplyr::case_when(Activity.type == 'Gear in'~End.longitude,.default = NA_integer_),
+                    haul.lat.stop = dplyr::case_when(Activity.type == 'Gear in'~End.latitude,.default = NA_integer_)) %>%
       ## Copy the haul characteristics (stored as Activity down in the corresponding Notes)
       dplyr::arrange(Vesselid, time.start) %>%
       tidyr::fill(IDhaul)
@@ -94,6 +102,10 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
         x$Soaking.time..h.[i] <- x$Soaking.time..h.[i+1]
         x$Mesh.color[i] <- x$Mesh.color[i+1]
         x$Review.info[i] <- x$Review.info[i+1]
+        x$haul.lon.start[i] <- x$haul.lon.start[i+1]
+        x$haul.lat.start[i] <- x$haul.lat.start[i+1]
+        x$haul.lon.stop[i] <- x$haul.lon.stop[i+1]
+        x$haul.lat.stop[i] <- x$haul.lat.stop[i+1]
         }
     }
 
@@ -105,15 +117,6 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       tidyr::fill(Soaking.time..h.) %>%
       tidyr::fill(Mesh.color) %>%
       tidyr::fill(Review.info) %>%
-      dplyr::mutate(haul.lon.start = NA,
-                    haul.lat.start = NA,
-                    haul.lon.stop = NA,
-                    haul.lat.stop = NA) %>%
-      dplyr::mutate(haul.lon.start = dplyr::case_when(Activity.type == 'Gear in'~Start.longitude,.default = NA_integer_),
-                    haul.lat.start = dplyr::case_when(Activity.type == 'Gear in'~Start.latitude,.default = NA_integer_),
-                    haul.lon.stop = dplyr::case_when(Activity.type == 'Gear in'~End.longitude,.default = NA_integer_),
-                    haul.lat.stop = dplyr::case_when(Activity.type == 'Gear in'~End.latitude,.default = NA_integer_)) %>%
-      # dplyr::group_by(IDhaul) %>%
       tidyr::fill(haul.lon.start) %>%
       tidyr::fill(haul.lat.start) %>%
       tidyr::fill(haul.lon.stop) %>%
