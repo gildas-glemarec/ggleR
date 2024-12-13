@@ -37,7 +37,6 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon',
                                          'Green', 'Red'))
 
-
     x$date <- as.Date(lubridate::dmy_hms(x$Start.time.local..log.))
     x$Start.time.local..log. <- strptime(x$Start.time.local..log.,
                                          "%d-%m-%Y %H:%M:%S")
@@ -187,9 +186,9 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
 
     ## Remove duplicated IDhaul if there is at least one note
     x <- x %>%
-      group_by(IDhaul) %>%
-      filter(if (n() > 1) row_number() != 1 else TRUE) %>%
-      ungroup()
+      dplyr::group_by(IDhaul) %>%
+      dplyr::filter(if (dplyr::n() > 1) dplyr::row_number() != 1 else TRUE) %>%
+      dplyr::ungroup()
   },
   list_BBdata)
   BBdata <- data.table::rbindlist(list_BBdata)
