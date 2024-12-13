@@ -1,6 +1,7 @@
 #' Add bycatch records from catch quantification data in Analyzer
 #' @param x A data frame. Usually the output of BBimport("path_to_files")
 #' @param y A data frame. Usually the output of fix.CQ("path_to_bycatch_data")
+#' @param alt_spp_list Experimental. Are you providing an alternative species list? Defaults to FALSE.
 #' @param rm_errors Defaults to TRUE. Removes the problematic bycatch events (those to fix manually) and prints them
 #' @return data.frame object
 #' @export
@@ -15,12 +16,12 @@ add_bycatch_records <- function(x = data_work,
     if(alt_spp_list == F){
       is.bird <- c('Ag','Alcidae','Anatidae','At','Bird','Fg','Ga','Gad','Gar',
                    'Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta',
-                   'Mf','Mn','NA','Pc','Pc','Pg','Sm','Ua')
+                   'Mf','Mn','Pc','Pg','Sm','Ua')
       is.mammal <- c('Ba','Hg','La','Mammal','Pp','Pv','Se','Seal')
       is.elasmo <- c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','Ray','Rb',
                      'Rc','Rm','Sa','Sc','Shark')
       is.fish <- c('Cl','Scsc')
-      is.not.id <- 'NI'
+      is.not.id <- c('NA','NI')
     }else{
       if(missing(path_to_spp_lists)) {
         print("You forgot to load the path to your species list file(s)./nFor
@@ -70,14 +71,16 @@ add_bycatch_records <- function(x = data_work,
     y$time.bc <- lubridate::dmy_hms(y$time.bc)
     y$Date <- as.Date(lubridate::dmy_hms(y$date))
     data.table::setorderv(y, cols = c("vessel","time.bc"), c(1, 1))
-    y <- y %>%
-      tidyr::separate(Date, c("y","m","d")) %>%
-      tidyr::unite(col = Date, c(d,m,y), sep = "-") %>%
-      ## Create variable "preID" (as vessel.dd-mm-yyyy)
-      tidyr::unite(preID, c(vessel, Date), sep = ".", remove = FALSE) %>%
-      dplyr::mutate(IDhaul = paste(preID, haul, sep = "."))
-
-
+    ## Create IDhaul. Be aware that if the haul crosses 00:00, then the date of
+    ## the bycatch event and the IDhaul haul might be different
+    y$preID <- paste(y$vessel, substr(y$FishingActivity, 1, 10), sep = ".")
+    y$IDhaul <- paste(y$preID, y$haul, sep = ".")
+    # y <- y %>%
+    #   tidyr::separate(Date, c("y","m","d")) %>%
+    #   tidyr::unite(col = Date, c(d,m,y), sep = "-") %>%
+    #   ## Create variable "preID" (as vessel.dd-mm-yyyy)
+    #   tidyr::unite(preID, c(vessel, Date), sep = ".", remove = FALSE) %>%
+    #   dplyr::mutate(IDhaul = paste(preID, haul, sep = "."))
 
     ## Rarely, there only one entry in CQ (i.e. one image) for multiple animals
     ## of the same spp/status. In this case we need to duplicate that row by
