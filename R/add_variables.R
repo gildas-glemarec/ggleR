@@ -21,7 +21,7 @@ add_variables <- function(x = data_work, give_me_more = give_me_more) {
   x$note.type <- as.factor(x$note.type)
   x$mitigation <- as.factor(x$mitigation)
   x$mitigation_type <- as.factor(x$mitigation_type)
-  x$date <- lubridate::ymd(x$date)
+  x$date <- lubridate::dmy(x$date)
   x[, y := lubridate::year(date)]
   x[, m := lubridate::month(date)]
   x[, d := lubridate::day(date)]
