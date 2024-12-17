@@ -33,7 +33,7 @@ logbook_import <- function(x,
   ## Housekeeping
   logbook <- data.table::data.table(logbook %>%
                                       dplyr::filter(redskb %in% c('GN','GND','GNS','GTN','GTR')) %>%
-                                      dplyr::filter(!stringr::str_starts(metier_level_6_new, "GN")) %>%
+                                      dplyr::filter(stringr::str_starts(metier_level_6_new, "GN")) %>%
                                       dplyr::mutate(maske = dplyr::na_if(maske,"")) %>%
                                       dplyr::mutate(maske = dplyr::na_if(maske,".")) %>%
                                       ## Filter out rows based on "faulty" landings
