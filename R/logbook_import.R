@@ -269,7 +269,23 @@ logbook_import <- function(x,
   ## subdivisions 24, 25 and 26.
   logbook <- logbook[ices.area %notin% c('3.d.24','3.d.25','3.d.26',
                                          '3.d.27','3.d.28','3.d.29')]
-
+  ### Assign a fishing location ('square') if there are none
+  ### 1. Most frequent ICES rectangle from the same period (here: same month)?
+  Mode <- function(x) {
+    ux <- unique(x)
+    ux[which.max(tabulate(match(x, ux)))]
+  }
+  logbook[, newID := paste(fid, m, sep = '_')]
+  logbook[, square2 := fifelse(square %notin% '99A9', square, NA_character_)]
+  logbook[, mostICESrect := Mode(square2), by = c('newID')]
+  logbook[, icesrect := ifelse(square == '99A9',
+                               yes = mostICESrect,
+                               no = square)]
+  ### 2. If there is no info on location of the effort, then use
+  ###    the harbour location as a proxy
+  logbook[, icesrect := ifelse(square == '',
+                               yes = mapplots::ices.rect2(lon_home, lat_home),
+                               no = icesrect)]
   ## Main target species (landed) per fishing day
   ## We have thousands of rows with no information on catch weight. We will set
   ## all this to be 0kg (to not discard these rows in the process)
