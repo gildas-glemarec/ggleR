@@ -33,6 +33,7 @@ logbook_import <- function(x,
   ## Housekeeping
   logbook <- data.table::data.table(logbook %>%
                                       dplyr::filter(redskb %in% c('GN','GND','GNS','GTN','GTR')) %>%
+                                      dplyr::filter(!stringr::str_starts(metier_level_6_new, "GN")) %>%
                                       dplyr::mutate(maske = dplyr::na_if(maske,"")) %>%
                                       dplyr::mutate(maske = dplyr::na_if(maske,".")) %>%
                                       ## Filter out rows based on "faulty" landings
@@ -147,7 +148,8 @@ logbook_import <- function(x,
                                                                                     ))))))))))]
   logbook[, mesh := ifelse(test = !is.na(maske), yes = maske,
                            ifelse(metier_level_6_new == "GNS_SPF_>=220_0_0" |
-                                    metier_level_6_new == "GNS_DEF_>=220_0_0",
+                                    metier_level_6_new == "GNS_DEF_>=220_0_0" |
+                                    metier_level_6_new == "GNS_CRU_>=220_0_0",
                                   230, # Mean value for these metiers
                                   ifelse(metier_level_6_new == "GND_ANA_>=157_0_0" |
                                            metier_level_6_new == "GNS_ANA_>=157_0_0" |
@@ -155,32 +157,51 @@ logbook_import <- function(x,
                                            metier_level_6_new == "GNS_DEF_>=157_0_0" |
                                            metier_level_6_new ==  "GNS_SPF_120-219_0_0" |
                                            metier_level_6_new ==  "GND_DEF_120-219_0_0" |
-                                           metier_level_6_new ==  "GNS_DEF_120-219_0_0",
+                                           metier_level_6_new ==  "GNS_DEF_120-219_0_0" |
+                                           metier_level_6_new ==  "GNS_CRU_120-219_0_0",
                                          170, # Mean value for these metiers
                                          ifelse(metier_level_6_new == "GNS_ANA_110-156_0_0" |
                                                   metier_level_6_new == "GNS_DEF_110-156_0_0" |
                                                   metier_level_6_new == "GNS_SPF_110-156_0_0",
                                                 130, # Mean value for these metiers
-                                                ifelse(metier_level_6_new == "GNS_DEF_100-119_0_0"|
-                                                         metier_level_6_new == "GNS_SPF_100-119_0_0",
+                                                ifelse(metier_level_6_new == "GNS_DEF_100-119_0_0" |
+                                                         metier_level_6_new == "GNS_SPF_100-119_0_0" |
+                                                         metier_level_6_new == "GNS_CRU_100-119_0_0",
                                                        110, # Mean value for these metiers
                                                        ifelse(metier_level_6_new == "GNS_DEF_90-109_0_0" |
                                                                 metier_level_6_new == "GNS_ANA_90-109_0_0" |
                                                                 metier_level_6_new == "GNS_SPF_90-99_0_0" |
                                                                 metier_level_6_new == "GNS_DEF_90-99_0_0" |
+                                                                metier_level_6_new == "GNS_CRU_90-99_0_0" |
                                                                 metier_level_6_new ==  "GNS_FWS_>0_0_0",
                                                               90, # Mean value for these metiers
-                                                              ifelse(metier_level_6_new == "GNS_SPF_32-109_0_0",
+                                                              ifelse(metier_level_6_new == "GNS_SPF_32-109_0_0" |
+                                                                       metier_level_6_new == "GNS_DEF_32-89_0_0" |
+                                                                       metier_level_6_new == "GNS_SPF_32-89_0_0",
                                                                      50, # Mean value for this metiers
-                                                                     ifelse(metier_level_6_new == "GNS_SPF_10-30_0_0",
+                                                                     ifelse(metier_level_6_new == "GNS_SPF_10-30_0_0" |
+                                                                              metier_level_6_new == "GNS_ANA_>0_0_0" |
+                                                                              metier_level_6_new == "GNS_CAT_>0_0_0" |
+                                                                              metier_level_6_new == "GNS_CRU_10-30_0_0" |
+                                                                              metier_level_6_new == "GNS_SPF_16-31_0_0",
                                                                             20, # Mean value for this metiers),
                                                                             ifelse(metier_level_6_new == 'GND_SPF_50-70_0_0' |
-                                                                                     metier_level_6_new == 'GNS_SPF_50-70_0_0',
+                                                                                     metier_level_6_new == 'GNS_CRU_50-70_0_0' |
+                                                                                     metier_level_6_new == 'GNS_SPF_50-70_0_0' |
+                                                                                     metier_level_6_new == 'GNS_DEF_50-70_0_0' |
+                                                                                     metier_level_6_new == 'GNS_SPF_>0_0_0',
                                                                                    60,
                                                                                    ifelse(metier_level_6_new == 'GNS_CRU_>0_0_0',
                                                                                           160,
+                                                                                          ifelse(metier_level_6_new == 'GNS_CRU_31-49_0_0' |
+                                                                                                   metier_level_6_new == 'GNS_DEF_31-49_0_0' |
+                                                                                                   metier_level_6_new == 'GNS_SPF_31-49_0_0',
+                                                                                                 40,
+                                                                                                 ifelse(metier_level_6_new == 'GNS_CRU_71-89_0_0' |
+                                                                                                          metier_level_6_new == 'GNS_DEF_71-89_0_0',
+                                                                                                        80,
                                                                                           as.numeric(NA))
-                                                                            )))))))))]
+                                                                            )))))))))))]
   ## Add mesh as a factor
   logbook[, f.mesh := data.table::fifelse(mesh<120, '<120mm',
                                           data.table::fifelse(mesh>200, '>200mm',
@@ -222,7 +243,7 @@ logbook_import <- function(x,
                                          lat_home:= i.lat]
 
   ### Assign a fishing location ('square') if there are none
-  logbook[, icesrect := ifelse(square == '99A9' | square == 'NANANA',
+  logbook[, icesrect := ifelse(square == '99A9' | square == 'NANANA' | square == '' | is.na(square),
                                yes = mapplots::ices.rect2(lon_home, lat_home),
                                no = square)]
 
