@@ -14,6 +14,10 @@ logbook_import <- function(x,
                            restrict_study_period = NULL){
   . <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- metier_level_6_new <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
   `%notin%` <- Negate(`%in%`)
+  Mode <- function(x) {
+    ux <- unique(x)
+    ux[which.max(tabulate(match(x, ux)))]
+  }
   logbook <- ggleR::load_data(x)
 
   ## Temporal dummy variables
@@ -95,8 +99,8 @@ logbook_import <- function(x,
                     )
     ) %>%
     dplyr::mutate(oal = if_else(vessel.length < 15,
-                         '<15m',
-                         '>15m'))
+                                '<15m',
+                                '>15m'))
   logbook <- data.table::as.data.table(logbook)
 
   ## Eyeballing the mesh size + registered gear + target species,
@@ -114,9 +118,9 @@ logbook_import <- function(x,
                               metier_level_6_new == "GNS_DEF_>=220_0_0" & maske < 220,
                             230,
                             ifelse(metier_level_6_new=="GND_ANA_>=157_0_0" & maske < 157 |
-                                     metier_level_6_new=="GNS_ANA_>=157_0_0"& maske < 157 |
-                                     metier_level_6_new=="GNS_SPF_>=157_0_0"& maske < 157 |
-                                     metier_level_6_new=="GNS_DEF_>=157_0_0"& maske < 157,
+                                     metier_level_6_new=="GNS_ANA_>=157_0_0" & maske < 157 |
+                                     metier_level_6_new=="GNS_SPF_>=157_0_0" & maske < 157 |
+                                     metier_level_6_new=="GNS_DEF_>=157_0_0" & maske < 157,
                                    157,
                                    ifelse(metier_level_6_new=="GNS_SPF_120-219_0_0"& maske < 120|
                                             metier_level_6_new=="GND_DEF_120-219_0_0"& maske < 120|
@@ -142,7 +146,8 @@ logbook_import <- function(x,
                                                                              ifelse(metier_level_6_new=="GNS_SPF_10-30_0_0" & maske<10,
                                                                                     10,
                                                                                     ifelse(metier_level_6_new=='GND_SPF_50-70_0_0' & maske<50|
-                                                                                             metier_level_6_new=='GNS_SPF_50-70_0_0' & maske<50,
+                                                                                             metier_level_6_new=='GNS_SPF_50-70_0_0' & maske<50|
+                                                                                             metier_level_6_new=='GNS_DEF_50-70_0_0' & maske<50,
                                                                                            50,
                                                                                            maske
                                                                                     ))))))))))]
@@ -173,11 +178,13 @@ logbook_import <- function(x,
                                                                 metier_level_6_new == "GNS_SPF_90-99_0_0" |
                                                                 metier_level_6_new == "GNS_DEF_90-99_0_0" |
                                                                 metier_level_6_new == "GNS_CRU_90-99_0_0" |
-                                                                metier_level_6_new ==  "GNS_FWS_>0_0_0",
+                                                                metier_level_6_new == "GNS_FWS_>0_0_0"|
+                                                                metier_level_6_new == 'GNS_SPF_>0_0_0',
                                                               90, # Mean value for these metiers
                                                               ifelse(metier_level_6_new == "GNS_SPF_32-109_0_0" |
                                                                        metier_level_6_new == "GNS_DEF_32-89_0_0" |
-                                                                       metier_level_6_new == "GNS_SPF_32-89_0_0",
+                                                                       metier_level_6_new == "GNS_SPF_32-89_0_0" |
+                                                                       metier_level_6_new == "GNS_DEF_50-70_0_0",
                                                                      50, # Mean value for this metiers
                                                                      ifelse(metier_level_6_new == "GNS_SPF_10-30_0_0" |
                                                                               metier_level_6_new == "GNS_ANA_>0_0_0" |
@@ -198,10 +205,11 @@ logbook_import <- function(x,
                                                                                                    metier_level_6_new == 'GNS_SPF_31-49_0_0',
                                                                                                  40,
                                                                                                  ifelse(metier_level_6_new == 'GNS_CRU_71-89_0_0' |
+                                                                                                          metier_level_6_new == 'GNS_DEF_71-89_0_0' |
                                                                                                           metier_level_6_new == 'GNS_DEF_71-89_0_0',
                                                                                                         80,
-                                                                                          as.numeric(NA))
-                                                                            )))))))))))]
+                                                                                                        as.numeric(NA))
+                                                                                          )))))))))))]
   ## Add mesh as a factor
   logbook[, f.mesh := data.table::fifelse(mesh<120, '<120mm',
                                           data.table::fifelse(mesh>200, '>200mm',
@@ -224,36 +232,62 @@ logbook_import <- function(x,
   harbours.locations <- data.table::as.data.table(sf::st_read(path_to_harbour_shp))
   harbours.locations <- harbours.locations[lplads %in% c(harbours$lplads)]
   data.table::setkey(harbours.locations, 'lplads')
+  harbours[, lplads := fifelse(lplads == '', Mode(lplads), lplads),
+           by = c('fid')]
+  harbours[, lplads := fifelse(lplads == '', landing_harbour, lplads)]
+  harbours <- data.table::copy(harbours)[harbours.locations,
+                                         on = 'lplads',
+                                         `:=`(lon = lgrad,
+                                              lat = bgrad)]
+  ## Merge with logbook data; fid.year because the same vessel (name) can change
+  ## owner (and thus also home harbour) from one year to the next
+  harbours$fid.year <- paste(harbours$fid, harbours$year, sep='.')
+  harbours <- data.table::unique(harbours, by = "fid.year")
+  logbook$fid.year <- paste(logbook$fid, as.character(logbook$y), sep='.')
 
-  ## https://stackoverflow.com/questions/34598139/left-join-using-data-table#34600831
-  harbours <- harbours[harbours.locations,
-                       on = 'lplads',
-                       lon := i.lgrad][harbours.locations,
-                                       on = 'lplads',
-                                       lat:= i.bgrad]
+  # Merge logbook with harbours to add home_harbour, lon_home, and lat_home
+  logbook <- data.table::merge(logbook,
+                               subset(harbours,
+                                      select = c('fid.year','lon','lat','lplads')),
+                               by = c('fid.year') )
+  data.table::setnames(logbook, old = c('lon','lat','lplads'),
+                       new = c('lon_home','lat_home','home_harbour'))
 
-  ## Merge with logbook data
-  logbook <- logbook[harbours,
-                     on = 'fid',
-                     home_harbour := i.lplads][
-                       harbours,
-                       on = 'fid',
-                       lon_home:= i.lon][harbours,
-                                         on = 'fid',
-                                         lat_home:= i.lat]
-
-  ### Assign a fishing location ('square') if there are none
-  logbook[, icesrect := ifelse(square == '99A9' | square == 'NANANA' | square == '' | is.na(square),
-                               yes = mapplots::ices.rect2(lon_home, lat_home),
+  ### Assign a fishing location ('icesrect') if there are none
+  ### 1. Most frequent ICES rectangle from the same period (here: same month)?
+  logbook[, newID := paste(fid, m, sep = '_')]
+  logbook[, square2 := fifelse(square %notin% '99A9', square, NA_character_)]
+  logbook[, mostICESrect := Mode(square2), by = c('newID')]
+  logbook[, icesrect := ifelse(square == '99A9' ,
+                               yes = mostICESrect,
                                no = square)]
+  ### 2. If there is no info on location of the effort, then use
+  ###    the harbour location as a proxy
+  logbook[, icesrect := ifelse(square == '' | is.na(square),
+                               yes = mapplots::ices.rect2(lon_home, lat_home),
+                               no = icesrect)]
 
   ## Register fishing location as centroid of ICES stat. rect.
   logbook[, lon := mapplots::ices.rect(logbook$icesrect)[,1]]
   logbook[, lat := mapplots::ices.rect(logbook$icesrect)[,2]]
 
   ## Calculate depth and distance to shore of the ICES rect centroids
+  get.depth <- function(x,
+                        path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif"){
+    ## Depth at point
+    depth.ras.dk <- terra::rast(x = path.to.raster)
+    x <- data.table::as.data.table(x)
+    dk.sppts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
+    depth.dk.df <- (terra::extract(x = depth.ras.dk,
+                                   y = dk.sppts,
+                                   df = TRUE))$alldepth
+    x <- data.table::data.table(x)[, depth:= depth.dk.df]
+    x <- x[, depth := data.table::fifelse(depth>0, -2, depth)]
+    return(x)
+    gc()
+  }
   logbook <- ggleR::get.depth(logbook,
-                              path.to.raster = path.to.raster)
+                              path.to.raster = 'Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif')
 
   ## Create an ID for each (unique) fishing day (FD)
   logbook <- logbook %>%
@@ -261,7 +295,7 @@ logbook_import <- function(x,
     tidyr::separate(Date, c("y","m","d")) %>%
     tidyr::unite(col = Date, c(d,m,y), sep = "-")
   data.table::setDT(logbook)
-  logbook[, IDFD := paste(fid,Date,sep='.')]
+  logbook[, IDFD := paste(fid, Date,sep='.')]
   logbook[, FD := sum(dplyr::n_distinct(fngdato)),
           by = 'match_alle']
 
@@ -274,39 +308,29 @@ logbook_import <- function(x,
   logbook$quarter <- factor(logbook$quarter, levels= c('Q1','Q2','Q3','Q4'))
 
   ## Assign correct name to ICES area
-  logbook[, ices.area := ifelse(DFADfvd_ret == '3AI', 'isefjord',
-                                ifelse(DFADfvd_ret == '3AN', '3.a.20',
-                                       ifelse(DFADfvd_ret == '3AS', '3.a.21',
-                                              ifelse(DFADfvd_ret == '3B', '3.b.23',
-                                                     ifelse(DFADfvd_ret == '3C22', '3.c.22',
-                                                            ifelse(DFADfvd_ret == '3D24', '3.d.24',
-                                                                   ifelse(DFADfvd_ret == '3D25', '3.d.25',
-                                                                          ifelse(DFADfvd_ret == '3D26', '3.d.26',
-                                                                                 ifelse(DFADfvd_ret == '4B', '4.b',
-                                                                                        ifelse(DFADfvd_ret == '4BX', '3.c.22',
-                                                                                               ifelse(DFADfvd_ret == '3AI3', 'isefjord',
-                                                                                                      'NA')))))))))))]
+  logbook[, ices.area := ifelse(dfadfvd_ret == '3AI', 'isefjord',
+                                ifelse(dfadfvd_ret == '3AN', '3.a.20',
+                                       ifelse(dfadfvd_ret == '3AS', '3.a.21',
+                                              ifelse(dfadfvd_ret == '3B', '3.b.23',
+                                                     ifelse(dfadfvd_ret == '3C22', '3.c.22',
+                                                            ifelse(dfadfvd_ret == '3D24', '3.d.24',
+                                                                   ifelse(dfadfvd_ret == '3D25', '3.d.25',
+                                                                          ifelse(dfadfvd_ret == '3D26', '3.d.26',
+                                                                                 ifelse(dfadfvd_ret == '4A', '4.a',
+                                                                                        ifelse(dfadfvd_ret == '4B', '4.b',
+                                                                                               ifelse(dfadfvd_ret == '4BX', '3.c.22',
+                                                                                                      ifelse(dfadfvd_ret == '4C', '4.c',
+                                                                                                             ifelse(dfadfvd_ret == '3AI3', 'isefjord',
+                                                                                                                    ifelse(dfadfvd_ret == '4L', 'limfjord',
+                                                                                                                           ifelse(dfadfvd_ret == '4R', 'ringk.fjord',
+                                                                                                                                  ifelse(dfadfvd_ret == '4N', 'nissum.fjord',
+                                                                                                                                         'NA'))))))))))))))))]
+
   ## We have no data from the Baltic Proper, so we need to remove those hauls in
   ## subdivisions 24, 25 and 26.
   logbook <- logbook[ices.area %notin% c('3.d.24','3.d.25','3.d.26',
                                          '3.d.27','3.d.28','3.d.29')]
-  ### Assign a fishing location ('square') if there are none
-  ### 1. Most frequent ICES rectangle from the same period (here: same month)?
-  Mode <- function(x) {
-    ux <- unique(x)
-    ux[which.max(tabulate(match(x, ux)))]
-  }
-  logbook[, newID := paste(fid, m, sep = '_')]
-  logbook[, square2 := fifelse(square %notin% '99A9', square, NA_character_)]
-  logbook[, mostICESrect := Mode(square2), by = c('newID')]
-  logbook[, icesrect := ifelse(square == '99A9',
-                               yes = mostICESrect,
-                               no = square)]
-  ### 2. If there is no info on location of the effort, then use
-  ###    the harbour location as a proxy
-  logbook[, icesrect := ifelse(square == '',
-                               yes = mapplots::ices.rect2(lon_home, lat_home),
-                               no = icesrect)]
+
   ## Main target species (landed) per fishing day
   ## We have thousands of rows with no information on catch weight. We will set
   ## all this to be 0kg (to not discard these rows in the process)
