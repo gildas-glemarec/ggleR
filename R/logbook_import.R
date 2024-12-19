@@ -242,7 +242,7 @@ logbook_import <- function(x,
   ## Merge with logbook data; fid.year because the same vessel (name) can change
   ## owner (and thus also home harbour) from one year to the next
   harbours$fid.year <- paste(harbours$fid, harbours$year, sep='.')
-  harbours <- data.table::unique(harbours, by = "fid.year")
+  harbours <- unique(harbours, by = "fid.year")
   logbook$fid.year <- paste(logbook$fid, as.character(logbook$y), sep='.')
 
   # Merge logbook with harbours to add home_harbour, lon_home, and lat_home
