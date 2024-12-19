@@ -242,14 +242,14 @@ logbook_import <- function(x,
   ## Merge with logbook data; fid.year because the same vessel (name) can change
   ## owner (and thus also home harbour) from one year to the next
   harbours$fid.year <- paste(harbours$fid, harbours$year, sep='.')
-  harbours <- data.table::unique(harbours, by = "fid.year")
+  harbours <- unique(harbours, by = "fid.year")
   logbook$fid.year <- paste(logbook$fid, as.character(logbook$y), sep='.')
 
   # Merge logbook with harbours to add home_harbour, lon_home, and lat_home
-  logbook <- data.table::merge(logbook,
-                               subset(harbours,
-                                      select = c('fid.year','lon','lat','lplads')),
-                               by = c('fid.year') )
+  logbook <- merge(logbook,
+                   subset(harbours,
+                          select = c('fid.year','lon','lat','lplads')),
+                   by = c('fid.year') )
   data.table::setnames(logbook, old = c('lon','lat','lplads'),
                        new = c('lon_home','lat_home','home_harbour'))
 
@@ -277,9 +277,9 @@ logbook_import <- function(x,
     ## Depth at point
     depth.ras.dk <- terra::rast(x = path.to.raster)
     x <- data.table::as.data.table(x)
-    dk.sppts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
+    dk.sfpts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
     depth.dk.df <- (terra::extract(x = depth.ras.dk,
-                                   y = dk.sppts,
+                                   y = dk.sfpts,
                                    df = TRUE))$alldepth
     x <- data.table::data.table(x)[, depth:= depth.dk.df]
     x <- x[, depth := data.table::fifelse(depth>0, -2, depth)]
