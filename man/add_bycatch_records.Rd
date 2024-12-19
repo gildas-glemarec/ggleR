@@ -16,6 +16,8 @@ add_bycatch_records(
 
 \item{y}{A data frame. Usually the output of fix.CQ("path_to_bycatch_data")}
 
+\item{alt_spp_list}{Experimental. Are you providing an alternative species list? Defaults to FALSE.}
+
 \item{rm_errors}{Defaults to TRUE. Removes the problematic bycatch events (those to fix manually) and prints them}
 }
 \value{

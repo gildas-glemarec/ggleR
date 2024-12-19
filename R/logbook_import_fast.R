@@ -268,26 +268,30 @@ logbook_import <- function(x,
                                no = icesrect)]
 
   ## Register fishing location as centroid of ICES stat. rect.
-  logbook[, lon := mapplots::ices.rect(logbook$icesrect)[,1]]
-  logbook[, lat := mapplots::ices.rect(logbook$icesrect)[,2]]
-
+  # logbook[, lon := mapplots::ices.rect(logbook$icesrect)[,1]]
+  # logbook[, lat := mapplots::ices.rect(logbook$icesrect)[,2]]
+  #
   ## Calculate depth and distance to shore of the ICES rect centroids
-  get.depth <- function(x,
-                        path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif"){
-    ## Depth at point
-    depth.ras.dk <- terra::rast(x = path.to.raster)
-    x <- data.table::as.data.table(x)
-    dk.sfpts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
-    depth.dk.df <- (terra::extract(x = depth.ras.dk,
-                                   y = dk.sfpts,
-                                   df = TRUE))$alldepth
-    x <- data.table::data.table(x)[, depth:= depth.dk.df]
-    x <- x[, depth := data.table::fifelse(depth>0, -2, depth)]
-    return(x)
-    gc()
-  }
-  logbook <- get.depth(logbook,
-                              path.to.raster = 'Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif')
+  # get.depth <- function(x,
+  #                       path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif"){
+  #   ## Depth at point
+  #   depth.ras.dk <- terra::rast(x = path.to.raster)
+  #   x <- data.table::as.data.table(x)
+  #   dk.sfpts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
+  #   depth.dk.df <- (terra::extract(x = depth.ras.dk,
+  #                                  y = dk.sfpts,
+  #                                  df = TRUE))$alldepth
+  #   x <- data.table::data.table(x)[, depth:= depth.dk.df]
+  #   x <- x[, depth := data.table::fifelse(depth>0, -2, depth)]
+  #   return(x)
+  #   gc()
+  # }
+  # logbook <- get.depth(logbook,
+  #                      path.to.raster = 'Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif')
+  ices.rectangles <- readRDS('H:/c-users/Maps/ICES_rect.RDS')
+  logbook <- merge(logbook, ices.rectangles[
+    , !c('ICESNAME','d2shore','depth'):=NULL],
+    by.x = 'icesrect', by.y = 'ICESNAME')
 
   ## Create an ID for each (unique) fishing day (FD)
   logbook <- logbook %>%
