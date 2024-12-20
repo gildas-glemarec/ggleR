@@ -291,7 +291,7 @@ logbook_import_fast <- function(x,
   ices.rectangles <- readRDS('Q:/scientific-projects/cctv-monitoring/data/GIS/ICES_rect.RDS')
   logbook <- merge(logbook,
                    subset(ices.rectangles, select = c('ICESNAME','d2shore','depth')),
-                   by.x = 'icesrect', by.y = 'ICESNAME')
+                   by.x = 'icesrect', by.y = 'ICESNAME', all.x = TRUE)
 
   ## Create an ID for each (unique) fishing day (FD)
   logbook <- logbook %>%
