@@ -10,8 +10,7 @@
 logbook_import_fast <- function(x,
                                 path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif",
                                 path_to_harbour_list = "Q:/scientific-projects/cctv-monitoring/data/harbours/by.year",
-                                path_to_harbour_shp = "Q:/scientific-projects/cctv-monitoring/data/harbours/XYhavn.shp",
-                                restrict_study_period = NULL){
+                                path_to_harbour_shp = "Q:/scientific-projects/cctv-monitoring/data/harbours/XYhavn.shp"){
   . <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- metier_level_6_new <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
   `%notin%` <- Negate(`%in%`)
   Mode <- function(x) {
@@ -27,12 +26,8 @@ logbook_import_fast <- function(x,
 
   #### What's the period (in years) of the dataset?
   study_period <- c(min(logbook$y):max(logbook$y))
-  ## Restrict the study period?
-  logbook <- data.table::data.table(logbook)
-  if(is.numeric(restrict_study_period)){
-    logbook <- logbook[y %in% restrict_study_period]
-  } else(logbook <- logbook[y %in% study_period]
-  )
+
+    logbook <- data.table::data.table(logbook)
 
   ## Housekeeping
   logbook <- data.table::data.table(logbook %>%
@@ -79,6 +74,30 @@ logbook_import_fast <- function(x,
                                       ## Quick fix
                                       dplyr::mutate(square = dplyr::if_else(square=='40B2','40G2',square)),
                                     key = 'fid')
+
+  ## Assign correct name to ICES area
+  logbook[, ices.area := ifelse(dfadfvd_ret == '3AI', 'isefjord',
+                                ifelse(dfadfvd_ret == '3AN', '3.a.20',
+                                       ifelse(dfadfvd_ret == '3AS', '3.a.21',
+                                              ifelse(dfadfvd_ret == '3B', '3.b.23',
+                                                     ifelse(dfadfvd_ret == '3C22', '3.c.22',
+                                                            ifelse(dfadfvd_ret == '3D24', '3.d.24',
+                                                                   ifelse(dfadfvd_ret == '3D25', '3.d.25',
+                                                                          ifelse(dfadfvd_ret == '3D26', '3.d.26',
+                                                                                 ifelse(dfadfvd_ret == '4A', '4.a',
+                                                                                        ifelse(dfadfvd_ret == '4B', '4.b',
+                                                                                               ifelse(dfadfvd_ret == '4BX', '3.c.22',
+                                                                                                      ifelse(dfadfvd_ret == '4C', '4.c',
+                                                                                                             ifelse(dfadfvd_ret == '3AI3', 'isefjord',
+                                                                                                                    ifelse(dfadfvd_ret == '4L', 'limfjord',
+                                                                                                                           ifelse(dfadfvd_ret == '4R', 'ringk.fjord',
+                                                                                                                                  ifelse(dfadfvd_ret == '4N', 'nissum.fjord',
+                                                                                                                                         'NA'))))))))))))))))]
+  ## We have no data from the Baltic Proper, so we need to remove those hauls in
+  ## subdivisions 24, 25 and 26.
+  logbook <- logbook[ices.area %notin% c('3.d.24','3.d.25','3.d.26',
+                                         '3.d.27','3.d.28','3.d.29')]
+
   ## Fix negative values of landings and landings value
   logbook$hel <- abs(logbook$hel)
   logbook$vrd <- abs(logbook$vrd)
@@ -218,7 +237,7 @@ logbook_import_fast <- function(x,
   ## indicate fishing location (icesrect) in Danish logbooks
   harbours <- ggleR::load_data(path_to_harbour_list)
   harbours <- data.table::data.table(harbours, key = 'fid')
-  harbours <- merge(unique(logbook, by = 'fid')[, c('fid','oal')],
+  harbours <- data.table::merge(unique(logbook, by = 'fid')[, c('fid','oal')],
                     harbours,
                     by = 'fid')
   harbours <- harbours[, c('fid', 'year', 'landing_harbour', 'home_harbour',
@@ -246,7 +265,7 @@ logbook_import_fast <- function(x,
   logbook$fid.year <- paste(logbook$fid, as.character(logbook$y), sep='.')
 
   # Merge logbook with harbours to add home_harbour, lon_home, and lat_home
-  logbook <- merge(logbook,
+  logbook <- data.table::merge(logbook,
                    subset(harbours,
                           select = c('fid.year','lon','lat','lplads')),
                    by = c('fid.year') )
@@ -258,12 +277,12 @@ logbook_import_fast <- function(x,
   logbook[, newID := paste(fid, m, sep = '_')]
   logbook[, square2 := data.table::fifelse(square %notin% '99A9', square, NA_character_)]
   logbook[, mostICESrect := Mode(square2), by = c('newID')]
-  logbook[, icesrect := data.table::fifelse(square == '99A9' ,
+  logbook[, icesrect := data.table::fifelse(square == '99A9' & !is.na(mostICESrect),
                                             yes = mostICESrect,
                                             no = square)]
   ### 2. If there is no info on location of the effort, then use
   ###    the harbour location as a proxy
-  logbook[, icesrect := data.table::fifelse(square == '' | is.na(square),
+  logbook[, icesrect := data.table::fifelse(square == '' | is.na(square) | icesrect == '99A9' | is.na(icesrect),
                                             yes = mapplots::ices.rect2(lon_home, lat_home),
                                             no = icesrect)]
 
@@ -289,7 +308,7 @@ logbook_import_fast <- function(x,
   # logbook <- get.depth(logbook,
   #                      path.to.raster = 'Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif')
   ices.rectangles <- readRDS('Q:/scientific-projects/cctv-monitoring/data/GIS/ICES_rect.RDS')
-  logbook <- merge(logbook,
+  logbook <- data.table::merge(logbook,
                    subset(ices.rectangles, select = c('ICESNAME','d2shore','depth')),
                    by.x = 'icesrect', by.y = 'ICESNAME', all.x = TRUE)
 
@@ -310,30 +329,6 @@ logbook_import_fast <- function(x,
                                                                data.table::fifelse(m %in% c(7,8,9), 'Q3',
                                                                                    'Q4')))]
   logbook$quarter <- factor(logbook$quarter, levels= c('Q1','Q2','Q3','Q4'))
-
-  ## Assign correct name to ICES area
-  logbook[, ices.area := ifelse(dfadfvd_ret == '3AI', 'isefjord',
-                                ifelse(dfadfvd_ret == '3AN', '3.a.20',
-                                       ifelse(dfadfvd_ret == '3AS', '3.a.21',
-                                              ifelse(dfadfvd_ret == '3B', '3.b.23',
-                                                     ifelse(dfadfvd_ret == '3C22', '3.c.22',
-                                                            ifelse(dfadfvd_ret == '3D24', '3.d.24',
-                                                                   ifelse(dfadfvd_ret == '3D25', '3.d.25',
-                                                                          ifelse(dfadfvd_ret == '3D26', '3.d.26',
-                                                                                 ifelse(dfadfvd_ret == '4A', '4.a',
-                                                                                        ifelse(dfadfvd_ret == '4B', '4.b',
-                                                                                               ifelse(dfadfvd_ret == '4BX', '3.c.22',
-                                                                                                      ifelse(dfadfvd_ret == '4C', '4.c',
-                                                                                                             ifelse(dfadfvd_ret == '3AI3', 'isefjord',
-                                                                                                                    ifelse(dfadfvd_ret == '4L', 'limfjord',
-                                                                                                                           ifelse(dfadfvd_ret == '4R', 'ringk.fjord',
-                                                                                                                                  ifelse(dfadfvd_ret == '4N', 'nissum.fjord',
-                                                                                                                                         'NA'))))))))))))))))]
-
-  ## We have no data from the Baltic Proper, so we need to remove those hauls in
-  ## subdivisions 24, 25 and 26.
-  logbook <- logbook[ices.area %notin% c('3.d.24','3.d.25','3.d.26',
-                                         '3.d.27','3.d.28','3.d.29')]
 
   ## Main target species (landed) per fishing day
   ## We have thousands of rows with no information on catch weight. We will set
@@ -358,7 +353,7 @@ logbook_import_fast <- function(x,
   ### Main target in VALUE landed ##
   ## The following will create 2 new variables (latin and target), which are the
   ## most important catch in terms of landings value per trip
-  logbook <- merge(logbook,
+  logbook <- data.table::merge(logbook,
                    logbook[logbook[, .I[base::which.max(vrd)],
                                    by = 'IDFD']$V1][, .SD, .SDcols = c('IDFD',
                                                                        'latin')],
@@ -366,7 +361,7 @@ logbook_import_fast <- function(x,
   ### Main target in WEIGHT landed ##
   ## The following will create 2 new variables (latin and target), which are the
   ## most important catch in terms of landings weight per trip
-  # logbook <- merge(logbook,
+  # logbook <- data.table::merge(logbook,
   #                  logbook[, .SD[which.max(hel)],
   #                          by = 'IDFD'][, .SD, .SDcols = c('IDFD', 'latin')],
   #                  by = 'IDFD')
