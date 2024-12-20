@@ -27,7 +27,7 @@ logbook_import_fast <- function(x,
   #### What's the period (in years) of the dataset?
   study_period <- c(min(logbook$y):max(logbook$y))
 
-    logbook <- data.table::data.table(logbook)
+  logbook <- data.table::data.table(logbook)
 
   ## Housekeeping
   logbook <- data.table::data.table(logbook %>%
@@ -237,9 +237,11 @@ logbook_import_fast <- function(x,
   ## indicate fishing location (icesrect) in Danish logbooks
   harbours <- ggleR::load_data(path_to_harbour_list)
   harbours <- data.table::data.table(harbours, key = 'fid')
-  harbours <- data.table::merge(unique(logbook, by = 'fid')[, c('fid','oal')],
-                    harbours,
-                    by = 'fid')
+  harbours <- unique(logbook, by = 'fid')[, c('fid','oal')][harbours,
+                                                            on = 'fid']
+  # harbours <- data.table::merge(unique(logbook, by = 'fid')[, c('fid','oal')],
+  #                   harbours,
+  #                   by = 'fid')
   harbours <- harbours[, c('fid', 'year', 'landing_harbour', 'home_harbour',
                            'oal'
                            # , 'n_trips', 'hel'
@@ -265,10 +267,13 @@ logbook_import_fast <- function(x,
   logbook$fid.year <- paste(logbook$fid, as.character(logbook$y), sep='.')
 
   # Merge logbook with harbours to add home_harbour, lon_home, and lat_home
-  logbook <- data.table::merge(logbook,
-                   subset(harbours,
-                          select = c('fid.year','lon','lat','lplads')),
-                   by = c('fid.year') )
+  logbook <- logbook[subset(harbours,
+                            select = c('fid.year','lon','lat','lplads')),
+                     on = 'fid.year']
+  # logbook <- data.table::merge(logbook,
+  #                  subset(harbours,
+  #                         select = c('fid.year','lon','lat','lplads')),
+  #                  by = c('fid.year') )
   data.table::setnames(logbook, old = c('lon','lat','lplads'),
                        new = c('lon_home','lat_home','home_harbour'))
 
@@ -308,9 +313,14 @@ logbook_import_fast <- function(x,
   # logbook <- get.depth(logbook,
   #                      path.to.raster = 'Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif')
   ices.rectangles <- readRDS('Q:/scientific-projects/cctv-monitoring/data/GIS/ICES_rect.RDS')
-  logbook <- data.table::merge(logbook,
-                   subset(ices.rectangles, select = c('ICESNAME','d2shore','depth')),
-                   by.x = 'icesrect', by.y = 'ICESNAME', all.x = TRUE)
+  # ices.rectangles <- sf::read_sf('H:/c-users/Maps/DepthDK/ICES rect depth.gpkg')
+  ices.rectangles$icesrect <- ices.rectangles$ICESNAME
+  logbook <- logbook[subset(ices.rectangles,
+                            select = c('icesrect','d2shore','depth')),
+                     on = c('icesrect')]
+  # logbook <- data.table::merge(logbook,
+  #                  subset(ices.rectangles, select = c('ICESNAME','d2shore','depth')),
+  #                  by.x = 'icesrect', by.y = 'ICESNAME', all.x = TRUE)
 
   ## Create an ID for each (unique) fishing day (FD)
   logbook <- logbook %>%
@@ -353,11 +363,16 @@ logbook_import_fast <- function(x,
   ### Main target in VALUE landed ##
   ## The following will create 2 new variables (latin and target), which are the
   ## most important catch in terms of landings value per trip
-  logbook <- data.table::merge(logbook,
-                   logbook[logbook[, .I[base::which.max(vrd)],
-                                   by = 'IDFD']$V1][, .SD, .SDcols = c('IDFD',
-                                                                       'latin')],
-                   by = 'IDFD')
+  logbook <- logbook[logbook[logbook[, .I[base::which.max(vrd)],
+                                     by = 'IDFD']$V1][, .SD, .SDcols = c('IDFD',
+                                                                         'latin')],
+                     on = c('IDFD')]
+  # logbook <- merge(logbook,
+  #                  logbook[logbook[, .I[base::which.max(vrd)],
+  #                                  by = 'IDFD']$V1][, .SD, .SDcols = c('IDFD',
+  #                                                                      'latin')],
+  #                  by = 'IDFD')
+
   ### Main target in WEIGHT landed ##
   ## The following will create 2 new variables (latin and target), which are the
   ## most important catch in terms of landings weight per trip
