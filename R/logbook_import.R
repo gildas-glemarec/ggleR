@@ -7,11 +7,11 @@
 #' @param restrict_study_period A vector of years - e.g., c(2010:2020) - default is NULL
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @export
-logbook_import <- function(x,
-                           path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif",
-                           path_to_harbour_list = "Q:/scientific-projects/cctv-monitoring/data/harbours/by.year",
-                           path_to_harbour_shp = "Q:/scientific-projects/cctv-monitoring/data/harbours/XYhavn.shp",
-                           restrict_study_period = NULL){
+logbook_import_fast <- function(x,
+                                path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif",
+                                path_to_harbour_list = "Q:/scientific-projects/cctv-monitoring/data/harbours/by.year",
+                                path_to_harbour_shp = "Q:/scientific-projects/cctv-monitoring/data/harbours/XYhavn.shp",
+                                restrict_study_period = NULL){
   . <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- metier_level_6_new <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
   `%notin%` <- Negate(`%in%`)
   Mode <- function(x) {
@@ -232,9 +232,9 @@ logbook_import <- function(x,
   harbours.locations <- data.table::as.data.table(sf::st_read(path_to_harbour_shp))
   harbours.locations <- harbours.locations[lplads %in% c(harbours$lplads)]
   data.table::setkey(harbours.locations, 'lplads')
-  harbours[, lplads := fifelse(lplads == '', Mode(lplads), lplads),
+  harbours[, lplads := data.table::fifelse(lplads == '', Mode(lplads), lplads),
            by = c('fid')]
-  harbours[, lplads := fifelse(lplads == '', landing_harbour, lplads)]
+  harbours[, lplads := data.table::fifelse(lplads == '', landing_harbour, lplads)]
   harbours <- data.table::copy(harbours)[harbours.locations,
                                          on = 'lplads',
                                          `:=`(lon = lgrad,
@@ -256,38 +256,42 @@ logbook_import <- function(x,
   ### Assign a fishing location ('icesrect') if there are none
   ### 1. Most frequent ICES rectangle from the same period (here: same month)?
   logbook[, newID := paste(fid, m, sep = '_')]
-  logbook[, square2 := fifelse(square %notin% '99A9', square, NA_character_)]
+  logbook[, square2 := data.table::fifelse(square %notin% '99A9', square, NA_character_)]
   logbook[, mostICESrect := Mode(square2), by = c('newID')]
-  logbook[, icesrect := ifelse(square == '99A9' ,
-                               yes = mostICESrect,
-                               no = square)]
+  logbook[, icesrect := data.table::fifelse(square == '99A9' ,
+                                            yes = mostICESrect,
+                                            no = square)]
   ### 2. If there is no info on location of the effort, then use
   ###    the harbour location as a proxy
-  logbook[, icesrect := ifelse(square == '' | is.na(square),
-                               yes = mapplots::ices.rect2(lon_home, lat_home),
-                               no = icesrect)]
+  logbook[, icesrect := data.table::fifelse(square == '' | is.na(square),
+                                            yes = mapplots::ices.rect2(lon_home, lat_home),
+                                            no = icesrect)]
 
   ## Register fishing location as centroid of ICES stat. rect.
-  logbook[, lon := mapplots::ices.rect(logbook$icesrect)[,1]]
-  logbook[, lat := mapplots::ices.rect(logbook$icesrect)[,2]]
-
+  # logbook[, lon := mapplots::ices.rect(logbook$icesrect)[,1]]
+  # logbook[, lat := mapplots::ices.rect(logbook$icesrect)[,2]]
+  #
   ## Calculate depth and distance to shore of the ICES rect centroids
-  get.depth <- function(x,
-                        path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif"){
-    ## Depth at point
-    depth.ras.dk <- terra::rast(x = path.to.raster)
-    x <- data.table::as.data.table(x)
-    dk.sfpts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
-    depth.dk.df <- (terra::extract(x = depth.ras.dk,
-                                   y = dk.sfpts,
-                                   df = TRUE))$alldepth
-    x <- data.table::data.table(x)[, depth:= depth.dk.df]
-    x <- x[, depth := data.table::fifelse(depth>0, -2, depth)]
-    return(x)
-    gc()
-  }
-  logbook <- get.depth(logbook,
-                              path.to.raster = 'Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif')
+  # get.depth <- function(x,
+  #                       path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif"){
+  #   ## Depth at point
+  #   depth.ras.dk <- terra::rast(x = path.to.raster)
+  #   x <- data.table::as.data.table(x)
+  #   dk.sfpts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
+  #   depth.dk.df <- (terra::extract(x = depth.ras.dk,
+  #                                  y = dk.sfpts,
+  #                                  df = TRUE))$alldepth
+  #   x <- data.table::data.table(x)[, depth:= depth.dk.df]
+  #   x <- x[, depth := data.table::fifelse(depth>0, -2, depth)]
+  #   return(x)
+  #   gc()
+  # }
+  # logbook <- get.depth(logbook,
+  #                      path.to.raster = 'Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif')
+  ices.rectangles <- readRDS('Q:/scientific-projects/cctv-monitoring/data/GIS/ICES_rect.RDS')
+  logbook <- merge(logbook,
+                   subset(ices.rectangles, select = c('ICESNAME','d2shore','depth')),
+                   by.x = 'icesrect', by.y = 'ICESNAME')
 
   ## Create an ID for each (unique) fishing day (FD)
   logbook <- logbook %>%
@@ -376,3 +380,4 @@ logbook_import <- function(x,
 
   return(logbook)
 }
+

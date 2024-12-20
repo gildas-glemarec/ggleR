@@ -7,7 +7,7 @@
 #' @param restrict_study_period A vector of years - e.g., c(2010:2020) - default is NULL
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @export
-logbook_import <- function(x,
+logbook_import_fast <- function(x,
                            path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif",
                            path_to_harbour_list = "Q:/scientific-projects/cctv-monitoring/data/harbours/by.year",
                            path_to_harbour_shp = "Q:/scientific-projects/cctv-monitoring/data/harbours/XYhavn.shp",
@@ -232,9 +232,9 @@ logbook_import <- function(x,
   harbours.locations <- data.table::as.data.table(sf::st_read(path_to_harbour_shp))
   harbours.locations <- harbours.locations[lplads %in% c(harbours$lplads)]
   data.table::setkey(harbours.locations, 'lplads')
-  harbours[, lplads := fifelse(lplads == '', Mode(lplads), lplads),
+  harbours[, lplads := data.table::fifelse(lplads == '', Mode(lplads), lplads),
            by = c('fid')]
-  harbours[, lplads := fifelse(lplads == '', landing_harbour, lplads)]
+  harbours[, lplads := data.table::fifelse(lplads == '', landing_harbour, lplads)]
   harbours <- data.table::copy(harbours)[harbours.locations,
                                          on = 'lplads',
                                          `:=`(lon = lgrad,
@@ -256,14 +256,14 @@ logbook_import <- function(x,
   ### Assign a fishing location ('icesrect') if there are none
   ### 1. Most frequent ICES rectangle from the same period (here: same month)?
   logbook[, newID := paste(fid, m, sep = '_')]
-  logbook[, square2 := fifelse(square %notin% '99A9', square, NA_character_)]
+  logbook[, square2 := data.table::fifelse(square %notin% '99A9', square, NA_character_)]
   logbook[, mostICESrect := Mode(square2), by = c('newID')]
-  logbook[, icesrect := ifelse(square == '99A9' ,
+  logbook[, icesrect := data.table::fifelse(square == '99A9' ,
                                yes = mostICESrect,
                                no = square)]
   ### 2. If there is no info on location of the effort, then use
   ###    the harbour location as a proxy
-  logbook[, icesrect := ifelse(square == '' | is.na(square),
+  logbook[, icesrect := data.table::fifelse(square == '' | is.na(square),
                                yes = mapplots::ices.rect2(lon_home, lat_home),
                                no = icesrect)]
 
@@ -288,9 +288,9 @@ logbook_import <- function(x,
   # }
   # logbook <- get.depth(logbook,
   #                      path.to.raster = 'Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif')
-  ices.rectangles <- readRDS('H:/c-users/Maps/ICES_rect.RDS')
-  logbook <- merge(logbook, ices.rectangles[
-    , !c('ICESNAME','d2shore','depth'):=NULL],
+  ices.rectangles <- readRDS('Q:/scientific-projects/cctv-monitoring/data/GIS/ICES_rect.RDS')
+  logbook <- merge(logbook,
+                   subset(ices.rectangles, select = c('ICESNAME','d2shore','depth')),
     by.x = 'icesrect', by.y = 'ICESNAME')
 
   ## Create an ID for each (unique) fishing day (FD)
@@ -380,3 +380,4 @@ logbook_import <- function(x,
 
   return(logbook)
 }
+
