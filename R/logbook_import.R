@@ -97,7 +97,10 @@ logbook_import_fast <- function(x,
   ## subdivisions 24, 25 and 26.
   logbook <- logbook[ices.area %notin% c('3.d.24','3.d.25','3.d.26',
                                          '3.d.27','3.d.28','3.d.29')]
+<<<<<<< HEAD
 
+=======
+>>>>>>> a73005a7b124d3566d1586e77ce17e770ad1b35f
   ## Fix negative values of landings and landings value
   logbook$hel <- abs(logbook$hel)
   logbook$vrd <- abs(logbook$vrd)
