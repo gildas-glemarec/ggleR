@@ -79,6 +79,29 @@ logbook_import_fast <- function(x,
                                       ## Quick fix
                                       dplyr::mutate(square = dplyr::if_else(square=='40B2','40G2',square)),
                                     key = 'fid')
+
+  ## Assign correct name to ICES area
+  logbook[, ices.area := ifelse(dfadfvd_ret == '3AI', 'isefjord',
+                                ifelse(dfadfvd_ret == '3AN', '3.a.20',
+                                       ifelse(dfadfvd_ret == '3AS', '3.a.21',
+                                              ifelse(dfadfvd_ret == '3B', '3.b.23',
+                                                     ifelse(dfadfvd_ret == '3C22', '3.c.22',
+                                                            ifelse(dfadfvd_ret == '3D24', '3.d.24',
+                                                                   ifelse(dfadfvd_ret == '3D25', '3.d.25',
+                                                                          ifelse(dfadfvd_ret == '3D26', '3.d.26',
+                                                                                 ifelse(dfadfvd_ret == '4A', '4.a',
+                                                                                        ifelse(dfadfvd_ret == '4B', '4.b',
+                                                                                               ifelse(dfadfvd_ret == '4BX', '3.c.22',
+                                                                                                      ifelse(dfadfvd_ret == '4C', '4.c',
+                                                                                                             ifelse(dfadfvd_ret == '3AI3', 'isefjord',
+                                                                                                                    ifelse(dfadfvd_ret == '4L', 'limfjord',
+                                                                                                                           ifelse(dfadfvd_ret == '4R', 'ringk.fjord',
+                                                                                                                                  ifelse(dfadfvd_ret == '4N', 'nissum.fjord',
+                                                                                                                                         'NA'))))))))))))))))]
+  ## We have no data from the Baltic Proper, so we need to remove those hauls in
+  ## subdivisions 24, 25 and 26.
+  logbook <- logbook[ices.area %notin% c('3.d.24','3.d.25','3.d.26',
+                                         '3.d.27','3.d.28','3.d.29')]
   ## Fix negative values of landings and landings value
   logbook$hel <- abs(logbook$hel)
   logbook$vrd <- abs(logbook$vrd)
@@ -258,12 +281,12 @@ logbook_import_fast <- function(x,
   logbook[, newID := paste(fid, m, sep = '_')]
   logbook[, square2 := data.table::fifelse(square %notin% '99A9', square, NA_character_)]
   logbook[, mostICESrect := Mode(square2), by = c('newID')]
-  logbook[, icesrect := data.table::fifelse(square == '99A9' ,
+  logbook[, icesrect := data.table::fifelse(square == '99A9' & !is.na(mostICESrect),
                                             yes = mostICESrect,
                                             no = square)]
   ### 2. If there is no info on location of the effort, then use
   ###    the harbour location as a proxy
-  logbook[, icesrect := data.table::fifelse(square == '' | is.na(square),
+  logbook[, icesrect := data.table::fifelse(square == '' | is.na(square) | icesrect == '99A9' | is.na(icesrect),
                                             yes = mapplots::ices.rect2(lon_home, lat_home),
                                             no = icesrect)]
 
@@ -310,30 +333,6 @@ logbook_import_fast <- function(x,
                                                                data.table::fifelse(m %in% c(7,8,9), 'Q3',
                                                                                    'Q4')))]
   logbook$quarter <- factor(logbook$quarter, levels= c('Q1','Q2','Q3','Q4'))
-
-  ## Assign correct name to ICES area
-  logbook[, ices.area := ifelse(dfadfvd_ret == '3AI', 'isefjord',
-                                ifelse(dfadfvd_ret == '3AN', '3.a.20',
-                                       ifelse(dfadfvd_ret == '3AS', '3.a.21',
-                                              ifelse(dfadfvd_ret == '3B', '3.b.23',
-                                                     ifelse(dfadfvd_ret == '3C22', '3.c.22',
-                                                            ifelse(dfadfvd_ret == '3D24', '3.d.24',
-                                                                   ifelse(dfadfvd_ret == '3D25', '3.d.25',
-                                                                          ifelse(dfadfvd_ret == '3D26', '3.d.26',
-                                                                                 ifelse(dfadfvd_ret == '4A', '4.a',
-                                                                                        ifelse(dfadfvd_ret == '4B', '4.b',
-                                                                                               ifelse(dfadfvd_ret == '4BX', '3.c.22',
-                                                                                                      ifelse(dfadfvd_ret == '4C', '4.c',
-                                                                                                             ifelse(dfadfvd_ret == '3AI3', 'isefjord',
-                                                                                                                    ifelse(dfadfvd_ret == '4L', 'limfjord',
-                                                                                                                           ifelse(dfadfvd_ret == '4R', 'ringk.fjord',
-                                                                                                                                  ifelse(dfadfvd_ret == '4N', 'nissum.fjord',
-                                                                                                                                         'NA'))))))))))))))))]
-
-  ## We have no data from the Baltic Proper, so we need to remove those hauls in
-  ## subdivisions 24, 25 and 26.
-  logbook <- logbook[ices.area %notin% c('3.d.24','3.d.25','3.d.26',
-                                         '3.d.27','3.d.28','3.d.29')]
 
   ## Main target species (landed) per fishing day
   ## We have thousands of rows with no information on catch weight. We will set
