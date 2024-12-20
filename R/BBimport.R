@@ -159,8 +159,8 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
       dplyr::ungroup() %>%
       ## If there is at least one pinger in a haul, consider that there is mitigation in place
       dplyr::mutate(mitigation = dplyr::case_when(
-        colour.name == "Yellow" ~ 1,
-        .default = NA_integer_)) %>%
+        colour.name == "Yellow" ~ '1',
+        .default = NA)) %>%
       dplyr::group_by(IDhaul) %>%
       tidyr::fill(mitigation) %>%
       dplyr::mutate(mitigation = dplyr::if_else(is.na(mitigation),
