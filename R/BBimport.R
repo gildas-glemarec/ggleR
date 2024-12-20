@@ -163,6 +163,9 @@ BBimport <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox e
         .default = NA_integer_)) %>%
       dplyr::group_by(IDhaul) %>%
       tidyr::fill(mitigation) %>%
+      dplyr::mutate(mitigation = dplyr::if_else(is.na(mitigation),
+                                                     "0",
+                                                mitigation)) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(mitigation_type = dplyr::case_when(
         colour.name == "Yellow" ~ 'pinger',
