@@ -46,21 +46,33 @@ add_variables <- function(x = data_work, give_me_more = give_me_more) {
   x$std_effort <- as.numeric(x$soak * x$netlength / 1000) # netlength is in meters
 
   if (give_me_more == TRUE){
+    ## Add info on depth (m) at point
     x <- ggleR::get.depth(x)
-    coastline <- sf::st_read("Q:/scientific-projects/cctv-monitoring/data/GIS/",
-                             "coastline")
+    ## Add info on distance (m) to nearest point on shore
+    coastline <- sf::st_read(
+      "Q:/gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp")
+    x_sf <- dat  %>%
+      sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
+                   crs = 4326) %>%
+      sf::st_transform(3035)
+    distances <- sapply(1:nrow(x_sf), function(i) {
+      point <- x_sf[i, ]
+      min(sf::st_distance(point, coastline))
+    })
+    x$d2shore <- distances
+    # # ## Older version (coastline shapefile incomplete with missing islets)
+    # # coastline <- sf::st_read("Q:/scientific-projects/cctv-monitoring/data/GIS/",
+    # #                         "coastline")
+    # # x_sf <- tidyr::drop_na(x, 'date')  %>%
+    # #  sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE) %>%
+    # #  sf::st_set_crs(4326)
+    # # ### And then project:
+    # # x_sf <- x_sf %>% sf::st_transform(32632)
+    # # ## Calculate the distance between each obs. and the closest coast, by:
+    # # dist <- sf::st_distance(x_sf, coastline[1:53,])
+    # # ## Store the results
+    # # x$d2shore <- as.numeric(apply(dist, 1, min))
 
-    x_sf <- tidyr::drop_na(x, 'date')  %>%
-      sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE) %>%
-      sf::st_set_crs(4326)
-
-    ### And then project:
-    x_sf <- x_sf %>% sf::st_transform(32632)
-    ## Calculate the distance between each obs. and the closest coast, by:
-    dist <- sf::st_distance(x_sf, coastline[1:53,])
-
-    ## Store the results
-    x$d2shore <- as.numeric(apply(dist, 1, min))
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
