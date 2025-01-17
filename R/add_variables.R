@@ -52,7 +52,7 @@ add_variables <- function(x = data_work, give_me_more = give_me_more) {
     coastline <- sf::st_read(
       "Q:/gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp")
     x_sf <- x  %>%
-      sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
+sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
                    crs = 4326) %>%
       sf::st_transform(3035)
     distances <- sapply(1:nrow(x_sf), function(i) {
