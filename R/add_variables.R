@@ -51,7 +51,11 @@ add_variables <- function(x = data_work, give_me_more = give_me_more) {
     ## Add info on distance (m) to nearest point on shore
     coastline <- sf::st_read(
       "Q:/gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp")
+<<<<<<< HEAD
     x_sf <- x  %>%
+=======
+    x_sf <- dat  %>%
+>>>>>>> c629fe30ba09de6b0c9b411c6640c4d77804deaa
       sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
                    crs = 4326) %>%
       sf::st_transform(3035)
