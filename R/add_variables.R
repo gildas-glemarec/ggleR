@@ -47,11 +47,11 @@ add_variables <- function(x = data_work, give_me_more = give_me_more,
 
   ## Soak times
   ### List the hauls with manually determined soak times
-  soak_files <- list.files(path_to_soak,
+  soak_files <- base::list.files(path_to_soak,
                            pattern = "*csv",
                            full.names = TRUE,
                            recursive = FALSE)
-  list_soak <- lapply(soak_files,
+  list_soak <- base::lapply(soak_files,
                       utils::read.csv2,
                       ## Uncomment below if the format looks weird (and comment the line above)
                       # utils::read.csv, sep = ",",
@@ -63,7 +63,7 @@ add_variables <- function(x = data_work, give_me_more = give_me_more,
   soakdata$IDhaul <- as.factor(soakdata$IDhaul)
   soakdata <- data.table::setkey(soakdata,IDhaul)
   x <- data.table::setkey(x,IDhaul)
-  x <- soakdata[rem_data_from2021, on = .(IDhaul)]
+  x <- soakdata[x, on = .(IDhaul)]
   x[is.na(soak), soak:=i.soak] # only replace the value missing from left table
   x[,"i.soak":=NULL]
 
