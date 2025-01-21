@@ -60,6 +60,12 @@ sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
       min(sf::st_distance(point, coastline))
     })
     x$d2shore <- distances
+    ## In the map we use here, there are a couple a islets in the Sound that
+    ## do not appear to be correct. As a result, we could rarely have d2shore=0
+    ## Fix by forcing a minimum d2shore of 20 metres
+    x <- x %>%
+      dplyr::mutate(d2shore = ifelse(d2shore == 0, 20, d2shore))
+
     # # ## Older version (coastline shapefile incomplete with missing islets)
     # # coastline <- sf::st_read("Q:/scientific-projects/cctv-monitoring/data/GIS/",
     # #                         "coastline")
@@ -72,6 +78,7 @@ sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
     # # dist <- sf::st_distance(x_sf, coastline[1:53,])
     # # ## Store the results
     # # x$d2shore <- as.numeric(apply(dist, 1, min))
+
 
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
