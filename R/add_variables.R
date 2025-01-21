@@ -7,8 +7,8 @@
 #' @return Same dataset with additional columns
 #' @export
 add_variables <- function(x = data_work, give_me_more = give_me_more,
-                          path_to_soak = path_to_soak,
-                          path.to.coastline = path.to.coastline) {
+                          path_to_soak = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/soak/",
+                          path.to.coastline = "Q:/gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp") {
   . <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
   x$rnum <- as.integer(row.names(x))
   data.table::setDT(x,'rnum')
