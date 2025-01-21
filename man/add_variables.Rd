@@ -5,12 +5,21 @@
 \title{Add variables to the extracted EM dataset
 Take in the Black Box data from the BBimport function and adds a number of important parameters}
 \usage{
-add_variables(x = data_work, give_me_more = give_me_more)
+add_variables(
+  x = data_work,
+  give_me_more = give_me_more,
+  path_to_soak = path_to_soak,
+  path.to.coastline = path.to.coastline
+)
 }
 \arguments{
 \item{x}{Data output from function BBimport}
 
 \item{give_me_more}{Should optional variables not relevant for RDBES be created too (default is TRUE)?}
+
+\item{path_to_soak}{Some soak time info is missing (not found in BB). Manual fix based on a prior extraction (input is a csv file)}
+
+\item{path.to.coastline}{ESRI Shapefile of the region (used to estimate distance to shore). By default, the file is Europe (Bounding box:  xmin: 943609.8 ymin: -375446 xmax: 7601958 ymax: 6825119; Projected CRS: ETRS89-extended / LAEA Europe)}
 }
 \value{
 Same dataset with additional columns
