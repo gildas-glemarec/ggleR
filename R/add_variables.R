@@ -63,7 +63,7 @@ add_variables <- function(x = data_work, give_me_more = give_me_more,
   soakdata$IDhaul <- as.factor(soakdata$IDhaul)
   soakdata <- data.table::setkey(soakdata,IDhaul)
   x <- data.table::setkey(x,IDhaul)
-  x <- soakdata[rem_data_from2021, on = .(IDhaul)]
+  x <- soakdata[x, on = .(IDhaul)]
   x[is.na(soak), soak:=i.soak] # only replace the value missing from left table
   x[,"i.soak":=NULL]
 
