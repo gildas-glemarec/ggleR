@@ -384,10 +384,13 @@ logbook_import_fast <- function(x,
   # names(logbook)[names(logbook)=="latin.x"] <- "latin"
   # names(logbook)[names(logbook)=="latin.y"] <- "target"
 
-  ## If lumpsucker is landed, then we assume that lumpsucker is the main target
-  ## species for that fishing day
-  logbook[, target := lapply(.SD, function(x) if(base::any(target == 'Cyclopterus lumpus'))
-    'Cyclopterus lumpus' else target), by = .(IDFD)]
+  # ## If lumpsucker is landed, then we assume that lumpsucker is the main target
+  # ## species for that fishing day
+  # logbook[, target := lapply(.SD, function(x) if(base::any(target == 'Cyclopterus lumpus'))
+  #   'Cyclopterus lumpus' else target), by = .(IDFD)]
+
+  ##### If lumpsucker is landed and above 20kg, then we assume that lumpsucker is
+  ##### the main target species for that fishing day
 
   return(logbook)
 }
