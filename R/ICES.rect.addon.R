@@ -1,59 +1,26 @@
-## Simple function to create a table with ices.rect + lat/lon of the centroid
+## Simple function to list ICES rectangles in the Baltic + Greater North Sea
+## with mean distance to shore and depth
 library(mapplots)
 library(sf)
 library(data.table)
-# library(emodnet.wfs)
-# wfs_bath <- emodnet_init_wfs_client(service = "bathymetry")
-# emodnet_get_layers(wfs = wfs_bath, layers = layers, simplify = TRUE)
-#
-# ices.rectangles <- read_sf('H:/c-users/Maps/Master layers/ICES_rectangles/ICES_Statistical_Rectangles_Eco.shp')
-# setDT(ices.rectangles, key = 'ICESNAME')
-# ##location as centroid of ICES stat. rect.
-# ices.rectangles[, lon := mapplots::ices.rect(ices.rectangles$ICESNAME)[,1]]
-# ices.rectangles[, lat := mapplots::ices.rect(ices.rectangles$ICESNAME)[,2]]
-# ## Distance to shore (in meters) ####
-# coastline <- sf::st_read("Q:/scientific-projects/cctv-monitoring/data/GIS/",
-#                          "coastline")
-# coastline <- coastline[!is.na(coastline$NAME),]
-#
-# ## Remake it an sf object
-# ices.rectangles <- ices.rectangles  %>%
-#   st_as_sf(coords = c('lon','lat')) %>%
-#   st_set_crs(4326)
-# ### And then project:
-# ices.rectangles <- ices.rectangles %>% sf::st_transform(32632)
-# ## Calculate the distance between each obs. and the closest coast, by:
-# dist <- st_distance(ices.rectangles, coastline)
-# ## Store the results
-# ices.rectangles$d2shore <- as.numeric(apply(dist, 1, min))
-# ## Calculate depth and distance to shore of the ICES rect centroids
-# get.depth <- function(x,
-#                       path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif"){
-#   ## Depth at point
-#   depth.ras.dk <- terra::rast(x = path.to.raster)
-#   depth.dk.df <- (terra::extract(x = depth.ras.dk,
-#                                  y = x,
-#                                  df = TRUE))$alldepth
-#   x <- data.table::data.table(x)[, depth:= depth.dk.df]
-#   x <- x[, depth := data.table::fifelse(depth>0, -2, depth)]
-#   return(x)
-#   gc()
-# }
-# ices.rectangles <- get.depth(ices.rectangles,
-#                              path.to.raster = 'Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif')
-# ices.rectangles <- ices.rectangles[!is.na(depth)]
-# ices.rectangles <- ices.rectangles[depth<0]
-
-ices.rectangles <- read_sf('H:/c-users/Maps/DepthDK/ICES rect depth.gpkg')
-ices.rectangles <- ices.rectangles %>% sf::st_transform(32632)
-## Distance to shore (in meters) ####
-coastline <- sf::st_read("Q:/scientific-projects/cctv-monitoring/data/GIS/",
-                         "coastline")
-coastline <- coastline[!is.na(coastline$NAME),]
-## Calculate the distance between each obs. and the closest coast, by:
-dist <- st_distance(ices.rectangles, coastline)
-## Store the results
-ices.rectangles$d2shore <- as.numeric(apply(dist, 1, min))
-ices.rectangles$depth <- as.numeric(ices.rectangles$`_mean`)
-
-saveRDS(ices.rectangles, 'H:/c-users/Maps/ICES_rect.RDS')
+icesrect_d2shore <- readRDS('H:/c-users/Maps/icesrect_d2shore.rds')
+icesrect_d2shore <- as.data.table(icesrect_d2shore)
+icesrect_d2shore <- icesrect_d2shore[, geom := NULL]
+icesrect_depth <- st_read('H:/c-users/Maps/Master layers/ICES rect mean depth EMODnet NSAtl.gpkg')
+ices.rectangles <- merge(icesrect_depth, icesrect_d2shore, all.x = TRUE, by = 'ICESNAME')
+# ## Plot mean d2shore and mean depth of the squares
+# plot(ices.rectangles["mean.d2shore"])
+# plot(ices.rectangles["X_mean"])
+## Remove the ICES rect for which we have no depth (outside our area of interest)
+ices.rectangles <- subset(ices.rectangles, !is.na(X_mean))
+ices.rectangles <- ices.rectangles %>%
+  dplyr::rename(depth.mean=X_mean) %>%
+  dplyr::rename(depth.median=X_median) %>%
+  dplyr::rename(depth.stdev=X_stdev) %>%
+  dplyr::rename(depth.min=X_min) %>%
+  dplyr::rename(depth.max=X_max) %>%
+  dplyr::rename(d2shore.mean=mean.d2shore) %>%
+  dplyr::select(c(-ICESNAME_1,-ICESNAME_2))
+names(ices.rectangles)
+st_write(ices.rectangles,
+         'H:/c-users/Maps/Master layers/ices.rectangles_meandepth_meand2shore.gpkg')

@@ -86,7 +86,7 @@ logbook_import_fast <- function(x,
                                                                           ifelse(dfadfvd_ret == '3D26', '3.d.26',
                                                                                  ifelse(dfadfvd_ret == '4A', '4.a',
                                                                                         ifelse(dfadfvd_ret == '4B', '4.b',
-                                                                                               ifelse(dfadfvd_ret == '4BX', '3.c.22',
+                                                                                               ifelse(dfadfvd_ret == '4BX', '3.c.22', ## Yes, this is correct!
                                                                                                       ifelse(dfadfvd_ret == '4C', '4.c',
                                                                                                              ifelse(dfadfvd_ret == '3AI3', 'isefjord',
                                                                                                                     ifelse(dfadfvd_ret == '4L', 'limfjord',
@@ -98,9 +98,9 @@ logbook_import_fast <- function(x,
   logbook <- logbook[ices.area %notin% c('3.d.24','3.d.25','3.d.26',
                                          '3.d.27','3.d.28','3.d.29')]
 
-  ## Fix negative values of landings and landings value
-  logbook$hel <- abs(logbook$hel)
-  logbook$vrd <- abs(logbook$vrd)
+  # ## Fix negative values of landings and landings value
+  # logbook$hel <- abs(logbook$hel)
+  # logbook$vrd <- abs(logbook$vrd)
 
   ## Flag the country
   logbook$flag <- as.character('DK')
@@ -317,7 +317,7 @@ logbook_import_fast <- function(x,
   ices.rectangles$icesrect <- ices.rectangles$ICESNAME
   logbook <- logbook[subset(ices.rectangles,
                             select = c('icesrect','d2shore','depth')),
-                     on = c('icesrect')]
+                     on = c('icesrect')][!is.na(fid)]
   # logbook <- data.table::merge(logbook,
   #                  subset(ices.rectangles, select = c('ICESNAME','d2shore','depth')),
   #                  by.x = 'icesrect', by.y = 'ICESNAME', all.x = TRUE)
@@ -328,7 +328,7 @@ logbook_import_fast <- function(x,
     tidyr::separate(Date, c("y","m","d")) %>%
     tidyr::unite(col = Date, c(d,m,y), sep = "-")
   data.table::setDT(logbook)
-  logbook[, IDFD := paste(fid, Date,sep='.')]
+  logbook[, IDFD := paste(fid, Date, sep='.')]
   logbook[, FD := sum(dplyr::n_distinct(fngdato)),
           by = 'match_alle']
 
@@ -367,6 +367,7 @@ logbook_import_fast <- function(x,
                                      by = 'IDFD']$V1][, .SD, .SDcols = c('IDFD',
                                                                          'latin')],
                      on = c('IDFD')]
+  names(logbook)[names(logbook)=="i.latin"] <- "target"
   # logbook <- merge(logbook,
   #                  logbook[logbook[, .I[base::which.max(vrd)],
   #                                  by = 'IDFD']$V1][, .SD, .SDcols = c('IDFD',
@@ -380,8 +381,8 @@ logbook_import_fast <- function(x,
   #                  logbook[, .SD[which.max(hel)],
   #                          by = 'IDFD'][, .SD, .SDcols = c('IDFD', 'latin')],
   #                  by = 'IDFD')
-  names(logbook)[names(logbook)=="latin.x"] <- "latin"
-  names(logbook)[names(logbook)=="latin.y"] <- "target"
+  # names(logbook)[names(logbook)=="latin.x"] <- "latin"
+  # names(logbook)[names(logbook)=="latin.y"] <- "target"
 
   ## If lumpsucker is landed, then we assume that lumpsucker is the main target
   ## species for that fishing day
