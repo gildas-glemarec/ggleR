@@ -8,8 +8,9 @@ Take in the Black Box data from the BBimport function and adds a number of impor
 add_variables(
   x = data_work,
   give_me_more = give_me_more,
-  path_to_soak = path_to_soak,
-  path.to.coastline = path.to.coastline
+  path_to_soak = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/soak/",
+  path.to.coastline =
+    "Q:/gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp"
 )
 }
 \arguments{

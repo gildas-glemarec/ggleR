@@ -1,17 +1,11 @@
 #' Format logbook / landings data to merge with EM data
 #' Dataset preparations
 #' @param x path to the directory where the logbook & sales notes are stored as .csv
-#' @param path.to.raster path to the directory where the depth raster is
-#' @param path_to_harbour_list path to the directory where the list of vessels per harbour per year is located
-#' @param path_to_harbour_shp path to the directory where the harbours' shapefile is located
 #' @param study_period A vector of years - e.g., c(2010:2020) - default is NULL
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @export
-logbook_import <- function(x, #x <- 'Q:/dfad/users/ggle/data/EFLALO'
-                           study_period = NULL,
-                           # path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif",
-                           # path_to_harbour_list = "Q:/scientific-projects/cctv-monitoring/data/harbours/by.year",
-                           # path_to_harbour_shp = "Q:/scientific-projects/cctv-monitoring/data/harbours/XYhavn.shp"
+EFLALO_import <- function(x, #x <- 'Q:/dfad/users/ggle/data/EFLALO'
+                           study_period = NULL
 ){
   . <- quarter <- vessel.length <- LE_DIV <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- VE_REF <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- LE_MSZ <- mesh <- metier_level6_ret <- LE_MET <- path <-  read.csv <- redskb <- restrict_study_period <- LE_RECT <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
   `%notin%` <- Negate(`%in%`)
