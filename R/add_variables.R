@@ -7,8 +7,8 @@
 #' @return Same dataset with additional columns
 #' @export
 add_variables <- function(x = data_work, give_me_more = give_me_more,
-                          path_to_soak = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/soak/",
-                          path.to.coastline = "Q:/gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp") {
+                          path_to_soak = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/soak/",
+                          path.to.coastline = "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp") {
   . <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
   x$rnum <- as.integer(row.names(x))
   data.table::setDT(x,'rnum')
@@ -76,7 +76,7 @@ add_variables <- function(x = data_work, give_me_more = give_me_more,
     x <- ggleR::get.depth(x)
     ## Add info on distance (m) to nearest point on shore
     coastline <- sf::st_read(path.to.coastline
-      # "Q:/gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp"
+      # "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp"
       )
     x_sf <- x  %>%
       sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
@@ -94,7 +94,7 @@ add_variables <- function(x = data_work, give_me_more = give_me_more,
       dplyr::mutate(d2shore = ifelse(d2shore == 0, 20, d2shore))
 
     # # ## Older version (coastline shapefile incomplete with missing islets)
-    # # coastline <- sf::st_read("Q:/scientific-projects/cctv-monitoring/data/GIS/",
+    # # coastline <- sf::st_read("Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/",
     # #                         "coastline")
     # # x_sf <- tidyr::drop_na(x, 'date')  %>%
     # #  sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE) %>%

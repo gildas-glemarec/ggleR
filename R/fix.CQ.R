@@ -2,7 +2,7 @@
 #' @param x Path to the catch quantification files sorted by year or by vessel
 #' @return a dataset
 #' @export
-fix.CQ <- function(x = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/catch_quantification/"){
+fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/"){
   Species <- NULL
   `%notin%` <- Negate(`%in%`)
   filenames <- list.files(x,

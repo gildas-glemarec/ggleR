@@ -6,7 +6,7 @@
 #' @return Same dataset with added variables
 #' @export
 get.depth <- function(x,
-                      path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif"){
+                      path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif"){
   lon.haul <- lat.haul <- lon <- lat <- depth <- icesrect <- NULL
 
   depth.ras.dk <- terra::rast(x = path.to.raster)

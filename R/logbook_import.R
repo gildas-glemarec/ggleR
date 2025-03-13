@@ -8,9 +8,9 @@
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @export
 logbook_import_fast <- function(x,
-                                path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif",
-                                path_to_harbour_list = "Q:/scientific-projects/cctv-monitoring/data/harbours/by.year",
-                                path_to_harbour_shp = "Q:/scientific-projects/cctv-monitoring/data/harbours/XYhavn.shp"){
+                                path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif",
+                                path_to_harbour_list = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/by.year",
+                                path_to_harbour_shp = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/XYhavn.shp"){
   . <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- metier_level_6_new <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
   `%notin%` <- Negate(`%in%`)
   Mode <- function(x) {
