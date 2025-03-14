@@ -7,16 +7,20 @@ Take in the Black Box data from the BBimport function and adds a number of impor
 \usage{
 add_variables(
   x = data_work,
-  give_me_more = give_me_more,
-  path_to_soak = "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/soak/",
+  give_me_more = T,
+  focus.year = NA,
+  path_to_soak =
+    "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/soak/",
   path.to.coastline =
-    "Q:/gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp"
+    "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp"
 )
 }
 \arguments{
 \item{x}{Data output from function BBimport}
 
 \item{give_me_more}{Should optional variables not relevant for RDBES be created too (default is TRUE)?}
+
+\item{focus.year}{Should all years (default), or only specific years be compiled (defined as c(year1, year2, etc.))?}
 
 \item{path_to_soak}{Some soak time info is missing (not found in BB). Manual fix based on a prior extraction (input is a csv file)}
 

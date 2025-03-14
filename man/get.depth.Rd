@@ -8,7 +8,7 @@ It also adds the ICES subrectangle these points are in.}
 \usage{
 get.depth(
   x,
-  path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif"
+  path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif"
 )
 }
 \arguments{

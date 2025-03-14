@@ -302,273 +302,273 @@ EFLALO_import <- function(x, #x <- 'Q:/20-forskning/20-dfad/users/ggle/data/EFLA
 
 
 
-  # ## TRY AND TEST THIS (DOES NOT WORK YET)
-  library(httr)
-  library(gdalUtilities)
-  # library(jsonlite)
-  # get_emodnet_data <- function(lat, lon) {
-  #   url <- paste0("https://www.emodnet-bathymetry.eu/api/bathymetry?lat=", lat, "&lon=", lon)
-  #   response <- httr::GET(url)
-  #   data <- jsonlite::fromJSON(content(response, "text"))
-  #   return(data)
-  # }
+  # # ## TRY AND TEST THIS (DOES NOT WORK YET)
+  # library(httr)
+  # library(gdalUtilities)
+  # # library(jsonlite)
+  # # get_emodnet_data <- function(lat, lon) {
+  # #   url <- paste0("https://www.emodnet-bathymetry.eu/api/bathymetry?lat=", lat, "&lon=", lon)
+  # #   response <- httr::GET(url)
+  # #   data <- jsonlite::fromJSON(content(response, "text"))
+  # #   return(data)
+  # # }
+  # # logbook$row.number <-  1:nrow(logbook)
+  # # missing.points <- subset(logbook, select = c('row.number','lat','lon','depth','d2shore'))
+  # # missing.points <- missing.points[is.na(depth)]
+  # # results <- apply(missing.points, 1, function(row) {
+  # #   lat <- row["latitude"]
+  # #   lon <- row["longitude"]
+  # #   get_emodnet_data(lat, lon)
+  # # })
+  # # logbook$depth <- sapply(results, function(res) res$depth)
+  # # logbook$distance_to_shore <- sapply(results, function(res) res$distance_to_shore)
+  #
   # logbook$row.number <-  1:nrow(logbook)
-  # missing.points <- subset(logbook, select = c('row.number','lat','lon','depth','d2shore'))
+  # missing.points <- subset(logbook, select = c('row.number','lat','lon',
+  #                                              'depth','d2shore'))
   # missing.points <- missing.points[is.na(depth)]
-  # results <- apply(missing.points, 1, function(row) {
-  #   lat <- row["latitude"]
-  #   lon <- row["longitude"]
-  #   get_emodnet_data(lat, lon)
-  # })
-  # logbook$depth <- sapply(results, function(res) res$depth)
-  # logbook$distance_to_shore <- sapply(results, function(res) res$distance_to_shore)
-
-  logbook$row.number <-  1:nrow(logbook)
-  missing.points <- subset(logbook, select = c('row.number','lat','lon',
-                                               'depth','d2shore'))
-  missing.points <- missing.points[is.na(depth)]
-
-
-
-  # install.packages("remotes")
-  ### WFS
-  # remotes::install_github("EMODnet/EMODnetWFS")
-  library(ows4R)
-  library(emodnet.wfs)
-  emodnet_bathy_client <- ows4R::WFSClient$new(
-    "https://ows.emodnet-bathymetry.eu/wfs",
-    serviceVersion = "2.0.0")
-  # View(emodnet_get_wfs_info(emodnet_bathy_client))
-  # depth.highres.layers <- emodnet_get_layers(
-  #   wfs = emodnet_bathy_client,
-  #   layers = "hr_bathymetry_area",
-  #   simplify = TRUE,
-  #   outputFormat = "application/json"
-  # )
-  # mapview::mapview(depth.highres.layers, burst = TRUE)
-  # depth.tiles.layers <- emodnet_get_layers(
-  #   wfs = emodnet_bathy_client,
-  #   layers = "download_tiles",
-  #   simplify = TRUE,
-  #   outputFormat = "application/json"
-  # )
-  # mapview::mapview(depth.tiles.layers, burst = TRUE)
-  bounding.box <- paste(min(missing.points$lon),min(missing.points$lat),
-                        max(missing.points$lon),max(missing.points$lat),
-                        "EPSG:4326", sep = ',')
-  depth.contours.layers.simple <- emodnet.wfs::emodnet_get_layers(
-    wfs = emodnet_bathy_client,
-    layers = "contours",
-    simplify = TRUE,
-    # outputFormat = "CSV",
-    bbox = bounding.box)
-  res <- rerddapXtracto::rxtracto(bathyInfo, parameter = parameter,
-                                  xcoord = xcoord , ycoord = ycoord)
-
-  # query <- list(service = "WFS",
-  #               request = "GetFeature",
-  #               typeName = "emodnet:contours",
-  #               outputFormat = "json",
-  #               propertyname = "elevation",
-  #               CRS = "EPSG:4326",
-  #               CQL_FILTER = sprintf("INTERSECTS(geom,POINT(%s %s))",
-  #                                    missing.points$lon, missing.points$lat))
-  # result <- GET(emodnet_bathy_client, query = query)
-  # result
-
-
-
-
-
-
-
-
-  depth.contours.layers.simple %>%
-    # sf::st_cast(to = "MULTILINESTRING") %>%
-    mapview::mapview(burst = TRUE, legend = FALSE)
-
-
-
-  %>%
-    sf::st_as_sf()
-  # mapview::mapview(depth.contours.layers.simple, burst = TRUE)
-
-
-
-  # ### WCS
-  # # remotes::install_github("EMODnet/EMODnetWCS")
-  # # library(EMODnetWCS)
-  # wcs <- EMODnetWCS::emdn_init_wcs_client(service = "bathymetry")
-  # # EMODnetWCS::emdn_get_wcs_info(service = "bathymetry")$coverage_details
-  # # EMODnetWCS::emdn_get_coverage_ids(wcs)
-  # cov <- EMODnetWCS::emdn_get_coverage(wcs,
-  #                                      coverage_id = "emodnet__mean_2020",
-  #                                      bbox = c(xmin = min(missing.points$lon),
-  #                                               ymin = min(missing.points$lat),
-  #                                               xmax = max(missing.points$lon),
-  #                                               ymax = max(missing.points$lat)),
-  #                                      nil_values_as_na = TRUE
-  # )
-
-
-
-
-
-
-
-
-  # ######################################
-  # remotes::install_github("ropensci/rerddap")
-  # install.packages(rerddapXtracto, dependencies = TRUE)
-  require("rerddap")
-  require("rerddapXtracto")
-  urlBase <- "https://erddap.emodnet.eu/erddap/griddap/" #"https://erddap.emodnet.eu/erddap/"
-  parameter <- "altitude"
-  bathyInfo <- rerddap::info(datasetid = "dtm_2020_v2_e0bf_e7e4_5b8f",# "emodnet_bathy_2020_full",
-                             url = urlBase)
-  xcoord <- missing.points$lon[1]
-  ycoord <- missing.points$lat[1]
-
-  # res <-  rerddap::tabledap(bathyInfo, fields = parameter)
-
-
-  res <- rerddapXtracto::rxtracto(bathyInfo, parameter = parameter,
-                                  xcoord = xcoord , ycoord = ycoord)
   #
-  # for (i in 1:10){
-  #   missing.points[i]
+  #
+  #
+  # # install.packages("remotes")
+  # ### WFS
+  # # remotes::install_github("EMODnet/EMODnetWFS")
+  # library(ows4R)
+  # library(emodnet.wfs)
+  # emodnet_bathy_client <- ows4R::WFSClient$new(
+  #   "https://ows.emodnet-bathymetry.eu/wfs",
+  #   serviceVersion = "2.0.0")
+  # # View(emodnet_get_wfs_info(emodnet_bathy_client))
+  # # depth.highres.layers <- emodnet_get_layers(
+  # #   wfs = emodnet_bathy_client,
+  # #   layers = "hr_bathymetry_area",
+  # #   simplify = TRUE,
+  # #   outputFormat = "application/json"
+  # # )
+  # # mapview::mapview(depth.highres.layers, burst = TRUE)
+  # # depth.tiles.layers <- emodnet_get_layers(
+  # #   wfs = emodnet_bathy_client,
+  # #   layers = "download_tiles",
+  # #   simplify = TRUE,
+  # #   outputFormat = "application/json"
+  # # )
+  # # mapview::mapview(depth.tiles.layers, burst = TRUE)
+  # bounding.box <- paste(min(missing.points$lon),min(missing.points$lat),
+  #                       max(missing.points$lon),max(missing.points$lat),
+  #                       "EPSG:4326", sep = ',')
+  # depth.contours.layers.simple <- emodnet.wfs::emodnet_get_layers(
+  #   wfs = emodnet_bathy_client,
+  #   layers = "contours",
+  #   simplify = TRUE,
+  #   # outputFormat = "CSV",
+  #   bbox = bounding.box)
+  # res <- rerddapXtracto::rxtracto(bathyInfo, parameter = parameter,
+  #                                 xcoord = xcoord , ycoord = ycoord)
+  #
+  # # query <- list(service = "WFS",
+  # #               request = "GetFeature",
+  # #               typeName = "emodnet:contours",
+  # #               outputFormat = "json",
+  # #               propertyname = "elevation",
+  # #               CRS = "EPSG:4326",
+  # #               CQL_FILTER = sprintf("INTERSECTS(geom,POINT(%s %s))",
+  # #                                    missing.points$lon, missing.points$lat))
+  # # result <- GET(emodnet_bathy_client, query = query)
+  # # result
+  #
+  #
+  #
+  #
+  #
+  #
+  #
+  #
+  # depth.contours.layers.simple %>%
+  #   # sf::st_cast(to = "MULTILINESTRING") %>%
+  #   mapview::mapview(burst = TRUE, legend = FALSE)
+  #
+  #
+  #
+  # %>%
+  #   sf::st_as_sf()
+  # # mapview::mapview(depth.contours.layers.simple, burst = TRUE)
+  #
+  #
+  #
+  # # ### WCS
+  # # # remotes::install_github("EMODnet/EMODnetWCS")
+  # # # library(EMODnetWCS)
+  # # wcs <- EMODnetWCS::emdn_init_wcs_client(service = "bathymetry")
+  # # # EMODnetWCS::emdn_get_wcs_info(service = "bathymetry")$coverage_details
+  # # # EMODnetWCS::emdn_get_coverage_ids(wcs)
+  # # cov <- EMODnetWCS::emdn_get_coverage(wcs,
+  # #                                      coverage_id = "emodnet__mean_2020",
+  # #                                      bbox = c(xmin = min(missing.points$lon),
+  # #                                               ymin = min(missing.points$lat),
+  # #                                               xmax = max(missing.points$lon),
+  # #                                               ymax = max(missing.points$lat)),
+  # #                                      nil_values_as_na = TRUE
+  # # )
+  #
+  #
+  #
+  #
+  #
+  #
+  #
+  #
+  # # ######################################
+  # # remotes::install_github("ropensci/rerddap")
+  # # install.packages(rerddapXtracto, dependencies = TRUE)
+  # require("rerddap")
+  # require("rerddapXtracto")
+  # urlBase <- "https://erddap.emodnet.eu/erddap/griddap/" #"https://erddap.emodnet.eu/erddap/"
+  # parameter <- "altitude"
+  # bathyInfo <- rerddap::info(datasetid = "dtm_2020_v2_e0bf_e7e4_5b8f",# "emodnet_bathy_2020_full",
+  #                            url = urlBase)
+  # xcoord <- missing.points$lon[1]
+  # ycoord <- missing.points$lat[1]
+  #
+  # # res <-  rerddap::tabledap(bathyInfo, fields = parameter)
+  #
+  #
+  # res <- rerddapXtracto::rxtracto(bathyInfo, parameter = parameter,
+  #                                 xcoord = xcoord , ycoord = ycoord)
+  # #
+  # # for (i in 1:10){
+  # #   missing.points[i]
+  # # }
+  # #
+  # #
+  # #
+  # #
+  # #
+  # # tiles <- emodnet_get_layers(service = "bathymetry", layers = "download_tiles")
+  # # tile_D5 <- tiles %>%
+  # #   filter(dtm_release = 2022 & )
+  # #
+  # #
+  # # layers <- c("download_tiles", "hr_bathymetry_area")
+  # # bathy_emodnet_sub <- emodnet_get_layers(service = "bathymetry",
+  # #                                         layers = layers)
+  # #https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
+  # # #############################
+  #
+  # # # # https://tutorials.inbo.be/tutorials/spatial_wfs_services/
+  #
+  # wfs_emodnet_bathy <- "https://ows.emodnet-bathymetry.eu/wfs"
+  # emodnet_bathy_client <- ows4R::WFSClient$new(wfs_emodnet_bathy,
+  #                                              serviceVersion = "2.0.0")
+  # # # emodnet_bathy_client$getFeatureTypes(pretty = TRUE)
+  # # # emodnet_bathy_client$getFeatureTypes() %>%
+  # # #   purrr::map_chr(function(x){x$getName()})
+  # # # emodnet_bathy_client$getFeatureTypes() %>%
+  # # #   purrr::map_chr(function(x){x$getTitle()})
+  # # ## available operations of the WFS
+  # # emodnet_bathy_client$
+  # #   getCapabilities()$
+  # #   getOperationsMetadata()$
+  # #   getOperations() %>%
+  # #   purrr::map_chr(function(x){x$getName()})
+  # # ## available output formats
+  # # emodnet_bathy_client$
+  # #   getCapabilities()$
+  # #   getOperationsMetadata()$
+  # #   getOperations() %>%
+  # #   purrr::map(function(x){x$getParameters()}) %>%
+  # #   purrr::pluck(3, "outputFormat")
+  # # ## bounding boxes for all layers
+  # # emodnet_bathy_client$
+  # #   getCapabilities()$
+  # #   getFeatureTypes() %>%
+  # #   purrr::map(function(x){x$getBoundingBox()})
+  # # ## Abstract of the layer?
+  # # emodnet_bathy_client$
+  # #   getCapabilities()$
+  # #   getFeatureTypes() %>%
+  # #   purrr::map_chr(function(x){x$getAbstract()})
+  # # ## Feature types?
+  # # emodnet_bathy_client$getFeatureTypes(pretty = TRUE)
+  # ## Write our query
+  # properties_of_interest <- "elevation"
+  # emodnet_bathy_query <- list(service = "WFS",
+  #                             request = "GetFeature",
+  #                             typeName = "emodnet:countours",
+  #                             outputFormat = "csv",
+  #                             # srsName = "EPSG:4326"
+  #                             # # ,
+  #                             propertyname = as.character(paste(properties_of_interest,
+  #                                                               collapse = ",")),
+  #                             CRS = "EPSG:4326"
+  #                             # , CQL_FILTER = sprintf("INTERSECTS(geom,POINT(%s %s))",
+  #                             # missing.points$lon, missing.points$lat
+  # )
+  #
+  # extract_bathy_data <- function(lon,
+  #                                lat,
+  #                                properties_of_interest) {
+  #   if (missing(properties_of_interest)) {
+  #     properties_of_interest <- "elevation"
+  #     message("Defaulting to elevation. To avoid this message provide properties of interest in the function call.")
+  #   }
+  #   # dealing with point data inside a certain polygon of the soil map:
+  #   wfs_emodnet_bathy <- "https://ows.emodnet-bathymetry.eu/wfs"
+  #   query = list(service = "WFS",
+  #                request = "GetFeature",
+  #                # version = "1.1.0",
+  #                typeName = "emodnet:countours",
+  #                outputFormat = "json",
+  #                propertyname = as.character(paste(properties_of_interest,
+  #                                                  collapse = ",")),
+  #                CRS = "EPSG:4623",
+  #                CQL_FILTER = paste("INTERSECTS(geom","POINT(",
+  #                                   missing.points$lon[1],
+  #                                   ",",
+  #                                   missing.points$lat[1],
+  #                                   ")")) # INTERSECT OPERATOR
+  #
+  #   result <- httr::GET(wfs_emodnet_bathy, query = query)
+  #   if (grepl("ExceptionText", content(result, "text"))) {
+  #     stop(paste(paste(properties_of_interest, collapse = ", "),"is not available for emodnet:countours."))
+  #   }
+  #   parsed <- jsonlite::fromJSON(content(result, "text"))
+  #   bathy_info_df <- parsed$features$properties
+  #   # if else to catch cases where a point falls outside the map
+  #   if (is.null(bathy_info_df)) {
+  #     as.data.frame(
+  #       matrix(rep(NA, length(properties_of_interest)),
+  #              nrow = 1,
+  #              dimnames = list(NULL, properties_of_interest)))
+  #   } else {
+  #     bathy_info_df
+  #   }
   # }
   #
+  # missing.points %>%
+  #   group_by(row.number) %>%
+  #   summarise(extract_bathy_data(lon,
+  #                                lat,
+  #                                properties_of_interest = properties_of_interest)) %>%
+  #   knitr::kable()
   #
   #
   #
+  # # df <- read.csv(textConnection(httr::content(result, 'text')))
+  # # knitr::kable(df)
   #
-  # tiles <- emodnet_get_layers(service = "bathymetry", layers = "download_tiles")
-  # tile_D5 <- tiles %>%
-  #   filter(dtm_release = 2022 & )
+  # extract_depth(
+  #   lat = lat,
+  #   lon = lon,
+  #   properties_of_interest = properties_of_interest) %>%
+  #   knitr::kable()
   #
+  # missing.points %>%
+  #   group_by(row.number) %>%
+  #   summarise(extract_depth(lat,lon,
+  #                           properties_of_interest = properties_of_interest)) %>%
+  #   knitr::kable()
   #
-  # layers <- c("download_tiles", "hr_bathymetry_area")
-  # bathy_emodnet_sub <- emodnet_get_layers(service = "bathymetry",
-  #                                         layers = layers)
-  #https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
   # #############################
-
-  # # # https://tutorials.inbo.be/tutorials/spatial_wfs_services/
-
-  wfs_emodnet_bathy <- "https://ows.emodnet-bathymetry.eu/wfs"
-  emodnet_bathy_client <- ows4R::WFSClient$new(wfs_emodnet_bathy,
-                                               serviceVersion = "2.0.0")
-  # # emodnet_bathy_client$getFeatureTypes(pretty = TRUE)
-  # # emodnet_bathy_client$getFeatureTypes() %>%
-  # #   purrr::map_chr(function(x){x$getName()})
-  # # emodnet_bathy_client$getFeatureTypes() %>%
-  # #   purrr::map_chr(function(x){x$getTitle()})
-  # ## available operations of the WFS
-  # emodnet_bathy_client$
-  #   getCapabilities()$
-  #   getOperationsMetadata()$
-  #   getOperations() %>%
-  #   purrr::map_chr(function(x){x$getName()})
-  # ## available output formats
-  # emodnet_bathy_client$
-  #   getCapabilities()$
-  #   getOperationsMetadata()$
-  #   getOperations() %>%
-  #   purrr::map(function(x){x$getParameters()}) %>%
-  #   purrr::pluck(3, "outputFormat")
-  # ## bounding boxes for all layers
-  # emodnet_bathy_client$
-  #   getCapabilities()$
-  #   getFeatureTypes() %>%
-  #   purrr::map(function(x){x$getBoundingBox()})
-  # ## Abstract of the layer?
-  # emodnet_bathy_client$
-  #   getCapabilities()$
-  #   getFeatureTypes() %>%
-  #   purrr::map_chr(function(x){x$getAbstract()})
-  # ## Feature types?
-  # emodnet_bathy_client$getFeatureTypes(pretty = TRUE)
-  ## Write our query
-  properties_of_interest <- "elevation"
-  emodnet_bathy_query <- list(service = "WFS",
-                              request = "GetFeature",
-                              typeName = "emodnet:countours",
-                              outputFormat = "csv",
-                              # srsName = "EPSG:4326"
-                              # # ,
-                              propertyname = as.character(paste(properties_of_interest,
-                                                                collapse = ",")),
-                              CRS = "EPSG:4326"
-                              # , CQL_FILTER = sprintf("INTERSECTS(geom,POINT(%s %s))",
-                              # missing.points$lon, missing.points$lat
-  )
-
-  extract_bathy_data <- function(lon,
-                                 lat,
-                                 properties_of_interest) {
-    if (missing(properties_of_interest)) {
-      properties_of_interest <- "elevation"
-      message("Defaulting to elevation. To avoid this message provide properties of interest in the function call.")
-    }
-    # dealing with point data inside a certain polygon of the soil map:
-    wfs_emodnet_bathy <- "https://ows.emodnet-bathymetry.eu/wfs"
-    query = list(service = "WFS",
-                 request = "GetFeature",
-                 # version = "1.1.0",
-                 typeName = "emodnet:countours",
-                 outputFormat = "json",
-                 propertyname = as.character(paste(properties_of_interest,
-                                                   collapse = ",")),
-                 CRS = "EPSG:4623",
-                 CQL_FILTER = paste("INTERSECTS(geom","POINT(",
-                                    missing.points$lon[1],
-                                    ",",
-                                    missing.points$lat[1],
-                                    ")")) # INTERSECT OPERATOR
-
-    result <- httr::GET(wfs_emodnet_bathy, query = query)
-    if (grepl("ExceptionText", content(result, "text"))) {
-      stop(paste(paste(properties_of_interest, collapse = ", "),"is not available for emodnet:countours."))
-    }
-    parsed <- jsonlite::fromJSON(content(result, "text"))
-    bathy_info_df <- parsed$features$properties
-    # if else to catch cases where a point falls outside the map
-    if (is.null(bathy_info_df)) {
-      as.data.frame(
-        matrix(rep(NA, length(properties_of_interest)),
-               nrow = 1,
-               dimnames = list(NULL, properties_of_interest)))
-    } else {
-      bathy_info_df
-    }
-  }
-
-  missing.points %>%
-    group_by(row.number) %>%
-    summarise(extract_bathy_data(lon,
-                                 lat,
-                                 properties_of_interest = properties_of_interest)) %>%
-    knitr::kable()
-
-
-
-  # df <- read.csv(textConnection(httr::content(result, 'text')))
-  # knitr::kable(df)
-
-  extract_depth(
-    lat = lat,
-    lon = lon,
-    properties_of_interest = properties_of_interest) %>%
-    knitr::kable()
-
-  missing.points %>%
-    group_by(row.number) %>%
-    summarise(extract_depth(lat,lon,
-                            properties_of_interest = properties_of_interest)) %>%
-    knitr::kable()
-
-  #############################
 
 
   missing.points <- ggleR::get.depth(missing.points)

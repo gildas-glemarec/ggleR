@@ -7,9 +7,11 @@ Dataset preparations}
 \usage{
 logbook_import_fast(
   x,
-  path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/D5_2020.tif",
-  path_to_harbour_list = "Q:/scientific-projects/cctv-monitoring/data/harbours/by.year",
-  path_to_harbour_shp = "Q:/scientific-projects/cctv-monitoring/data/harbours/XYhavn.shp"
+  path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif",
+  path_to_harbour_list =
+    "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/by.year",
+  path_to_harbour_shp =
+    "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/XYhavn.shp"
 )
 }
 \arguments{

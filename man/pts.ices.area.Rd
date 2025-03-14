@@ -6,7 +6,7 @@
 \usage{
 pts.ices.area(
   x,
-  dsn = "Q:/gis/Dynamisk/GEOdata/BasicLayers/Boundaries/Ices/ICES_areas",
+  dsn = "Q:/20-forskning/12-gis/Dynamisk/GEOdata/BasicLayers/Boundaries/Ices/ICES_areas",
   layer = "ICES_Areas_20160601_cut_dense_3857"
 )
 }

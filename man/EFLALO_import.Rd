@@ -3,7 +3,8 @@
 \name{EFLALO_import}
 \alias{EFLALO_import}
 \title{Format logbook / landings data to merge with EM data
-Dataset preparations}
+Dataset preparations
+https://github.com/CefasRepRes/ICES-VMS-and-Logbook-Data-Call_Cefas/blob/dev_june_2024/EFLALO%20%26%20TACSAT%20Formats.md}
 \usage{
 EFLALO_import(x, study_period = NULL)
 }
@@ -18,4 +19,5 @@ A dataset with all notes/annotations in long format, where rows are unique for h
 \description{
 Format logbook / landings data to merge with EM data
 Dataset preparations
+https://github.com/CefasRepRes/ICES-VMS-and-Logbook-Data-Call_Cefas/blob/dev_june_2024/EFLALO%20%26%20TACSAT%20Formats.md
 }

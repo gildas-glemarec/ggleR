@@ -2,11 +2,12 @@
 #' Take in the Black Box data from the BBimport function and adds a number of important parameters
 #' @param x Data output from function BBimport
 #' @param give_me_more Should optional variables not relevant for RDBES be created too (default is TRUE)?
+#' @param focus.year Should all years (default), or only specific years be compiled (defined as c(year1, year2, etc.))?
 #' @param path_to_soak Some soak time info is missing (not found in BB). Manual fix based on a prior extraction (input is a csv file)
 #' @param path.to.coastline ESRI Shapefile of the region (used to estimate distance to shore). By default, the file is Europe (Bounding box:  xmin: 943609.8 ymin: -375446 xmax: 7601958 ymax: 6825119; Projected CRS: ETRS89-extended / LAEA Europe)
 #' @return Same dataset with additional columns
 #' @export
-add_variables <- function(x = data_work, give_me_more = give_me_more,
+add_variables <- function(x = data_work, give_me_more = T, focus.year = NA,
                           path_to_soak = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/soak/",
                           path.to.coastline = "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp") {
   . <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
@@ -27,6 +28,7 @@ add_variables <- function(x = data_work, give_me_more = give_me_more,
   x$mitigation_type <- as.factor(x$mitigation_type)
   x$date <- lubridate::dmy(x$date)
   x[, y := lubridate::year(date)]
+  if (is.na(focus.year)){next} else(x[y %in% focus.year])
   x[, m := lubridate::month(date)]
   x[, d := lubridate::day(date)]
   x$week.number <- strftime(x$date, format = "%V")
