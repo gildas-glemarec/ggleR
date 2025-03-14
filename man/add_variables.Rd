@@ -8,7 +8,7 @@ Take in the Black Box data from the BBimport function and adds a number of impor
 add_variables(
   x = data_work,
   give_me_more = T,
-  focus.year = NA,
+  study_period = NULL,
   path_to_soak =
     "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/soak/",
   path.to.coastline =
@@ -20,7 +20,7 @@ add_variables(
 
 \item{give_me_more}{Should optional variables not relevant for RDBES be created too (default is TRUE)?}
 
-\item{focus.year}{Should all years (default), or only specific years be compiled (defined as c(year1, year2, etc.))?}
+\item{study_period}{Should all years (default), or only specific years be compiled (defined as c(year1, year2, etc.))?}
 
 \item{path_to_soak}{Some soak time info is missing (not found in BB). Manual fix based on a prior extraction (input is a csv file)}
 
