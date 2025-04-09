@@ -235,7 +235,8 @@ EFLALO_import <- function(x,
                                                               '120-200mm'))]
   ## Add mean depth and mean distance to shore of the ICES rectangle the fishing
   ## operations are marked in
-  ices.rectangles <- sf::st_read("./data/ices.rectangles_meandepth_meand2shore.gpkg")
+  ices.rectangles <- sf::st_read("./data/ices.rectangles_meandepth_meand2shore.gpkg",
+                                 quiet = TRUE)
   ices.rectangles$LE_RECT <- ices.rectangles$ICESNAME
   logbook <- logbook[subset(ices.rectangles,
                             select = c('LE_RECT','d2shore.mean','depth.mean')),
@@ -313,12 +314,14 @@ EFLALO_import <- function(x,
          lon > -35.99947916666667 &
          lon < 42.99947916663591){
       # Query the ERDDAP server
-      result <- rerddap::griddap(
-        rerddap::info(datasetid = dataset_id,
-                      url = erddap_url),
-        fields = variable,
-        latitude = c(lat,lat),
-        longitude = c(lon,lon))
+      result <- suppressMessages(
+        rerddap::griddap(
+          rerddap::info(datasetid = dataset_id,
+                        url = erddap_url),
+          fields = variable,
+          latitude = c(lat,lat),
+          longitude = c(lon,lon))
+      )
 
       # Extract the depth value
       depth <- result$data[[variable]]
@@ -335,17 +338,22 @@ EFLALO_import <- function(x,
                            logbook$LE_LON)
 
   #### Distance to shore (fishing operation)
-  get_d2shore <- function(logbook,
-                          coastline,
-                          crs = 4326) {
-    x_sf <- sf::st_as_sf(logbook,
+  get_d2shore <- function(x = logbook,
+                          shapefile = coastline,
+                          crs_shp = 4326,
+                          crs_dst = 3035) {
+    if (!requireNamespace("sf", quietly = TRUE)) {
+      install.packages("sf")
+    }
+    x_sf <- sf::st_as_sf(x,
                          coords = c('LE_LON','LE_LAT'),
                          na.fail = FALSE,
-                         crs = crs)
-    sf::st_transform(x_sf, dst = 3035)
+                         crs = crs_shp) |>
+      sf::st_transform(crs_dst)
+    x_sf2 <- sf::st_transform(x_sf, dst = crs_dst)
     distances <- sapply(1:nrow(x_sf), function(i) {
       point <- x_sf[i, ]
-      min(sf::st_distance(point, coastline))
+      min(sf::st_distance(point, shapefile))
     })
     return(distances)
   }
@@ -368,10 +376,8 @@ EFLALO_import <- function(x,
     shp_file <- grep(".shp$", file_path, value = TRUE)
     coastline <- sf::st_read(shp_file)}
 
-  logbook$LE_D2S <- mapply(get_d2shore,
-                           logbook,
-                           coastline,
-                           crs = 4326)
+  logbook$LE_D2S <- get_d2shore(x = logbook)
+
   ## In the map we use here, there are a couple a islets in the Sound that
   ## do not appear to be correct. As a result, we could rarely have d2shore=0
   ## Fix by forcing a minimum d2shore of 20 metres
