@@ -5,7 +5,7 @@
 #' @param study_period A vector of years - e.g., c(2010:2020) - default is NULL
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @export
-EFLALO_import <- function(x, #x <- 'Q:/20-forskning/20-dfad/users/ggle/data/EFLALO'
+EFLALO_import <- function(x,
                           study_period = NULL
 ){
   . <- quarter <- vessel.length <- LE_DIV <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- VE_REF <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- LE_MSZ <- mesh <- metier_level6_ret <- LE_MET <- path <-  read.csv <- redskb <- restrict_study_period <- LE_RECT <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
@@ -16,10 +16,15 @@ EFLALO_import <- function(x, #x <- 'Q:/20-forskning/20-dfad/users/ggle/data/EFLA
   }
 
   if(exists("x")){
-    logbook <- ggleR::load_data(x) # copylogbook <- data.table::copy(logbook)
+    logbook <- ggleR::load_data(x)
   } else {
     stop("Logbook data missing!")
   }
+
+  ### Keep only net fisheries and missing gears
+  logbook <- subset(logbook, LE_GEAR %in% c('GN','GND','GNS','GTN','GTR',''))
+  logbook <- subset(logbook, stringr::str_starts(LE_MET, "GN") | LE_MET == "")
+  logbook <- logbook[!(LE_MET == "" & LE_GEAR == "")]
 
   ## Temporal dummy variables
   logbook$date <- base::as.Date(strptime(logbook$LE_CDAT, "%d/%m/%Y"))
@@ -55,10 +60,6 @@ EFLALO_import <- function(x, #x <- 'Q:/20-forskning/20-dfad/users/ggle/data/EFLA
   ### Remove info on individual species catches/landings
   logbook <- logbook[, grep("^LE_EURO_", names(logbook), value = TRUE) := NULL]
   logbook <- logbook[, grep("^LE_KG_", names(logbook), value = TRUE) := NULL]
-  ### Keep only net fisheries
-  logbook <- subset(logbook, LE_GEAR %in% c('GN','GND','GNS','GTN','GTR',''))
-  logbook <- subset(logbook, stringr::str_starts(LE_MET, "GN") | LE_MET == "")
-  logbook <- logbook[!(LE_MET == "" & LE_GEAR == "")]
   ### Mesh size
   logbook[, LE_MSZ := data.table::fifelse(LE_MSZ == '' | LE_MSZ == ' ' | LE_MSZ == '.',
                                           NA_character_,
