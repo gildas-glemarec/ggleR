@@ -6,10 +6,7 @@
 This scripts extracts the depth (metres) for each point in a dataset.
 It also adds the ICES subrectangle these points are in.}
 \usage{
-get.depth(
-  x,
-  path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif"
-)
+get.depth(x, path.to.raster = "./data/bath_NorthSea_BalticSea.gpkg")
 }
 \arguments{
 \item{x}{dataset with geographic coordinates in decimal as lon/lat}

@@ -1,15 +1,18 @@
 #' Format logbook / landings data to merge with EM data
 #' Dataset preparations
-#' https://github.com/CefasRepRes/ICES-VMS-and-Logbook-Data-Call_Cefas/blob/dev_june_2024/EFLALO%20%26%20TACSAT%20Formats.md
+#' "https://github.com/CefasRepRes/ICES-VMS-and-Logbook-Data-Call_Cefas/blob/dev_june_2024/EFLALO%20%26%20TACSAT%20Formats.md"
 #' @param x path to the directory where the logbook & sales notes are stored as .csv
 #' @param study_period A vector of years - e.g., c(2010:2020) - default is NULL
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
+#' @import data.table
 #' @export
 EFLALO_import <- function(x,
                           study_period = NULL
 ){
-  . <- quarter <- vessel.length <- LE_DIV <- Date <- FD <- IDFD <- d <- eart <- LE_F.MESH <- VE_REF <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- LE_ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- LE_MSZ <- mesh <- metier_level6_ret <- LE_MET <- path <-  read.csv <- redskb <- restrict_study_period <- LE_RECT <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
-  `%notin%` <- Negate(`%in%`)
+
+  . <- LE_D2S <- LE_GEAR <- LE_CYEAR <- FT_MAX.KG <- FT_MAX.EUR <- FT_TARGET <- LE_EURO_AAS <- LE_KG_LUM <- LE_KG <- LE_EURO <- VE_F.LEN <- LE_MS <- LE_LAT <- LE_LON <- quarter <- vessel.length <- LE_DIV <- Date <- FD <- IDFD <- d <- eart <- LE_F.MESH <- VE_REF <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- LE_ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- LE_MSZ <- mesh <- metier_level6_ret <- LE_MET <- path <-  read.csv <- redskb <- restrict_study_period <- LE_RECT <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
+
+   `%notin%` <- Negate(`%in%`)
   Mode <- function(x) {
     ux <- unique(x)
     ux[which.max(tabulate(match(x, ux)))]
@@ -306,87 +309,87 @@ EFLALO_import <- function(x,
     .default = NA)]
 
   #### Depth (fishing operation)
-  get_depth_data <- function(lat, lon) {
+  # get_depth_data <- function(lat, lon) {
+  #
+  #   if (!requireNamespace("rerddap", quietly = TRUE)) {
+  #     install.packages("rerddap")
+  #   }
+  #
+  #   # Define the ERDDAP dataset ID and the variable you want to retrieve
+  #   #### https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
+  #   dataset_id <- "bathymetry_dtm_2024"
+  #   variable <- "elevation"
+  #   erddap_url <- "https://erddap.emodnet.eu/erddap/"
+  #   if ( !is.na(lat) &
+  #        !is.na(lon) &
+  #        lat > 15.000520833333333 &
+  #        lat < 89.99947916660017 &
+  #        lon > -35.99947916666667 &
+  #        lon < 42.99947916663591){
+  #     # Query the ERDDAP server
+  #     result <- suppressMessages(
+  #       rerddap::griddap(
+  #         rerddap::info(datasetid = dataset_id,
+  #                       url = erddap_url),
+  #         fields = variable,
+  #         latitude = c(lat,lat),
+  #         longitude = c(lon,lon))
+  #     )
+  #
+  #     # Extract the depth value
+  #     depth <- result$data[[variable]]
+  #
+  #   } else(
+  #     depth <- NA_integer_
+  #   )
+  #
+  #   return(depth)
+  # }
 
-    if (!requireNamespace("rerddap", quietly = TRUE)) {
-      install.packages("rerddap")
-    }
-
-    # Define the ERDDAP dataset ID and the variable you want to retrieve
-    #### https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
-    dataset_id <- "bathymetry_dtm_2024"
-    variable <- "elevation"
-    erddap_url <- "https://erddap.emodnet.eu/erddap/"
-    if ( !is.na(lat) &
-         !is.na(lon) &
-         lat > 15.000520833333333 &
-         lat < 89.99947916660017 &
-         lon > -35.99947916666667 &
-         lon < 42.99947916663591){
-      # Query the ERDDAP server
-      result <- suppressMessages(
-        rerddap::griddap(
-          rerddap::info(datasetid = dataset_id,
-                        url = erddap_url),
-          fields = variable,
-          latitude = c(lat,lat),
-          longitude = c(lon,lon))
-      )
-
-      # Extract the depth value
-      depth <- result$data[[variable]]
-
-    } else(
-      depth <- NA_integer_
-    )
-
-    return(depth)
-  }
-
-  logbook$LE_DEP <- mapply(get_depth_data,
+  logbook$LE_DEP <- mapply(ggleR::get_depth_EMODNET,
                            logbook$LE_LAT,
                            logbook$LE_LON)
 
   #### Distance to shore (fishing operation)
-  get_d2shore <- function(x = logbook,
-                          shapefile = coastline,
-                          crs_shp = 4326,
-                          crs_dst = 3035) {
-    if (!requireNamespace("sf", quietly = TRUE)) {
-      install.packages("sf")
-    }
-    x_sf <- sf::st_as_sf(x,
-                         coords = c('LE_LON','LE_LAT'),
-                         na.fail = FALSE,
-                         crs = crs_shp) |>
-      sf::st_transform(crs_dst)
-    x_sf2 <- sf::st_transform(x_sf, dst = crs_dst)
-    distances <- sapply(1:nrow(x_sf), function(i) {
-      point <- x_sf[i, ]
-      min(sf::st_distance(point, shapefile))
-    })
-    return(distances)
-  }
+  # get_d2shore <- function(x = logbook,
+  #                         shapefile = coastline,
+  #                         crs_shp = 4326,
+  #                         crs_dst = 3035) {
+  #   if (!requireNamespace("sf", quietly = TRUE)) {
+  #     install.packages("sf")
+  #   }
+  #   x_sf <- sf::st_as_sf(x,
+  #                        coords = c('LE_LON','LE_LAT'),
+  #                        na.fail = FALSE,
+  #                        crs = crs_shp) |>
+  #     sf::st_transform(crs_dst)
+  #   x_sf2 <- sf::st_transform(x_sf, dst = crs_dst)
+  #   distances <- sapply(1:nrow(x_sf), function(i) {
+  #     point <- x_sf[i, ]
+  #     min(sf::st_distance(point, shapefile))
+  #   })
+  #   return(distances)
+  # }
+  #
+  # if( !exists("coastline") ){
+  #   ## If there is no shapefile called "coastline", then download it
+  #   zip_url <- "https://www.eea.europa.eu/data-and-maps/data/eea-coastline-for-analysis-2/gis-data/eea-coastline-polygon/at_download/file.zip"
+  #   ## Create a temporary directory
+  #   temp_dir <- tempdir()
+  #   ## Define the path for the downloaded zip file
+  #   zip_file_path <- file.path(temp_dir, "data.zip")
+  #   ## Download the zip file
+  #   download.file(zip_url, zip_file_path)
+  #   ## Unzip the file
+  #   unzip(zip_file_path, exdir = temp_dir)
+  #   ## List the files in the temporary directory
+  #   unzipped_files <- list.files(temp_dir)
+  #   ## Read the shapefile
+  #   file_path <- file.path(temp_dir, unzipped_files)
+  #   shp_file <- grep(".shp$", file_path, value = TRUE)
+  #   coastline <- sf::st_read(shp_file)}
 
-  if( !exists("coastline") ){
-    ## If there is no shapefile called "coastline", then download it
-    zip_url <- "https://www.eea.europa.eu/data-and-maps/data/eea-coastline-for-analysis-2/gis-data/eea-coastline-polygon/at_download/file.zip"
-    ## Create a temporary directory
-    temp_dir <- tempdir()
-    ## Define the path for the downloaded zip file
-    zip_file_path <- file.path(temp_dir, "data.zip")
-    ## Download the zip file
-    download.file(zip_url, zip_file_path)
-    ## Unzip the file
-    unzip(zip_file_path, exdir = temp_dir)
-    ## List the files in the temporary directory
-    unzipped_files <- list.files(temp_dir)
-    ## Read the shapefile
-    file_path <- file.path(temp_dir, unzipped_files)
-    shp_file <- grep(".shp$", file_path, value = TRUE)
-    coastline <- sf::st_read(shp_file)}
-
-  logbook$LE_D2S <- get_d2shore(x = logbook)
+  logbook$LE_D2S <- ggleR::get_d2shore(x = logbook)
 
   ## In the map we use here, there are a couple a islets in the Sound that
   ## do not appear to be correct. As a result, we could rarely have d2shore=0

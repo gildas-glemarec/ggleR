@@ -10,7 +10,9 @@
 add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
                           path_to_soak = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/soak/",
                           path.to.coastline = "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp") {
-  . <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
+
+  . <- time.bc <- IDhaul <- soak <- i.soak <- d2shore <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
+
   x$rnum <- as.integer(row.names(x))
   data.table::setDT(x,'rnum')
   x$vessel <- as.factor(x$vessel)
