@@ -49,11 +49,11 @@ EFLALO_import <- function(x,
   logbook[, FT_TARGET := names(.SD)[max.col(replace(.SD, is.na(.SD) | .SD == 0, -Inf),
                                             ties.method = "first")],
           .SDcols = patterns("^LE_EURO_")] ## Target == max landings in value
-  logbook[, FT_TARGET := data.table::fifelse(target == "LE_EURO_AAS" & LE_EURO_AAS == 0,
+  logbook[, FT_TARGET := data.table::fifelse(FT_TARGET == "LE_EURO_AAS" & LE_EURO_AAS == 0,
                                              NA_character_,
                                              substr(target,
-                                                    nchar(target) - 2,
-                                                    nchar(target)))]
+                                                    nchar(FT_TARGET) - 2,
+                                                    nchar(FT_TARGET)))]
   ##### If lumpsucker is landed and above 20kg, then we assume that lumpsucker is
   ##### the main target species for that fishing day
   logbook[, FT_TARGET := data.table::fifelse(LE_KG_LUM > 20,
