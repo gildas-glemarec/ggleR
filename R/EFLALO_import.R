@@ -12,7 +12,7 @@ EFLALO_import <- function(x,
 
   . <- LE_D2S <- LE_GEAR <- LE_CYEAR <- FT_MAX.KG <- FT_MAX.EUR <- FT_TARGET <- LE_EURO_AAS <- LE_KG_LUM <- LE_KG <- LE_EURO <- VE_F.LEN <- LE_MS <- LE_LAT <- LE_LON <- quarter <- vessel.length <- LE_DIV <- Date <- FD <- IDFD <- d <- eart <- LE_F.MESH <- VE_REF <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- LE_ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- LE_MSZ <- mesh <- metier_level6_ret <- LE_MET <- path <-  read.csv <- redskb <- restrict_study_period <- LE_RECT <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
 
-   `%notin%` <- Negate(`%in%`)
+  `%notin%` <- Negate(`%in%`)
   Mode <- function(x) {
     ux <- unique(x)
     ux[which.max(tabulate(match(x, ux)))]
@@ -46,12 +46,12 @@ EFLALO_import <- function(x,
   ##### This could look something like:
   logbook[, FT_MAX.KG := do.call(pmax, c(.SD, na.rm = TRUE)), .SDcols = patterns("^LE_KG_")]
   logbook[, FT_MAX.EUR := do.call(pmax, c(.SD, na.rm = TRUE)), .SDcols = patterns("^LE_EURO_")]
-  logbook[, FT_TARGET := names(.SD)[max.col(replace(.SD, is.na(.SD) | .SD == 0, -Inf),
+  logbook[, FT_TARGET := names(.SD)[max.col(replace(.SD, is.na(.SD), -Inf),
                                             ties.method = "first")],
           .SDcols = patterns("^LE_EURO_")] ## Target == max landings in value
-  logbook[, FT_TARGET := data.table::fifelse(FT_TARGET == "LE_EURO_AAS" & LE_EURO_AAS == 0,
+  logbook[, FT_TARGET := data.table::fifelse(is.na(FT_TARGET),
                                              NA_character_,
-                                             substr(target,
+                                             substr(FT_TARGET,
                                                     nchar(FT_TARGET) - 2,
                                                     nchar(FT_TARGET)))]
   ##### If lumpsucker is landed and above 20kg, then we assume that lumpsucker is
@@ -59,7 +59,7 @@ EFLALO_import <- function(x,
   logbook[, FT_TARGET := data.table::fifelse(LE_KG_LUM > 20,
                                              "LUM",
                                              FT_TARGET,
-                                             na=FT_TARGET)]
+                                             na = FT_TARGET)]
   ##### Total catches (landed) in weight (kg)
   logbook[, LE_KG := rowSums(.SD, na.rm = TRUE),
           .SDcols = patterns("^LE_KG_")] # This adds LE_KG, containing the row-wise sums of all columns whose names start with "LE_KG_"
@@ -187,7 +187,7 @@ EFLALO_import <- function(x,
                                LE_MET == "GNS_SPF_>=220_0_0" |
                                  LE_MET == "GNS_DEF_>=220_0_0" |
                                  LE_MET == "GNS_CRU_>=220_0_0" ~
-                               230, # Mean value for these metiers
+                                 230, # Mean value for these metiers
                                LE_MET == "GND_ANA_>=157_0_0" |
                                  LE_MET == "GNS_ANA_>=157_0_0" |
                                  LE_MET == "GNS_SPF_>=157_0_0" |
@@ -196,15 +196,15 @@ EFLALO_import <- function(x,
                                  LE_MET ==  "GND_DEF_120-219_0_0" |
                                  LE_MET ==  "GNS_DEF_120-219_0_0" |
                                  LE_MET ==  "GNS_CRU_120-219_0_0" ~
-                               170, # Mean value for these metiers
+                                 170, # Mean value for these metiers
                                LE_MET == "GNS_ANA_110-156_0_0" |
                                  LE_MET == "GNS_DEF_110-156_0_0" |
                                  LE_MET == "GNS_SPF_110-156_0_0" ~
-                               130, # Mean value for these metiers
+                                 130, # Mean value for these metiers
                                LE_MET == "GNS_DEF_100-119_0_0" |
                                  LE_MET == "GNS_SPF_100-119_0_0" |
                                  LE_MET == "GNS_CRU_100-119_0_0" ~
-                               110, # Mean value for these metiers
+                                 110, # Mean value for these metiers
                                LE_MET == "GNS_DEF_90-109_0_0" |
                                  LE_MET == "GNS_ANA_90-109_0_0" |
                                  LE_MET == "GNS_SPF_90-99_0_0" |
@@ -212,34 +212,34 @@ EFLALO_import <- function(x,
                                  LE_MET == "GNS_CRU_90-99_0_0" |
                                  LE_MET == "GNS_FWS_>0_0_0"|
                                  LE_MET == 'GNS_SPF_>0_0_0' ~
-                               90, # Mean value for these metiers
+                                 90, # Mean value for these metiers
                                LE_MET == "GNS_SPF_32-109_0_0" |
                                  LE_MET == "GNS_DEF_32-89_0_0" |
                                  LE_MET == "GNS_SPF_32-89_0_0" |
                                  LE_MET == "GNS_DEF_50-70_0_0" ~
-                               50, # Mean value for this metiers
+                                 50, # Mean value for this metiers
                                LE_MET == "GNS_SPF_10-30_0_0" |
                                  LE_MET == "GNS_ANA_>0_0_0" |
                                  LE_MET == "GNS_CAT_>0_0_0" |
                                  LE_MET == "GNS_CRU_10-30_0_0" |
                                  LE_MET == "GNS_SPF_16-31_0_0" ~
-                               20, # Mean value for this metiers)
+                                 20, # Mean value for this metiers)
                                LE_MET == 'GND_SPF_50-70_0_0' |
                                  LE_MET == 'GNS_CRU_50-70_0_0' |
                                  LE_MET == 'GNS_SPF_50-70_0_0' |
                                  LE_MET == 'GNS_DEF_50-70_0_0' |
                                  LE_MET == 'GNS_SPF_>0_0_0' ~
-                               60,
+                                 60,
                                LE_MET == 'GNS_CRU_>0_0_0' ~
-                               160,
+                                 160,
                                LE_MET == 'GNS_CRU_31-49_0_0' |
                                  LE_MET == 'GNS_DEF_31-49_0_0' |
                                  LE_MET == 'GNS_SPF_31-49_0_0' ~
-                               40,
+                                 40,
                                LE_MET == 'GNS_CRU_71-89_0_0' |
                                  LE_MET == 'GNS_DEF_71-89_0_0' |
                                  LE_MET == 'GNS_DEF_71-89_0_0' ~
-                               80,
+                                 80,
                                .default = NA_integer_))]
 
   ## Add mesh as a factor
