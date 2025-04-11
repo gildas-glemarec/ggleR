@@ -6,11 +6,9 @@
 #' @param crs_src CRS of the points in the dataset (deafaults to 4326)
 #' @return A vector (numeric) of depth values in metre
 #' @export
-get_d2shore <- function(x = logbook,
+get_d2shore <- function(x = x,
                         shapefile = NULL,
                         crs_src = 4326) {
-
-  . <- logbook
 
   if( is.null(shapefile) ){
     ## If there is no shapefile called "coastline", then download it
@@ -20,9 +18,9 @@ get_d2shore <- function(x = logbook,
     ## Define the path for the downloaded zip file
     zip_file_path <- file.path(temp_dir, "data.zip")
     ## Download the zip file
-    download.file(zip_url, zip_file_path)
+    utils::download.file(zip_url, zip_file_path)
     ## Unzip the file
-    unzip(zip_file_path, exdir = temp_dir)
+    utils::unzip(zip_file_path, exdir = temp_dir)
     ## List the files in the temporary directory
     unzipped_files <- list.files(temp_dir)
     ## Read the shapefile

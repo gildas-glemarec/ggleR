@@ -4,7 +4,6 @@
 #' @param path.to.raster path to the directory where the depth raster is
 #' @param path_to_harbour_list path to the directory where the list of vessels per harbour per year is located
 #' @param path_to_harbour_shp path to the directory where the harbours' shapefile is located
-#' @param restrict_study_period A vector of years - e.g., c(2010:2020) - default is NULL
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @export
 logbook_import_fast <- function(x,

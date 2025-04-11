@@ -1,6 +1,6 @@
 #' Format logbook / landings data to merge with EM data
 #' Dataset preparations
-#' "https://github.com/CefasRepRes/ICES-VMS-and-Logbook-Data-Call_Cefas/blob/dev_june_2024/EFLALO%20%26%20TACSAT%20Formats.md"
+#' Format the input dataset following the EFLALO2 way (google TACSAT and EFLALO Formats and check the Github page)
 #' @param x path to the directory where the logbook & sales notes are stored as .csv
 #' @param study_period A vector of years - e.g., c(2010:2020) - default is NULL
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).

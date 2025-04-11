@@ -6,7 +6,7 @@
 This scripts estimates the distance to shore (d2shore) in metres for each row in the input dataset, assuming ESPG:4326. Missing values are NA_numeric_
 If no shapefile is input, Europe is used as default (with ESPG:3035)}
 \usage{
-get_d2shore(x = logbook, shapefile = NULL, crs_src = 4326)
+get_d2shore(x = x, shapefile = NULL, crs_src = 4326)
 }
 \arguments{
 \item{x}{data.frame or data.table object with coordinates as 'LE_LON' and 'LE_LAT' in decimal}
