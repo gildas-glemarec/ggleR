@@ -41,11 +41,8 @@ EFLALO_import <- function(x,
   logbook <- logbook[LE_CYEAR %in% study_period]
 
   ## Main target species (landed) per fishing day
-  ##### Work in progress: Need to map the list of species using the species code
-  ##### to LE_KG_species and LE_EURO_species and then figure out the max per row
-  ##### This could look something like:
-  logbook[, FT_MAX.KG := do.call(pmax, c(.SD, na.rm = TRUE)), .SDcols = patterns("^LE_KG_")]
-  logbook[, FT_MAX.EUR := do.call(pmax, c(.SD, na.rm = TRUE)), .SDcols = patterns("^LE_EURO_")]
+  logbook[, FT_TARGET.KG := do.call(pmax, c(.SD, na.rm = TRUE)), .SDcols = patterns("^LE_KG_")]
+  logbook[, FT_TARGET.EUR := do.call(pmax, c(.SD, na.rm = TRUE)), .SDcols = patterns("^LE_EURO_")]
   logbook[, FT_TARGET := names(.SD)[max.col(replace(.SD, is.na(.SD), -Inf),
                                             ties.method = "first")],
           .SDcols = patterns("^LE_EURO_")] ## Target == max landings in value
@@ -54,15 +51,19 @@ EFLALO_import <- function(x,
                                              substr(FT_TARGET,
                                                     nchar(FT_TARGET) - 2,
                                                     nchar(FT_TARGET)))]
-  ##### If lumpsucker is landed and above 20kg, then we assume that lumpsucker is
+  ##### Replace NA in FT_TARGET.KG with 0 for consistency
+  logbook[, FT_TARGET.KG := fifelse(is.na(FT_TARGET.KG), 0, FT_TARGET.KG)]
+  ##### If lumpfish is landed and above 20kg, then we assume that lumpfish is
   ##### the main target species for that fishing day
   logbook[, FT_TARGET := data.table::fifelse(LE_KG_LUM > 20,
                                              "LUM",
                                              FT_TARGET,
                                              na = FT_TARGET)]
+
   ##### Total catches (landed) in weight (kg)
-  logbook[, LE_KG := rowSums(.SD, na.rm = TRUE),
-          .SDcols = patterns("^LE_KG_")] # This adds LE_KG, containing the row-wise sums of all columns whose names start with "LE_KG_"
+  logbook[# Add LE_KG, containing the row-wise sums of all columns whose names start with "LE_KG_"
+    , LE_KG := rowSums(.SD, na.rm = TRUE),
+    .SDcols = patterns("^LE_KG_")]
   ### Total catches (landed) in value (Euro)
   logbook[, LE_EURO := rowSums(.SD, na.rm = TRUE),
           .SDcols = patterns("^LE_EURO_")]
@@ -309,90 +310,20 @@ EFLALO_import <- function(x,
     .default = NA)]
 
   #### Depth (fishing operation)
-  # get_depth_data <- function(lat, lon) {
-  #
-  #   if (!requireNamespace("rerddap", quietly = TRUE)) {
-  #     install.packages("rerddap")
-  #   }
-  #
-  #   # Define the ERDDAP dataset ID and the variable you want to retrieve
-  #   #### https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
-  #   dataset_id <- "bathymetry_dtm_2024"
-  #   variable <- "elevation"
-  #   erddap_url <- "https://erddap.emodnet.eu/erddap/"
-  #   if ( !is.na(lat) &
-  #        !is.na(lon) &
-  #        lat > 15.000520833333333 &
-  #        lat < 89.99947916660017 &
-  #        lon > -35.99947916666667 &
-  #        lon < 42.99947916663591){
-  #     # Query the ERDDAP server
-  #     result <- suppressMessages(
-  #       rerddap::griddap(
-  #         rerddap::info(datasetid = dataset_id,
-  #                       url = erddap_url),
-  #         fields = variable,
-  #         latitude = c(lat,lat),
-  #         longitude = c(lon,lon))
-  #     )
-  #
-  #     # Extract the depth value
-  #     depth <- result$data[[variable]]
-  #
-  #   } else(
-  #     depth <- NA_integer_
-  #   )
-  #
-  #   return(depth)
-  # }
-
   logbook$LE_DEP <- mapply(ggleR::get_depth_EMODNET,
                            logbook$LE_LAT,
                            logbook$LE_LON)
 
   #### Distance to shore (fishing operation)
-  # get_d2shore <- function(x = logbook,
-  #                         shapefile = coastline,
-  #                         crs_shp = 4326,
-  #                         crs_dst = 3035) {
-  #   if (!requireNamespace("sf", quietly = TRUE)) {
-  #     install.packages("sf")
-  #   }
-  #   x_sf <- sf::st_as_sf(x,
-  #                        coords = c('LE_LON','LE_LAT'),
-  #                        na.fail = FALSE,
-  #                        crs = crs_shp) |>
-  #     sf::st_transform(crs_dst)
-  #   x_sf2 <- sf::st_transform(x_sf, dst = crs_dst)
-  #   distances <- sapply(1:nrow(x_sf), function(i) {
-  #     point <- x_sf[i, ]
-  #     min(sf::st_distance(point, shapefile))
-  #   })
-  #   return(distances)
-  # }
-  #
-  # if( !exists("coastline") ){
-  #   ## If there is no shapefile called "coastline", then download it
-  #   zip_url <- "https://www.eea.europa.eu/data-and-maps/data/eea-coastline-for-analysis-2/gis-data/eea-coastline-polygon/at_download/file.zip"
-  #   ## Create a temporary directory
-  #   temp_dir <- tempdir()
-  #   ## Define the path for the downloaded zip file
-  #   zip_file_path <- file.path(temp_dir, "data.zip")
-  #   ## Download the zip file
-  #   download.file(zip_url, zip_file_path)
-  #   ## Unzip the file
-  #   unzip(zip_file_path, exdir = temp_dir)
-  #   ## List the files in the temporary directory
-  #   unzipped_files <- list.files(temp_dir)
-  #   ## Read the shapefile
-  #   file_path <- file.path(temp_dir, unzipped_files)
-  #   shp_file <- grep(".shp$", file_path, value = TRUE)
-  #   coastline <- sf::st_read(shp_file)}
-
   logbook$LE_D2S <- ggleR::get_d2shore(x = logbook)
 
+  ###### Some points appear to be on land or in harbour ( is.NaN(LE_DEP) ). Fix:
+  logbook[, LE_DEP := ifelse(is.nan(LE_DEP), NA_integer_, LE_DEP)]
+  logbook[, LE_D2S := ifelse(is.nan(LE_DEP), NA_integer_, LE_D2S)]
+  logbook[, LE_D2S := ifelse(is.na(LE_DEP)&LE_D2S==0, NA_integer_, LE_D2S)]
+
   ## In the map we use here, there are a couple a islets in the Sound that
-  ## do not appear to be correct. As a result, we could rarely have d2shore=0
+  ## do not appear to be correct. As a result, we could rarely have d2shore = 0
   ## Fix by forcing a minimum d2shore of 20 metres
   logbook[, LE_D2S := ifelse(LE_D2S == 0, 20, LE_D2S)]
 
