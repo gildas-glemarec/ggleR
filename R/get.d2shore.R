@@ -30,7 +30,7 @@ get_d2shore <- function(x = x,
 
   crs_shp <- sf::st_crs(shapefile)
 
-  if(  c('LE_LON','LE_LAT') %in% colnames(x) ){
+  if(  c('LE_LON') %in% colnames(x) ){
     x_sf <- sf::st_as_sf(x,
                          coords = c('LE_LON','LE_LAT'),
                          na.fail = FALSE,
