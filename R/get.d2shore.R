@@ -30,11 +30,19 @@ get_d2shore <- function(x = x,
 
   crs_shp <- sf::st_crs(shapefile)
 
-  x_sf <- sf::st_as_sf(x,
-                       coords = c('LE_LON','LE_LAT'),
-                       na.fail = FALSE,
-                       crs = crs_src) |>
-    sf::st_transform(crs_shp)
+  if(  c('LE_LON','LE_LAT') %in% colnames(x) ){
+    x_sf <- sf::st_as_sf(x,
+                         coords = c('LE_LON','LE_LAT'),
+                         na.fail = FALSE,
+                         crs = crs_src) |>
+      sf::st_transform(crs_shp)
+  }else(
+    x_sf <- sf::st_as_sf(x,
+                         coords = c('lon.haul','lat.haul'),
+                         na.fail = FALSE,
+                         crs = crs_src) |>
+      sf::st_transform(crs_shp)
+  )
 
   distances <- sapply(1:nrow(x_sf), function(i) {
     point <- x_sf[i, ]
