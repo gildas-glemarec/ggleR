@@ -80,31 +80,15 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
 
   if (give_me_more == TRUE){
     ## Add info on depth (m) at point
-    x <- ggleR::get.depth(x)
+    # x <- ggleR::get.depth(x)
 
     ### Define the ERDDAP dataset ID and the variable you want to retrieve
     #### https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
     dataset_id <- "bathymetry_dtm_2024"
     variable <- "elevation"
     erddap_url <- "https://erddap.emodnet.eu/erddap/"
-
-
-
-
-
-
-
-
-
-
     out <- rerddap::info(datasetid = dataset_id,
                          url = erddap_url)
-
-
-
-
-
-
     depth_EMODNET <- function(lat, lon) {
 
       if ( !is.na(lat) &
