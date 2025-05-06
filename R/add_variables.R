@@ -55,16 +55,16 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   ## Soak times
   ### List the hauls with manually determined soak times
   soak_files <- base::list.files(path_to_soak,
-                           pattern = "*csv",
-                           full.names = TRUE,
-                           recursive = FALSE)
+                                 pattern = "*csv",
+                                 full.names = TRUE,
+                                 recursive = FALSE)
   list_soak <- base::lapply(soak_files,
-                      utils::read.csv2,
-                      ## Uncomment below if the format looks weird (and comment the line above)
-                      # utils::read.csv, sep = ",",
-                      header=TRUE,
-                      stringsAsFactors = FALSE,
-                      quote = "")
+                            utils::read.csv2,
+                            ## Uncomment below if the format looks weird (and comment the line above)
+                            # utils::read.csv, sep = ",",
+                            header=TRUE,
+                            stringsAsFactors = FALSE,
+                            quote = "")
   soakdata <- data.table::rbindlist(list_soak,fill=TRUE)
   soakdata <- soakdata[, c('IDhaul','soak')]
   soakdata$IDhaul <- as.factor(soakdata$IDhaul)
@@ -81,10 +81,89 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   if (give_me_more == TRUE){
     ## Add info on depth (m) at point
     x <- ggleR::get.depth(x)
+
+    ### Define the ERDDAP dataset ID and the variable you want to retrieve
+    #### https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
+    dataset_id <- "bathymetry_dtm_2024"
+    variable <- "elevation"
+    erddap_url <- "https://erddap.emodnet.eu/erddap/"
+
+
+
+
+
+
+
+
+
+
+    out <- rerddap::info(datasetid = dataset_id,
+                         url = erddap_url)
+
+
+
+
+
+
+    depth_EMODNET <- function(lat, lon) {
+
+      if ( !is.na(lat) &
+           !is.na(lon) &
+           lat > 15.000520833333333 &
+           lat < 89.99947916660017 &
+           lon > -35.99947916666667 &
+           lon < 42.99947916663591){
+        # Query the ERDDAP server
+        Sys.sleep(0.1)
+        result <- suppressMessages(
+          rerddap::griddap(
+            out,
+            fields = variable,
+            latitude = c(lat,lat),
+            longitude = c(lon,lon))
+        )
+
+        # Extract the depth value
+        depth <- result$data[[variable]]
+
+      } else(
+        depth <- NA_integer_
+      )
+
+      return(depth)
+    }
+
+    x$depth <- NA
+    chunk_size <- 500
+    num_chunks <- ceiling(nrow(x) / chunk_size)
+    depth_in_chuncks <- list()
+
+    for (i in 1:num_chunks) {
+      # Calculate the start and end indices for the current chunk
+      start_idx <- (i - 1) * chunk_size + 1
+      end_idx <- min(i * chunk_size, nrow(x))
+
+      # Extract the current chunk of data
+      x_chunk <- x[start_idx:end_idx, ]
+
+      # Query the server with the current chunk
+      one_chunck <-  mapply(depth_EMODNET,
+                                  x_chunk$lat.haul,
+                                  x_chunk$lon.haul)
+      # Store the result
+      depth_in_chuncks[[i]] <- one_chunck
+
+      # Print progress
+      cat("Processed chunk", i, "of", num_chunks, "\n")
+      Sys.sleep(1)
+
+    }
+    x$depth <- unlist(depth_in_chuncks)
+
     ## Add info on distance (m) to nearest point on shore
     coastline <- sf::st_read(path.to.coastline
-      # "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp"
-      )
+                             # "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp"
+    )
     x_sf <- x  %>%
       sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
                    crs = 4326) %>%
