@@ -176,6 +176,32 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
     # # ## Store the results
     # # x$d2shore <- as.numeric(apply(dist, 1, min))
 
+    ## Add variable ICES rectangle and ICES subrectangle
+
+    if("lon.haul" %in% names(x)){
+      dk.sppts <- sf::st_as_sf(x, coords = c('lon.haul','lat.haul'), na.fail = FALSE)
+      ## Add the variable ICES rectangle and ICES subRectangle #----
+      x[, icesrect:= data.table::fifelse(!is.na(lon.haul) & !is.na(lat.haul),
+                                         mapplots::ices.rect2(lon.haul, lat.haul),
+                                         NA_character_)]
+      suppressWarnings(
+        x <- x %>%
+          dplyr::rowwise() %>%
+          dplyr::mutate(subrect = dplyr::if_else(!is.na(icesrect),
+                                                 ggleR::ices.subrect(lon.haul,lat.haul),
+                                                 NA)))
+    } else {dk.sppts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
+    ## Add the variable ICES rectangle and ICES subRectangle #----
+    x[, icesrect:= data.table::fifelse(!is.na(lon) & !is.na(lat),
+                                       mapplots::ices.rect2(lon, lat),
+                                       NA_character_)]
+    suppressWarnings(
+      x <- x %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate(subrect = dplyr::if_else(!is.na(icesrect),
+                                               ggleR::ices.subrect(lon,lat),
+                                               NA)))
+    }
 
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

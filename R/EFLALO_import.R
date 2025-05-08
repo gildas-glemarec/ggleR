@@ -310,9 +310,35 @@ EFLALO_import <- function(x,
     .default = NA)]
 
   #### Depth (fishing operation)
-  logbook$LE_DEP <- mapply(ggleR::get_depth_EMODNET,
-                           logbook$LE_LAT,
-                           logbook$LE_LON)
+  # logbook$LE_DEP <- mapply(ggleR::get_depth_EMODNET,
+  #                          logbook$LE_LAT,
+  #                          logbook$LE_LON)
+  logbook$LE_DEP <- NA
+  chunk_size <- 500
+  num_chunks <- ceiling(nrow(LE_DEP) / chunk_size)
+  depth_in_chuncks <- list()
+
+  for (i in 1:num_chunks) {
+    # Calculate the start and end indices for the current chunk
+    start_idx <- (i - 1) * chunk_size + 1
+    end_idx <- min(i * chunk_size, nrow(logbook))
+
+    # Extract the current chunk of data
+    logbook_chunk <- x[start_idx:end_idx, ]
+
+    # Query the server with the current chunk
+    one_chunck <-  mapply(depth_EMODNET,
+                          logbook_chunk$lat.haul,
+                          logbook_chunk$lon.haul)
+    # Store the result
+    depth_in_chuncks[[i]] <- one_chunck
+
+    # Print progress
+    cat("Processed chunk", i, "of", num_chunks, "\n")
+    Sys.sleep(1)
+
+  }
+  logbook$LE_DEP <- unlist(depth_in_chuncks)
 
   #### Distance to shore (fishing operation)
   logbook$LE_D2S <- ggleR::get_d2shore(x = logbook)
