@@ -180,7 +180,7 @@ EFLALO_import <- function(x,
       LE_MET=='GNS_DEF_50-70_0_0'&
       LE_MSZ<50 ~
       50,
-    .default = LE_MS)]
+    .default = LE_MSZ)]
 
   ### 2. Are there missing values (undefined mesh, but defined metier)?
   logbook[, LE_MSZ := ifelse(test = !is.na(LE_MSZ), yes = LE_MSZ,
@@ -313,9 +313,45 @@ EFLALO_import <- function(x,
   # logbook$LE_DEP <- mapply(ggleR::get_depth_EMODNET,
   #                          logbook$LE_LAT,
   #                          logbook$LE_LON)
+
+  ### Define the ERDDAP dataset ID and the variable you want to retrieve
+  #### https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
+  dataset_id <- "bathymetry_dtm_2024"
+  variable <- "elevation"
+  erddap_url <- "https://erddap.emodnet.eu/erddap/"
+  out <- rerddap::info(datasetid = dataset_id,
+                       url = erddap_url)
+  depth_EMODNET <- function(LE_LAT, LE_LON) {
+
+    if ( !is.na(LE_LAT) &
+         !is.na(LE_LON) &
+         LE_LAT > 15.000520833333333 &
+         LE_LAT < 89.99947916660017 &
+         LE_LON > -35.99947916666667 &
+         LE_LON < 42.99947916663591){
+      # Query the ERDDAP server
+      Sys.sleep(0.1)
+      result <- suppressMessages(
+        rerddap::griddap(
+          out,
+          fields = variable,
+          latitude = c(LE_LAT,LE_LAT),
+          longitude = c(LE_LON,LE_LON))
+      )
+
+      # Extract the depth value
+      depth <- result$data[[variable]]
+
+    } else(
+      depth <- NA_integer_
+    )
+
+    return(depth)
+  }
+
   logbook$LE_DEP <- NA
   chunk_size <- 500
-  num_chunks <- ceiling(nrow(LE_DEP) / chunk_size)
+  num_chunks <- ceiling(nrow(logbook) / chunk_size)
   depth_in_chuncks <- list()
 
   for (i in 1:num_chunks) {
@@ -324,12 +360,12 @@ EFLALO_import <- function(x,
     end_idx <- min(i * chunk_size, nrow(logbook))
 
     # Extract the current chunk of data
-    logbook_chunk <- x[start_idx:end_idx, ]
+    logbook_chunk <- logbook[start_idx:end_idx, ]
 
     # Query the server with the current chunk
     one_chunck <-  mapply(depth_EMODNET,
-                          logbook_chunk$lat.haul,
-                          logbook_chunk$lon.haul)
+                          logbook_chunk$LE_LAT,
+                          logbook_chunk$LE_LON)
     # Store the result
     depth_in_chuncks[[i]] <- one_chunck
 
