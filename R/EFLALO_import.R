@@ -36,13 +36,16 @@ EFLALO_import <- function(x,
 
   #### What's the period (in years) of the dataset?
   if(is.null(study_period)){
-    study_period <- c(min(logbook$LE_CYEAR, na.rm = T):max(logbook$LE_CYEAR, na.rm = T))
+    study_period <- c(min(logbook$LE_CYEAR, na.rm = T):max(logbook$LE_CYEAR,
+                                                           na.rm = T))
   }else(study_period)
   logbook <- logbook[LE_CYEAR %in% study_period]
 
   ## Main target species (landed) per fishing day
-  logbook[, FT_TARGET.KG := do.call(pmax, c(.SD, na.rm = TRUE)), .SDcols = patterns("^LE_KG_")]
-  logbook[, FT_TARGET.EUR := do.call(pmax, c(.SD, na.rm = TRUE)), .SDcols = patterns("^LE_EURO_")]
+  logbook[, FT_TARGET.KG := do.call(pmax, c(.SD, na.rm = TRUE)),
+          .SDcols = patterns("^LE_KG_")]
+  logbook[, FT_TARGET.EUR := do.call(pmax, c(.SD, na.rm = TRUE)),
+          .SDcols = patterns("^LE_EURO_")]
   logbook[, FT_TARGET := names(.SD)[max.col(replace(.SD, is.na(.SD), -Inf),
                                             ties.method = "first")],
           .SDcols = patterns("^LE_EURO_")] ## Target == max landings in value
@@ -80,7 +83,8 @@ EFLALO_import <- function(x,
   logbook[, LE_DIV := data.table::fifelse(
     LE_DIV == '' | stringr::str_starts(LE_DIV, "NA"), NA_character_, LE_DIV)]
 
-  ## Assign correct name to ICES area /// This is probably only good for DK. Need to test other countries
+  ## Assign correct name to ICES area /// This is probably only good for DK.
+  ## Need to test other countries
   logbook[, LE_ices.area := dplyr::case_when(
     LE_DIV == '3AI' ~ 'isefjord',
     LE_DIV == '3AN'~ '3.a.20',
@@ -349,7 +353,7 @@ EFLALO_import <- function(x,
     return(depth)
   }
 
-  logbook$LE_DEP <- NA
+  logbook$LE_DEP <- NA_integer_
   chunk_size <- 500
   num_chunks <- ceiling(nrow(logbook) / chunk_size)
   depth_in_chuncks <- list()
@@ -380,14 +384,15 @@ EFLALO_import <- function(x,
   logbook$LE_D2S <- ggleR::get_d2shore(x = logbook)
 
   ###### Some points appear to be on land or in harbour ( is.NaN(LE_DEP) ). Fix:
-  logbook[, LE_DEP := ifelse(is.nan(LE_DEP), NA_integer_, LE_DEP)]
-  logbook[, LE_D2S := ifelse(is.nan(LE_DEP), NA_integer_, LE_D2S)]
-  logbook[, LE_D2S := ifelse(is.na(LE_DEP)&LE_D2S==0, NA_integer_, LE_D2S)]
+  logbook[, LE_DEP := data.table::fifelse(is.nan(LE_DEP), NA_integer_, LE_DEP)]
+  logbook[, LE_D2S := data.table::fifelse(is.nan(LE_DEP), NA_integer_, LE_D2S)]
+  logbook[, LE_D2S := data.table::fifelse(is.na(LE_DEP)&LE_D2S==0,
+                                          NA_integer_, LE_D2S)]
 
   ## In the map we use here, there are a couple a islets in the Sound that
   ## do not appear to be correct. As a result, we could rarely have d2shore = 0
   ## Fix by forcing a minimum d2shore of 20 metres
-  logbook[, LE_D2S := ifelse(LE_D2S == 0, 20, LE_D2S)]
+  logbook[, LE_D2S := data.table::fifelse(LE_D2S == 0, 20, LE_D2S)]
 
   return(logbook)
 }
