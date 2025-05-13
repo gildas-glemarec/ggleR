@@ -223,7 +223,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     dplyr::arrange(vessel, as.Date(date), IDevent)
 
   BBdata <- BBdata %>%
-    dplyr::mutate(sealmarks = dplyr::if_else(colour.name == "DeepPink"), 1, 0)
+    dplyr::mutate(sealmarks = dplyr::if_else(colour.name == "DeepPink", 1, 0))
 
   return(BBdata)
 }
