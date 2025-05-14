@@ -181,9 +181,10 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
     if("lon.haul" %in% names(x)){
       dk.sppts <- sf::st_as_sf(x, coords = c('lon.haul','lat.haul'), na.fail = FALSE)
       ## Add the variable ICES rectangle and ICES subRectangle #----
-      x[, icesrect:= data.table::fifelse(!is.na(lon.haul) & !is.na(lat.haul),
+      suppressWarnings(
+        x[, icesrect:= data.table::fifelse(!is.na(lon.haul) & !is.na(lat.haul),
                                          mapplots::ices.rect2(lon.haul, lat.haul),
-                                         NA_character_)]
+                                         NA_character_)])
       suppressWarnings(
         x <- x %>%
           dplyr::rowwise() %>%

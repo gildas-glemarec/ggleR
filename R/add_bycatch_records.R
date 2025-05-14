@@ -14,9 +14,9 @@ add_bycatch_records <- function(x = data_work,
     print("You forgot to indicate the path to your EM data file(s).")
   } else {
     if(alt_spp_list == F){
-      is.bird <- c('Ag','Alcidae','Anatidae','At','Bird','Fg','Ga','Gad','Gar',
-                   'Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta',
-                   'Mf','Mn','Pc','Pg','Sm','Ua')
+      is.bird <- c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad',
+                   'Gar','Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel',
+                   'Melanitta','Mf','Mn','Pc','Pcr','Pg','Sm','Ua')
       is.mammal <- c('Ba','Hg','La','Mammal','Pp','Pv','Se','Seal')
       is.elasmo <- c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','Ray','Rb',
                      'Rc','Rm','Sa','Sc','Shark')
@@ -130,14 +130,6 @@ add_bycatch_records <- function(x = data_work,
     if(rm_errors == FALSE){
       return(merged_data)
     }else{
-      # is.bird <- c('Ag','Alcidae','Anatidae','At','Bird','Fg','Ga','Gad','Gar',
-      #              'Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta',
-      #              'Mf','Mn','NA','Pc','Pc','Pg','Sm','Ua')
-      # is.mammal <- c('Ba','Hg','La','Mammal','Pp','Pv','Se','Seal')
-      # is.elasmo <- c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','Ray','Rb',
-      #                'Rc','Rm','Sa','Sc','Shark')
-      # is.fish <- c('Cl','Scsc')
-      # is.not.id <- 'NI'
       errors1 <- merged_data %>%
         dplyr::filter(colour.name == 'Aqua' & !spp %in% is.elasmo |
                         colour.name == 'Black' & !spp %in% is.mammal |
@@ -154,7 +146,7 @@ add_bycatch_records <- function(x = data_work,
         message("
       ####!!!####!!!####!!!####!!!####
       ####!!!####!!!####!!!####!!!####
-A dataset with the missing bycatch spp was saved to the workspace (and it is called errors).\nThe missing matches between activity and bycatch data are listed and must be fixed in BB ANalyzer / Catch quantification.\nThen, re-extract the catch quantification, and finally re-run this script.\nON Windows, you can try: write.csv(errors,'Q:/scientific-projects/cctv-monitoring/data/errors.csv')
+A dataset with the missing bycatch spp was saved to the workspace (and it is called errors).\nThe missing matches between activity and bycatch data are listed and must be fixed in BB ANalyzer / Catch quantification.\nThen, re-extract the catch quantification, and finally re-run this script.\nON Windows, you can try: write.csv(errors,'Q:/10-forskningsprojekter/faste-cctv-monitoring/data/errors.csv')
       ####!!!####!!!####!!!####!!!####
       ####!!!####!!!####!!!####!!!####")
       }
