@@ -47,24 +47,12 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   ## Position of the hauls
   ## Each haul position is averaged so that there is only one position per haul.
   ####  midPoint function from the geosphere package
-  geodesic_inverse <- function (p1, p2, a = 6378137, f = 1/298.257223563, ...)
-  {
-    p1 <- .pointsToMatrix(p1)
-    p2 <- .pointsToMatrix(p2)
-    p <- cbind(p1[, 1], p1[, 2], p2[, 1], p2[, 2])
-    r <- .inversegeodesic(as.double(p[, 1]), as.double(p[, 2]),
-                          as.double(p[, 3]), as.double(p[, 4]), as.double(a),
-                          as.double(f))
-    r <- matrix(r, ncol = 3, byrow = TRUE)
-    colnames(r) <- c("distance", "azimuth1", "azimuth2")
-    r
-  }
-  midPoint <- function (p1, p2, a = 6378137, f = 1/298.257223563)
-  {
-    gi <- geodesic_inverse(p1, p2, a = a, f = f)
-    destPoint(p1, gi[, "azimuth1"], gi[, "distance"]/2, a = a,
-              f = f)
-  }
+  p1 <- matrix(c(x$lon.start * pi/180,
+                 x$lat.start * pi/180),
+               ncol=2 )
+  p2 <- matrix(c(x$lon.stop * pi/180,
+                 x$lat.stop * pi/180),
+               ncol=2 )
   midhaul <- as.data.frame(midPoint(p1, p2))
   midhaul$lon <- midhaul$lon * 180/pi # back to degrees
   midhaul$lat <- midhaul$lat * 180/pi # back to degrees
@@ -72,6 +60,7 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   names(midhaul)[2] <- "lat.haul"
   x <- cbind(x, midhaul)
   rm(list = c("midhaul", "p1", "p2"))
+
   ## Make sure dataframe is organized the way we want
   x <- dplyr::arrange(x, rnum)
 

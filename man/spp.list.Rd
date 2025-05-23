@@ -17,6 +17,8 @@ Load a species list - Experimental
 }
 \examples{
 # This function is called in add_bycatch_records and is not supposed to be used on its own.
-# For testing purpose: Create bycatch species "lists" (as in ICES spp list, not R list!) using default for bycatch monitoring in DK 2024
-spp.list <-  spp.list(path_to_spp_lists = "Q:/scientific-projects/cctv-monitoring/data/species lists/")
+# For testing purpose: Create bycatch species "lists" (as in ICES spp list, not R list!)
+using default for bycatch monitoring in DK 2024
+spp.list <- spp.list(path_to_spp_lists =
+  "Q:/scientific-projects/cctv-monitoring/data/species lists/")
 }

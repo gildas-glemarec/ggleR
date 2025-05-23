@@ -6,7 +6,7 @@
 #' # For testing purpose: Create bycatch species "lists" (as in ICES spp list, not R list!)
 #' using default for bycatch monitoring in DK 2024
 #' spp.list <- spp.list(path_to_spp_lists =
-#'   "Q:/scientific-projects/cctv-monitoring/data/species lists/")
+#'   "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/species lists/")
 #' @export
 spp.list <- function(path_to_spp_lists = path_to_spp_lists){
   all_files <- list.files(path_to_spp_lists,

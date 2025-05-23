@@ -7,7 +7,7 @@ Read, format, and merge Notes and Annotations from Black Box Analyzer}
 \usage{
 BBimport(
   x =
-    "Q:/scientific-projects/cctv-monitoring/data/blackbox extractions/annotations_notes/",
+    "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/annotations_notes/",
   by.year = TRUE
 )
 }
