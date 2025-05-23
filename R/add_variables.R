@@ -53,7 +53,7 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   p2 <- matrix(c(x$lon.stop * pi/180,
                  x$lat.stop * pi/180),
                ncol=2 )
-  midhaul <- as.data.frame(midPoint(p1, p2))
+  midhaul <- as.data.frame(geosphere::midPoint(p1, p2))
   midhaul$lon <- midhaul$lon * 180/pi # back to degrees
   midhaul$lat <- midhaul$lat * 180/pi # back to degrees
   names(midhaul)[1] <- "lon.haul"
