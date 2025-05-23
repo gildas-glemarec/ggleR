@@ -43,12 +43,23 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
                                       'Q4')))]
   x$quarter <- factor(x$quarter, levels= c('Q1','Q2','Q3','Q4'))
   x[, time.bc := NULL]
-  x <- x %>%
-    dplyr::rowwise() %>%
-    dplyr::mutate(lat.haul = sum(lat.start,lat.stop)/2,
-                  lon.haul = sum(lon.start,lon.stop)/2) %>%
-    data.table::as.data.table(.) # print as dt, not tibble
 
+  ## Position of the hauls
+  ## Each haul position is averaged so that there is only one position per haul.
+  ####  midPoint function from the geosphere package
+   midPoint <- function (p1, p2, a = 6378137, f = 1/298.257223563)
+  {
+    gi <- geodesic_inverse(p1, p2, a = a, f = f)
+    destPoint(p1, gi[, "azimuth1"], gi[, "distance"]/2, a = a,
+              f = f)
+  }
+  midhaul <- as.data.frame(midPoint(p1, p2))
+  midhaul$lon <- midhaul$lon * 180/pi # back to degrees
+  midhaul$lat <- midhaul$lat * 180/pi # back to degrees
+  names(midhaul)[1] <- "lon.haul"
+  names(midhaul)[2] <- "lat.haul"
+  x <- cbind(x, midhaul)
+  rm(list = c("midhaul", "p1", "p2"))
   ## Make sure dataframe is organized the way we want
   x <- dplyr::arrange(x, rnum)
 
