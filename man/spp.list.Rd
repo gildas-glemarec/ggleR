@@ -20,5 +20,5 @@ Load a species list - Experimental
 # For testing purpose: Create bycatch species "lists" (as in ICES spp list, not R list!)
 using default for bycatch monitoring in DK 2024
 spp.list <- spp.list(path_to_spp_lists =
-  "Q:/scientific-projects/cctv-monitoring/data/species lists/")
+  "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/species lists/")
 }
