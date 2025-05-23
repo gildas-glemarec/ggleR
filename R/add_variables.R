@@ -47,7 +47,19 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   ## Position of the hauls
   ## Each haul position is averaged so that there is only one position per haul.
   ####  midPoint function from the geosphere package
-   midPoint <- function (p1, p2, a = 6378137, f = 1/298.257223563)
+  geodesic_inverse <- function (p1, p2, a = 6378137, f = 1/298.257223563, ...)
+  {
+    p1 <- .pointsToMatrix(p1)
+    p2 <- .pointsToMatrix(p2)
+    p <- cbind(p1[, 1], p1[, 2], p2[, 1], p2[, 2])
+    r <- .inversegeodesic(as.double(p[, 1]), as.double(p[, 2]),
+                          as.double(p[, 3]), as.double(p[, 4]), as.double(a),
+                          as.double(f))
+    r <- matrix(r, ncol = 3, byrow = TRUE)
+    colnames(r) <- c("distance", "azimuth1", "azimuth2")
+    r
+  }
+  midPoint <- function (p1, p2, a = 6378137, f = 1/298.257223563)
   {
     gi <- geodesic_inverse(p1, p2, a = a, f = f)
     destPoint(p1, gi[, "azimuth1"], gi[, "distance"]/2, a = a,
@@ -143,8 +155,8 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
 
       # Query the server with the current chunk
       one_chunck <-  mapply(depth_EMODNET,
-                                  x_chunk$lat.haul,
-                                  x_chunk$lon.haul)
+                            x_chunk$lat.haul,
+                            x_chunk$lon.haul)
       # Store the result
       depth_in_chuncks[[i]] <- one_chunck
 
@@ -194,8 +206,8 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
       ## Add the variable ICES rectangle and ICES subRectangle #----
       suppressWarnings(
         x[, icesrect:= data.table::fifelse(!is.na(lon.haul) & !is.na(lat.haul),
-                                         mapplots::ices.rect2(lon.haul, lat.haul),
-                                         NA_character_)])
+                                           mapplots::ices.rect2(lon.haul, lat.haul),
+                                           NA_character_)])
       suppressWarnings(
         x <- x %>%
           dplyr::rowwise() %>%
