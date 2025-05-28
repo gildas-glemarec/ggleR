@@ -105,7 +105,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
         x$haul.lat.start[i] <- x$haul.lat.start[i+1]
         x$haul.lon.stop[i] <- x$haul.lon.stop[i+1]
         x$haul.lat.stop[i] <- x$haul.lat.stop[i+1]
-        }
+      }
     }
 
     x <- x %>%
@@ -164,7 +164,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       dplyr::group_by(IDhaul) %>%
       tidyr::fill(mitigation) %>%
       dplyr::mutate(mitigation = dplyr::if_else(is.na(mitigation),
-                                                     "0",
+                                                "0",
                                                 mitigation)) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(mitigation_type = dplyr::case_when(
@@ -227,7 +227,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     dplyr::group_by(IDhaul) %>%
     dplyr::mutate(sealmarks = ifelse(any(sealmarks == 1), 1, sealmarks)) %>%
     dplyr::ungroup()
-  data.table::setnames(rem_data_from2021,
+  data.table::setnames(BBdata,
                        old = c("haul.lon.start","haul.lat.start",
                                "haul.lon.stop","haul.lat.stop"),
                        new = c("lon.start","lat.start",
