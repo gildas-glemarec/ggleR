@@ -223,7 +223,14 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     dplyr::arrange(vessel, as.Date(date), IDevent)
 
   BBdata <- BBdata %>%
-    dplyr::mutate(sealmarks = dplyr::if_else(colour.name == "DeepPink", 1, 0))
-
+    dplyr::mutate(sealmarks = dplyr::if_else(colour.name == "DeepPink", 1, 0)) %>%
+    dplyr::group_by(IDhaul) %>%
+    dplyr::mutate(sealmarks = ifelse(any(sealmarks == 1), 1, sealmarks)) %>%
+    dplyr::ungroup()
+  data.table::setnames(rem_data_from2021,
+                       old = c("haul.lon.start","haul.lat.start",
+                               "haul.lon.stop","haul.lat.stop"),
+                       new = c("lon.start","lat.start",
+                               "lon.stop","lat.stop"))
   return(BBdata)
 }
