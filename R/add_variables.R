@@ -72,7 +72,7 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
                                  full.names = TRUE,
                                  recursive = FALSE)
   list_soak <- base::lapply(soak_files,
-                            utils::read.csv2,
+                            utils::read.csv,
                             ## Uncomment below if the format looks weird (and comment the line above)
                             # utils::read.csv, sep = ",",
                             header=TRUE,
