@@ -14,7 +14,8 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   . <- time.bc <- IDhaul <- soak <- i.soak <- d2shore <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
 
   x$rnum <- as.integer(row.names(x))
-  data.table::setDT(x,'rnum')
+  data.table::setDT(x)
+  data.table::setkeyv(x, "rnum")
   x$vessel <- as.factor(x$vessel)
   x$mesh.colour <- as.factor(x$mesh.colour)
   x$review.info <- as.factor(x$review.info)
