@@ -227,10 +227,5 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     dplyr::group_by(IDhaul) %>%
     dplyr::mutate(sealmarks = ifelse(any(sealmarks == 1), 1, sealmarks)) %>%
     dplyr::ungroup()
-  data.table::setnames(BBdata,
-                       old = c("haul.lon.start","haul.lat.start",
-                               "haul.lon.stop","haul.lat.stop"),
-                       new = c("lon.start","lat.start",
-                               "lon.stop","lat.stop"))
   return(BBdata)
 }

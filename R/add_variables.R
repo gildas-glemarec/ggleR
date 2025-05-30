@@ -47,11 +47,11 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   ## Position of the hauls
   ## Each haul position is averaged so that there is only one position per haul.
   ####  midPoint function from the geosphere package
-  p1 <- matrix(c(x$lon.start * pi/180,
-                 x$lat.start * pi/180),
+  p1 <- matrix(c(x$haul.lon.start * pi/180,
+                 x$haul.lat.start * pi/180),
                ncol=2 )
-  p2 <- matrix(c(x$lon.stop * pi/180,
-                 x$lat.stop * pi/180),
+  p2 <- matrix(c(x$haul.lon.stop * pi/180,
+                 x$haul.lat.stop * pi/180),
                ncol=2 )
   midhaul <- as.data.frame(geosphere::midPoint(p1, p2))
   midhaul$lon <- midhaul$lon * 180/pi # back to degrees
@@ -191,17 +191,20 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
     ## Add variable ICES rectangle and ICES subrectangle
 
     if("lon.haul" %in% names(x)){
-      dk.sppts <- sf::st_as_sf(x, coords = c('lon.haul','lat.haul'), na.fail = FALSE)
+      dk.sppts <- sf::st_as_sf(x, coords = c('lon.haul','lat.haul'),
+                               na.fail = FALSE)
       ## Add the variable ICES rectangle and ICES subRectangle #----
       suppressWarnings(
         x[, icesrect:= data.table::fifelse(!is.na(lon.haul) & !is.na(lat.haul),
-                                           mapplots::ices.rect2(lon.haul, lat.haul),
+                                           mapplots::ices.rect2(lon.haul,
+                                                                lat.haul),
                                            NA_character_)])
       suppressWarnings(
         x <- x %>%
           dplyr::rowwise() %>%
           dplyr::mutate(subrect = dplyr::if_else(!is.na(icesrect),
-                                                 ggleR::ices.subrect(lon.haul,lat.haul),
+                                                 ggleR::ices.subrect(lon.haul,
+                                                                     lat.haul),
                                                  NA)))
     } else {dk.sppts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
     ## Add the variable ICES rectangle and ICES subRectangle #----
@@ -212,7 +215,8 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
       x <- x %>%
         dplyr::rowwise() %>%
         dplyr::mutate(subrect = dplyr::if_else(!is.na(icesrect),
-                                               ggleR::ices.subrect(lon,lat),
+                                               ggleR::ices.subrect(lon.haul,
+                                                                   lat.haul),
                                                NA)))
     }
 
