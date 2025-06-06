@@ -83,12 +83,13 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   soakdata <- soakdata[, c('IDhaul','soak')]
   soakdata$IDhaul <- as.factor(soakdata$IDhaul)
   soakdata <- data.table::setkey(soakdata,IDhaul)
+  soakdata <- soakdata[IDhaul!='']
   x <- data.table::setkey(x,IDhaul)
   x <- soakdata[x, on = .(IDhaul)]
   x[is.na(soak), soak:=i.soak] # only replace the value missing from left table
   x[,"i.soak":=NULL]
   ## Manual BB bug fix (when it rarely rounds down to 0 hour)
-  x[, soak := fifelse(soak == 0, 1, soak)]
+  x[, soak := data.table::fifelse(soak == 0, 1, soak)]
 
   ## Standardised effort
   ### as net length (in km) multiplied by soak time (hours): km*hour
