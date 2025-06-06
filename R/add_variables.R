@@ -9,7 +9,8 @@
 #' @export
 add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
                           path_to_soak = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/soak/",
-                          path.to.coastline = "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp") {
+                          path.to.coastline = "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp",
+                          path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif") {
 
   . <- time.bc <- IDhaul <- soak <- i.soak <- d2shore <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
 
@@ -86,6 +87,8 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   x <- soakdata[x, on = .(IDhaul)]
   x[is.na(soak), soak:=i.soak] # only replace the value missing from left table
   x[,"i.soak":=NULL]
+  ## Manual BB bug fix (when it rarely rounds down to 0 hour)
+  x[, soak := fifelse(soak == 0, 1, soak)]
 
   ## Standardised effort
   ### as net length (in km) multiplied by soak time (hours): km*hour
@@ -93,7 +96,6 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
 
   if (give_me_more == TRUE){
     ## Add info on depth (m) at point
-    # x <- ggleR::get.depth(x)
 
     ### Define the ERDDAP dataset ID and the variable you want to retrieve
     #### https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
@@ -156,6 +158,22 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
 
     }
     x$depth <- unlist(depth_in_chuncks)
+
+    ## For the points that are not found, we can use a backup plan:
+    depth.ras.dk <- terra::rast(x = path.to.raster)
+    x <- data.table::as.data.table(x)
+    if("lon.haul" %in% names(x)){
+      dk.sppts <- sf::st_as_sf(x, coords = c('lon.haul','lat.haul'), na.fail = FALSE)
+    } else {dk.sppts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
+    }
+    depth.dk.df <- (terra::extract(x = depth.ras.dk,
+                                   y = dk.sppts,
+                                   df = TRUE))$D5_2020
+    for (i in 1: length(x$depth)){
+      if( is.na(x$depth[i]) ){
+        x$depth[i] <- depth.dk.df[i] }
+    }
+    x <- x[, depth := data.table::fifelse(depth>0, -2, depth)]
 
     ## Add info on distance (m) to nearest point on shore
     coastline <- sf::st_read(path.to.coastline

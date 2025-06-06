@@ -12,7 +12,8 @@ add_variables(
   path_to_soak =
     "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/soak/",
   path.to.coastline =
-    "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp"
+    "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp",
+  path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif"
 )
 }
 \arguments{
