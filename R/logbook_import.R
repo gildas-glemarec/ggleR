@@ -118,7 +118,7 @@ logbook_import_fast <- function(x,
                                      TRUE ~ as.character(vessel.length)
                     )
     ) %>%
-    dplyr::mutate(oal = if_else(vessel.length < 15,
+    dplyr::mutate(vessel.length.split15 = if_else(vessel.length < 15,
                                 '<15m',
                                 '>15m'))
   logbook <- data.table::as.data.table(logbook)
@@ -238,13 +238,14 @@ logbook_import_fast <- function(x,
   ## indicate fishing location (icesrect) in Danish logbooks
   harbours <- ggleR::load_data(path_to_harbour_list)
   harbours <- data.table::data.table(harbours, key = 'fid')
-  harbours <- unique(logbook, by = 'fid')[, c('fid','oal')][harbours,
-                                                            on = 'fid']
-  # harbours <- data.table::merge(unique(logbook, by = 'fid')[, c('fid','oal')],
-  #                   harbours,
-  #                   by = 'fid')
+  harbours <- unique(logbook, by = 'fid')[
+    , c('fid','vessel.length.split15')][harbours, on = 'fid']
+  # harbours <- data.table::merge(unique(logbook, by = 'fid')[
+  #   , c('fid','vessel.length.split15')],
+  #   harbours,
+  #   by = 'fid')
   harbours <- harbours[, c('fid', 'year', 'landing_harbour', 'home_harbour',
-                           'oal'
+                           'vessel.length.split15'
                            # , 'n_trips', 'hel'
   )]
   data.table::setnames(harbours, old = 'home_harbour', new = 'lplads')
