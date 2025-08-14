@@ -7,7 +7,7 @@
 #' @export
 BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/annotations_notes/",
                      by.year = TRUE) {
-  Gear.type <- note.type <- review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- IDevent <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- NULL
+  Gear.type <- note.type <- review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- IDevent <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- Treatment.Group <- NULL
   `%notin%` <- Negate(`%in%`)
   if( by.year == FALSE ){
     all_files <- list.files(x, pattern = "^[A-Za-z]", full.names = TRUE,
@@ -26,6 +26,8 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
   names(list_BBdata) <- tolower(gsub(".*/(.+).csv.*", "\\1", filenames))
 
   list_BBdata <- Map(function(x){
+    if( is.null(x$Treatment.Group) ){ x$Treatment.Group <- NA_integer_ }
+    if( is.logical(x$Treatment.Group) ){ x$Treatment.Group <- NA_integer_ }
     x <- x[!x$Vesselid == "",]
     x <- x[!is.na(x$Vesselid),]
     x <- x[!x$Vesselid == "HAV01",]
@@ -69,8 +71,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     x <- x %>%
       dplyr::filter(Activity.type != 'Gear out') %>%
       dplyr::filter(Note.type %notin% c('Anchor 1', 'Anchor 2', 'Start', 'Stop')) %>%
-      dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon', 'Green', 'Red')) %>%
-      dplyr::filter(Color.name %notin% "MediumTurquoise") %>%
+      dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon', 'Green', 'Red', 'MediumTurquoise')) %>%
       dplyr::rename(haul_number = Haul.no) %>%
       dplyr::mutate(Mesh.color = na_if(Mesh.color,"")) %>%
       ## Create IDhaul for Activities (i.e. hauling)
@@ -143,6 +144,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                     time.start,
                     time.stop,
                     colour.name = Color.name,
+                    treatment = Treatment.Group,
                     note.type = Note.type,
                     comments = Note,
                     add.comments = Activity.comment
@@ -157,9 +159,10 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                               dplyr::n()), 1, review.info)
       ) %>%
       dplyr::ungroup() %>%
-      ## If there is at least one pinger in a haul, consider that there is mitigation in place
+      ## Is there  mitigation in place?
       dplyr::mutate(mitigation = dplyr::case_when(
         colour.name == "Yellow" ~ '1',
+        treatment == 1 ~ '1',
         .default = NA)) %>%
       dplyr::group_by(IDhaul) %>%
       tidyr::fill(mitigation) %>%
@@ -168,9 +171,18 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                                 mitigation)) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(mitigation_type = dplyr::case_when(
-        colour.name == "Yellow" ~ 'pinger',
-        #colour.name == "colour-to-define" ~ 'LED',
-        #colour.name == "colour-to-define" ~ 'thin-thread',
+        mitigation == '1' & colour.name == "Yellow" ~ 'pinger',
+        mitigation == '1' &
+          add.comments %in% add.comments[grepl(paste(c("(^|[^a-zA-Z])tt([^a-zA-Z]|$)",
+                                                       "thin thread",
+                                                       "thin-thread"),
+                                                     collapse = "|"),
+                                               add.comments)] ~ 'thin-twine nets',
+        mitigation == '1' &
+          add.comments %in% add.comments[grepl(paste(c("low net", "low-net"),
+                                                     collapse = "|"),
+                                               add.comments)] ~ 'low nets',
+        #colour.name == "colour-to-define" ~ 'some_mitigation_device',
         #colour.name == "colour-to-define" ~ 'other_mitigation',
         .default = NA)) %>%
       dplyr::group_by(IDhaul) %>%
