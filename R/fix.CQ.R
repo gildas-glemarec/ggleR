@@ -16,7 +16,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
     dat <- utils::read.csv2(textConnection(tmp), header=FALSE) # read tmp in as a csv
     names(dat) <- strsplit(header, ';')[[1]] # add headers
     dat <- dat[-1,]
-    dat <- subset(dat, Species %notin% c("Cl","Scsc")) ## Rm any lumpsucker or mackerel
+    # dat <- subset(dat, Species %notin% c("Cl","Scsc")) ## Rm any lumpsucker or mackerel
   },
   filenames)
   CQdata <- data.table::rbindlist(list_CQdata, fill = TRUE)

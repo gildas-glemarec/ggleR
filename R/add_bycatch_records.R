@@ -14,14 +14,7 @@ add_bycatch_records <- function(x = data_work,
     print("You forgot to indicate the path to your EM data file(s).")
   } else {
     if(alt_spp_list == F){
-      is.bird <- c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad',
-                   'Gar','Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel',
-                   'Melanitta','Mf','Mn','Pc','Pcr','Pg','Sm','Ua')
-      is.mammal <- c('Ba','Hg','La','Mammal','Pp','Pv','Se','Seal')
-      is.elasmo <- c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','Ray','Rb',
-                     'Rc','Rm','Sa','Sc','Shark')
-      is.fish <- c('Cl','Scsc')
-      is.not.id <- c('NA','NI')
+      list2env(spp_list, envir = .GlobalEnv)
     }else{
       if(missing(path_to_spp_lists)) {
         print("You forgot to load the path to your species list file(s)./nFor
@@ -65,7 +58,7 @@ add_bycatch_records <- function(x = data_work,
     y[,c("TripId","FishingTripId","FishingActivityId","ReferenceCode",
          "MeshSize","MeasurementTimeUTC","Length","Weight",
          "Volume","VolumeUnit","State","GpsTimeUtc","CreatedTime",
-         "CameraId","VideoFileName",NA) := NULL]
+         "CameraId",NA) := NULL]
 
     y$date <- y$time.bc
     y$time.bc <- lubridate::dmy_hms(y$time.bc)
