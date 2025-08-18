@@ -46,7 +46,7 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   x$quarter <- factor(x$quarter, levels= c('Q1','Q2','Q3','Q4'))
   x[, time.bc := NULL]
 
-  ## Position of the hauls
+  ## Position of the hauls #----
   ## Each haul position is averaged so that there is only one position per haul.
   ####  midPoint function from the geosphere package
   p1 <- matrix(c(x$haul.lon.start * pi/180,
@@ -66,7 +66,7 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   ## Make sure dataframe is organized the way we want
   x <- dplyr::arrange(x, rnum)
 
-  ## Soak times
+  ## Soak times #----
   ### List the hauls with manually determined soak times
   soak_files <- base::list.files(path_to_soak,
                                  pattern = "*csv",
@@ -91,12 +91,12 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   ## Manual BB bug fix (when it rarely rounds down to 0 hour)
   x[, soak := data.table::fifelse(soak == 0, 1, soak)]
 
-  ## Standardised effort
+  ## Standardised effort #----
   ### as net length (in km) multiplied by soak time (hours): km*hour
   x$std_effort <- as.numeric(x$soak * x$netlength / 1000) # netlength is in m
 
   if (give_me_more == TRUE){
-    ## Add info on depth (m) at point
+    ## Add info on depth (m) at point #----
 
     ### Define the ERDDAP dataset ID and the variable you want to retrieve
     #### https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
@@ -176,7 +176,7 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
     }
     x <- x[, depth := data.table::fifelse(depth>0, -2, depth)]
 
-    ## Add info on distance (m) to nearest point on shore
+    ## Add info on distance (m) to nearest point on shore #----
     coastline <- sf::st_read(path.to.coastline
                              # "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp"
     )
@@ -208,12 +208,11 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
     # # ## Store the results
     # # x$d2shore <- as.numeric(apply(dist, 1, min))
 
-    ## Add variable ICES rectangle and ICES subrectangle
+    ## Add variable ICES rectangle and ICES subrectangle #----
 
     if("lon.haul" %in% names(x)){
       dk.sppts <- sf::st_as_sf(x, coords = c('lon.haul','lat.haul'),
                                na.fail = FALSE)
-      ## Add the variable ICES rectangle and ICES subRectangle #----
       suppressWarnings(
         x[, icesrect:= data.table::fifelse(!is.na(lon.haul) & !is.na(lat.haul),
                                            mapplots::ices.rect2(lon.haul,
@@ -227,7 +226,7 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
                                                                      lat.haul),
                                                  NA)))
     } else {dk.sppts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
-    ## Add the variable ICES rectangle and ICES subRectangle #----
+
     x[, icesrect:= data.table::fifelse(!is.na(lon) & !is.na(lat),
                                        mapplots::ices.rect2(lon, lat),
                                        NA_character_)]
@@ -243,7 +242,7 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ## ICES area
+    ## ICES area #----
     x <- ggleR::pts.ices.area(x)
     return(x)
   }

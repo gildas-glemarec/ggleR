@@ -20,13 +20,13 @@ add_bycatch_records <- function(x = data_work,
         print("You forgot to load the path to your species list file(s)./nFor
               instance, use path_to_spp_lists = 'Q:/scientific-projects/cctv-monitoring/data/species lists/'
               before loading this function")}else{
-          list_spp <- ggleR::spp.list(path_to_spp_lists)
-          for(i in length(list_spp)){
-            assign(paste0("is.", names(list_spp[i])), unlist(list_spp[i]))
-          }
-        }
+                list_spp <- ggleR::spp.list(path_to_spp_lists)
+                for(i in length(list_spp)){
+                  assign(paste0("is.", names(list_spp[i])), unlist(list_spp[i]))
+                }
+              }
     }
-        ## Format input data and merge
+    ## Format input data and merge #----
     data.table::setDT(y, key = 'SpecieslistId')
     data.table::setnames(x = y,
                          old = c('HarbourNumber',
@@ -50,7 +50,7 @@ add_bycatch_records <- function(x = data_work,
                                  'comments',
                                  'name')
     )
-    ## Remove rows with no info on Vessel ID & remove Havfisken
+    ## Remove rows with no info on Vessel ID & remove Havfisken #----
     y <- y[!y$vessel == "",]
     y <- y[!is.na(y$vessel),]
     y <- y[!y$vessel == "HAV01",]
@@ -64,8 +64,9 @@ add_bycatch_records <- function(x = data_work,
     y$time.bc <- lubridate::dmy_hms(y$time.bc)
     y$Date <- as.Date(lubridate::dmy_hms(y$date))
     data.table::setorderv(y, cols = c("vessel","time.bc"), c(1, 1))
-    ## Create IDhaul. Be aware that if the haul crosses 00:00, then the date of
-    ## the bycatch event and the IDhaul haul might be different
+    ## Create IDhaul  #----
+    ### Be aware that if the haul crosses 00:00, then the date of
+    ### the bycatch event and the IDhaul haul might be different
     y$preID <- paste(y$vessel, substr(y$FishingActivity, 1, 10), sep = ".")
     y$IDhaul <- paste(y$preID, y$haul, sep = ".")
     # y <- y %>%
@@ -91,7 +92,7 @@ add_bycatch_records <- function(x = data_work,
     y$IDhaul <- as.factor(y$IDhaul)
     y$IDbc <- as.factor(y$IDbc)
 
-    ## Merge Annotations/Notes and Bycatch registrations
+    ## Merge Annotations/Notes and Bycatch registrations #----
     data.table::setDT(y, key = 'IDbc')
     data.table::setDT(x, key = 'IDbc')
 
@@ -133,6 +134,7 @@ add_bycatch_records <- function(x = data_work,
       if(dim(errors1)[1]==0 & dim(errors2)[1]==0){
         message("No error detected in the input data. Congratulations!")
       }else{
+        ## Print error message #----
         errors <- rbind(errors2, errors1)
         assign("errors", errors, envir = .GlobalEnv)
         utils::View(errors)
@@ -143,13 +145,18 @@ A dataset with the missing bycatch spp was saved to the workspace (and it is cal
       ####!!!####!!!####!!!####!!!####
       ####!!!####!!!####!!!####!!!####")
       }
-
-      merged_data <- merged_data[!is.na(merged_data$review.info), ][
-        !(colour.name == 'Aqua' & !spp %in% is.elasmo)][
-          !(colour.name == 'Black' & !spp %in% is.mammal)][
-            !(colour.name == 'Blue' & !spp %in% is.bird)]#[
-              #(!colour.name %in% c('Gray','Gray','Thistle') & !spp %in% is.fish)]
-
+      if('is.fish' %in% names(spp_list)){
+        merged_data <- merged_data[!is.na(merged_data$review.info), ][
+          !(colour.name == 'Aqua' & !spp %in% is.elasmo)][
+            !(colour.name == 'Black' & !spp %in% is.mammal)][
+              !(colour.name == 'Blue' & !spp %in% is.bird)][
+                (!colour.name %in% c('Gray','Grey','Thistle') & !spp %in% is.fish)]
+      }else{
+        merged_data <- merged_data[!is.na(merged_data$review.info), ][
+          !(colour.name == 'Aqua' & !spp %in% is.elasmo)][
+            !(colour.name == 'Black' & !spp %in% is.mammal)][
+              !(colour.name == 'Blue' & !spp %in% is.bird)]
+      }
       data.table::setorder(merged_data, vessel, time.start)
       return(merged_data)
     }
