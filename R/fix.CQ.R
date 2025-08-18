@@ -1,8 +1,10 @@
 #' Fix the catch quantification export format
 #' @param x Path to the catch quantification files sorted by year or by vessel
+#' @param incl.fish Should the bycatch data also include (targeted) fish species (e.g. lumpfish, mackerel, etc.)? Defaults to FALSE
 #' @return a dataset
 #' @export
-fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/"){
+fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/",
+                   incl.fish = FALSE){
   Species <- NULL
   `%notin%` <- Negate(`%in%`)
   filenames <- list.files(x,
@@ -16,7 +18,9 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
     dat <- utils::read.csv2(textConnection(tmp), header=FALSE) # read tmp in as a csv
     names(dat) <- strsplit(header, ';')[[1]] # add headers
     dat <- dat[-1,]
-    # dat <- subset(dat, Species %notin% c("Cl","Scsc")) ## Rm any lumpsucker or mackerel
+    if(incl.fish == FALSE){
+      dat <- subset(dat, Species %notin% c("Cl","Scsc")) ## Rm any lumpsucker or mackerel
+    }
   },
   filenames)
   CQdata <- data.table::rbindlist(list_CQdata, fill = TRUE)

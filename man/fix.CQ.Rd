@@ -6,11 +6,14 @@
 \usage{
 fix.CQ(
   x =
-    "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/"
+    "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/",
+  incl.fish = FALSE
 )
 }
 \arguments{
 \item{x}{Path to the catch quantification files sorted by year or by vessel}
+
+\item{incl.fish}{Should the bycatch data also include (targeted) fish species (e.g. lumpfish, mackerel, etc.)? Defaults to FALSE}
 }
 \value{
 a dataset
