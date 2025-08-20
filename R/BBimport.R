@@ -9,6 +9,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                      by.year = TRUE) {
   Gear.type <- note.type <- review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- IDevent <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- Treatment.Group <- NULL
   `%notin%` <- Negate(`%in%`)
+  ## Get all files together as a list #----
   if( by.year == FALSE ){
     all_files <- list.files(x, pattern = "^[A-Za-z]", full.names = TRUE,
                             recursive = FALSE)
@@ -18,23 +19,23 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                             recursive = FALSE)
     filenames <- all_files[!file.info(all_files)$isdir]
   }
-
   list_BBdata <- lapply(filenames,
                         utils::read.csv,
                         header=TRUE, sep = ";",
                         stringsAsFactors = FALSE, quote = "")
   names(list_BBdata) <- tolower(gsub(".*/(.+).csv.*", "\\1", filenames))
 
+  ## Map function  #----
   list_BBdata <- Map(function(x){
     if( is.null(x$Treatment.Group) ){ x$Treatment.Group <- NA_integer_ }
     if( is.logical(x$Treatment.Group) ){ x$Treatment.Group <- NA_integer_ }
     x <- x[!x$Vesselid == "",]
     x <- x[!is.na(x$Vesselid),]
     x <- x[!x$Vesselid == "HAV01",]
-    ## Keep only notes and annotations
+    ## Keep only notes and annotations #----
     x <- x %>%
       dplyr::filter(substr(Id,1,1) == "a" | substr(Id,1,1) == "n")
-    ## Remove the Green/Red and PaleGreen/LightSalmon notes (manual markings of start/stop)
+    ## Remove the Green/Red and PaleGreen/LightSalmon notes (manual markings of start/stop) #----
     x <- x %>%
       dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon',
                                          'Green', 'Red'))
@@ -71,24 +72,30 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     x <- x %>%
       dplyr::filter(Activity.type != 'Gear out') %>%
       dplyr::filter(Note.type %notin% c('Anchor 1', 'Anchor 2', 'Start', 'Stop')) %>%
-      dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon', 'Green', 'Red', 'MediumTurquoise')) %>%
+      dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon', 'Green',
+                                         'Red', 'MediumTurquoise')) %>%
       dplyr::rename(haul_number = Haul.no) %>%
       dplyr::mutate(Mesh.color = na_if(Mesh.color,"")) %>%
-      ## Create IDhaul for Activities (i.e. hauling)
-      dplyr::mutate(IDhaul = dplyr::case_when(Activity.type == 'Gear in' ~ paste(IDFD, haul_number, sep = "."),
+      ## Create IDhaul for Activities (i.e. hauling) #----
+      dplyr::mutate(IDhaul = dplyr::case_when(Activity.type == 'Gear in' ~
+                                                paste(IDFD, haul_number, sep = "."),
                                               .default = NA)) %>%
       dplyr::mutate(haul.lon.start = NA,
                     haul.lat.start = NA,
                     haul.lon.stop = NA,
                     haul.lat.stop = NA) %>%
-      dplyr::mutate(haul.lon.start = dplyr::case_when(Activity.type == 'Gear in'~Start.longitude,.default = NA_integer_),
-                    haul.lat.start = dplyr::case_when(Activity.type == 'Gear in'~Start.latitude,.default = NA_integer_),
-                    haul.lon.stop = dplyr::case_when(Activity.type == 'Gear in'~End.longitude,.default = NA_integer_),
-                    haul.lat.stop = dplyr::case_when(Activity.type == 'Gear in'~End.latitude,.default = NA_integer_)) %>%
-      ## Copy the haul characteristics (stored as Activity down in the corresponding Notes)
+      dplyr::mutate(haul.lon.start = dplyr::case_when(Activity.type == 'Gear in'~
+                                                        Start.longitude,.default = NA_integer_),
+                    haul.lat.start = dplyr::case_when(Activity.type == 'Gear in'~
+                                                        Start.latitude,.default = NA_integer_),
+                    haul.lon.stop = dplyr::case_when(Activity.type == 'Gear in'~
+                                                       End.longitude,.default = NA_integer_),
+                    haul.lat.stop = dplyr::case_when(Activity.type == 'Gear in'~
+                                                       End.latitude,.default = NA_integer_)) %>%
+      ## Copy the haul characteristics (stored as Activity down in the corresponding Notes) #----
       dplyr::arrange(Vesselid, time.start) %>%
       tidyr::fill(IDhaul)
-    ## Fix the problem where the first pinger appears before the beginning of the activity
+    ## Fix the problem where the first pinger appears before the beginning of the activity #----
     for(i in 1:(length(x$Id)-1)){
       if(x$Type[i] == 'Note' &
          x$Type[i+1] == 'Activity' &
@@ -159,7 +166,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                               dplyr::n()), 1, review.info)
       ) %>%
       dplyr::ungroup() %>%
-      ## Is there  mitigation in place?
+      ## Is there  mitigation in place? #----
       dplyr::mutate(mitigation = dplyr::case_when(
         colour.name == "Yellow" ~ '1',
         treatment == 1 ~ '1',
@@ -191,7 +198,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                                      "no mitigation",
                                                      mitigation_type)) %>%
       dplyr::ungroup() %>%
-      ## Create an event ID
+      ## Create an event ID #----
       dplyr::group_by(IDhaul) %>%
       dplyr::mutate(ID3 = rank(haul_number,
                                ties.method = "first")) %>% # ID3 = note "number" (rank) per haul (sorted chronologically)
@@ -199,29 +206,31 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       dplyr::ungroup() %>%
       dplyr::select(-ID3)
 
-    ## Remove duplicated IDhaul if there is at least one note
+    ## Remove duplicated IDhaul if there is at least one note #----
     x <- x %>%
       dplyr::group_by(IDhaul) %>%
       dplyr::filter(if (dplyr::n() > 1) dplyr::row_number() != 1 else TRUE) %>%
       dplyr::ungroup()
   },
   list_BBdata)
+
+  ## Bind the files in the list as one dt #----
   BBdata <- data.table::rbindlist(list_BBdata)
 
-  ## Add variable IDbc
+  ## Add variable IDbc and IDcatch #----
+  ### Include only the bycatch groups we are interested in
+  #                                      "Aqua" ## Elasmobranchs
+  #                                      "Black" ## Mammal
+  #                                      "Blue" ## Bird
+  #                                      "LawnGreen" ## Pearl net start
+  #                                      "Brown" ## Pearl net stop
+  #                                      "DeepPink" ## Seal damage
+  #                                      "Gray","Grey","DarkKhaki","Thistle" ## Used for fish
+  #                                      "Orange" ## Other (Andet), incl. some fish
+  #                                      "Purple" ## Plastic
+  #                                      "Yellow" ## Pingers
   tmp.bc <- BBdata %>%
     dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
-    ### Include only the bycatch groups we are interested in
-    #                                      "Aqua" ## Elasmobranchs
-    #                                      "Black" ## Mammal
-    #                                      "Blue" ## Bird
-    #                                      "LawnGreen" ## Pearl net start
-    #                                      "Brown" ## Pearl net stop
-    #                                      "DeepPink" ## Seal damage
-    #                                      "Gray","Grey","DarkKhaki","Thistle" ## Used for fish
-    #                                      "Orange" ## Other (Andet), incl. some fish
-    #                                      "Purple" ## Plastic
-    #                                      "Yellow" ## Pingers
     dplyr::filter(colour.name %in% c("Black","Blue","Aqua")) %>%
     dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
     dplyr::group_by(IDhaul) %>%
@@ -230,14 +239,29 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     dplyr::ungroup() %>%
     dplyr::mutate(IDbc = paste(IDhaul, ID3, sep = ".")) %>%
     dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
+  tmp.catch <- BBdata %>%
+    dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
+    dplyr::filter(colour.name %in% c("Gray","Grey","DarkKhaki","Thistle")) %>%
+    dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
+    dplyr::group_by(IDhaul) %>%
+    dplyr::mutate(ID3 = rank(haul_number,
+                             ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
+    dplyr::ungroup() %>%
+    dplyr::mutate(IDcatch = paste(IDhaul, ID3, sep = ".")) %>%
+    dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
 
   BBdata <- merge(BBdata, tmp.bc, by = 'IDevent', all.x = TRUE) %>%
     dplyr::arrange(vessel, as.Date(date), IDevent)
+  BBdata <- merge(BBdata, tmp.catch, by = 'IDevent', all.x = TRUE) %>%
+    dplyr::arrange(vessel, as.Date(date), IDevent)
 
+  ## Add variable sealmarks #----
   BBdata <- BBdata %>%
     dplyr::mutate(sealmarks = dplyr::if_else(colour.name == "DeepPink", 1, 0)) %>%
     dplyr::group_by(IDhaul) %>%
     dplyr::mutate(sealmarks = ifelse(any(sealmarks == 1), 1, sealmarks)) %>%
     dplyr::ungroup()
+
+  ## Return final dt #----
   return(BBdata)
 }
