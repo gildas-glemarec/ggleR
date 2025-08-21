@@ -6,7 +6,6 @@
 fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/",
                    incl.fish = FALSE){
   Species <- NULL
-  `%notin%` <- Negate(`%in%`)
   filenames <- list.files(x,
                           full.names = TRUE)
   list_CQdata <- Map(function(x){
@@ -19,7 +18,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
     names(dat) <- strsplit(header, ';')[[1]] # add headers
     dat <- dat[-1,]
     if(incl.fish == FALSE){
-      dat <- subset(dat, Species %notin% c("Cl","Scsc")) ## Rm any lumpsucker or mackerel
+      dat <- subset(dat, !Species %in% c("Cl","Scsc")) ## Rm any lumpsucker or mackerel
     }
   },
   filenames)
