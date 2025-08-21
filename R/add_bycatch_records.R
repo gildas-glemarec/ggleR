@@ -127,8 +127,10 @@ add_bycatch_records <- function(x = data_work,
       errors1 <- merged_data %>%
         dplyr::filter(colour.name == 'Aqua' & !spp %in% is.elasmo |
                         colour.name == 'Black' & !spp %in% is.mammal |
-                        colour.name == 'Blue' & !spp %in% is.bird
-                      # | colour.name %in% c('Gray','Gray','Thistle') & !spp %in% is.fish
+                        colour.name == 'Blue' & !spp %in% is.bird |
+                        colour.name %in% c("Gray","Grey","DarkKhaki","Thistle",
+                                           "SaddleBrown") & !note.type %in%
+                        c('Cod','Lumpsucker','Flatfish','Sole','Mackerel')
         )
       errors2 <- merged_data[is.na(merged_data$review.info), ]
       if(dim(errors1)[1]==0 & dim(errors2)[1]==0){
@@ -148,7 +150,11 @@ A dataset with the missing bycatch spp was saved to the workspace (and it is cal
       merged_data <- merged_data[!is.na(merged_data$review.info), ][
         !(colour.name == 'Aqua' & !spp %in% is.elasmo)][
           !(colour.name == 'Black' & !spp %in% is.mammal)][
-            !(colour.name == 'Blue' & !spp %in% is.bird)]
+            !(colour.name == 'Blue' & !spp %in% is.bird)][
+              !(colour.name %in% c("Gray","Grey","DarkKhaki","Thistle",
+                                   "SaddleBrown") & !note.type %in%
+                  c('Cod','Lumpsucker','Flatfish','Sole','Mackerel'))
+            ]
       data.table::setorder(merged_data, vessel, time.start)
       return(merged_data)
     }
