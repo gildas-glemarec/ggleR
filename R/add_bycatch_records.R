@@ -145,18 +145,10 @@ A dataset with the missing bycatch spp was saved to the workspace (and it is cal
       ####!!!####!!!####!!!####!!!####
       ####!!!####!!!####!!!####!!!####")
       }
-      if('is.fish' %in% names(spp_list)){
-        merged_data <- merged_data[!is.na(merged_data$review.info), ][
-          !(colour.name == 'Aqua' & !spp %in% is.elasmo)][
-            !(colour.name == 'Black' & !spp %in% is.mammal)][
-              !(colour.name == 'Blue' & !spp %in% is.bird)][
-                (!colour.name %in% c('Gray','Grey','Thistle') & !spp %in% is.fish)]
-      }else{
-        merged_data <- merged_data[!is.na(merged_data$review.info), ][
-          !(colour.name == 'Aqua' & !spp %in% is.elasmo)][
-            !(colour.name == 'Black' & !spp %in% is.mammal)][
-              !(colour.name == 'Blue' & !spp %in% is.bird)]
-      }
+      merged_data <- merged_data[!is.na(merged_data$review.info), ][
+        !(colour.name == 'Aqua' & !spp %in% is.elasmo)][
+          !(colour.name == 'Black' & !spp %in% is.mammal)][
+            !(colour.name == 'Blue' & !spp %in% is.bird)]
       data.table::setorder(merged_data, vessel, time.start)
       return(merged_data)
     }
