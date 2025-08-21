@@ -6,7 +6,8 @@
 #' @import data.table
 #' @export
 BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/annotations_notes/",
-                     by.year = TRUE) {
+                     by.year = TRUE,
+                     incl.fish = FALSE) {
   Gear.type <- note.type <- review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- IDevent <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- Treatment.Group <- NULL
   `%notin%` <- Negate(`%in%`)
   ## Get all files together as a list #----
@@ -217,18 +218,22 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
   ## Bind the files in the list as one dt #----
   BBdata <- data.table::rbindlist(list_BBdata)
 
-  ## Add variable IDbc and IDcatch #----
+  ## Add variable IDbc (and IDcatch if incl.fish == TRUE) #----
   ### Include only the bycatch groups we are interested in
-  #                                      "Aqua" ## Elasmobranchs
-  #                                      "Black" ## Mammal
-  #                                      "Blue" ## Bird
-  #                                      "LawnGreen" ## Pearl net start
-  #                                      "Brown" ## Pearl net stop
-  #                                      "DeepPink" ## Seal damage
-  #                                      "Gray","Grey","DarkKhaki","Thistle" ## Used for fish
-  #                                      "Orange" ## Other (Andet), incl. some fish
-  #                                      "Purple" ## Plastic
-  #                                      "Yellow" ## Pingers
+  # Aqua           Elasmobranch
+  # Black          Mammal
+  # Blue           Bird
+  # Brown          Pearl net stop
+  # DarkKhaki      Cod
+  # DeepPink       Seal damage
+  # Gray           Lumpsucker
+  # LawnGreen      Pearl net start
+  # Orange         Andet
+  # Purple         Plastic
+  # SaddleBrown    Flatfish or Sole
+  # Thistle        Mackerel
+  # Yellow         Pinger
+
   tmp.bc <- BBdata %>%
     dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
     dplyr::filter(colour.name %in% c("Black","Blue","Aqua")) %>%
@@ -239,21 +244,24 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     dplyr::ungroup() %>%
     dplyr::mutate(IDbc = paste(IDhaul, ID3, sep = ".")) %>%
     dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
-  tmp.catch <- BBdata %>%
-    dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
-    dplyr::filter(colour.name %in% c("Gray","Grey","DarkKhaki","Thistle")) %>%
-    dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
-    dplyr::group_by(IDhaul) %>%
-    dplyr::mutate(ID3 = rank(haul_number,
-                             ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
-    dplyr::ungroup() %>%
-    dplyr::mutate(IDcatch = paste(IDhaul, ID3, sep = ".")) %>%
-    dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
-
   BBdata <- merge(BBdata, tmp.bc, by = 'IDevent', all.x = TRUE) %>%
     dplyr::arrange(vessel, as.Date(date), IDevent)
-  BBdata <- merge(BBdata, tmp.catch, by = 'IDevent', all.x = TRUE) %>%
-    dplyr::arrange(vessel, as.Date(date), IDevent)
+
+  if(incl.fish == TRUE){
+    tmp.catch <- BBdata %>%
+      dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
+      dplyr::filter(colour.name %in% c("Gray","Grey","DarkKhaki","Thistle",
+                                       "SaddleBrown")) %>%
+      dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
+      dplyr::group_by(IDhaul) %>%
+      dplyr::mutate(ID3 = rank(haul_number,
+                               ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
+      dplyr::ungroup() %>%
+      dplyr::mutate(IDcatch = paste(IDhaul, ID3, sep = ".")) %>%
+      dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
+    BBdata <- merge(BBdata, tmp.catch, by = 'IDevent', all.x = TRUE) %>%
+      dplyr::arrange(vessel, as.Date(date), IDevent)
+  }
 
   ## Add variable sealmarks #----
   BBdata <- BBdata %>%
