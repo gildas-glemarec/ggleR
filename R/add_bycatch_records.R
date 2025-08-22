@@ -14,7 +14,7 @@ add_bycatch_records <- function(x = data_work,
     print("You forgot to indicate the path to your EM data file(s).")
   }
   ## Species list #----
-  if( length(spp_list) == 0 )){
+  if( length(spp_list) == 0 ){
     list2env(spp_list, envir = .GlobalEnv)
   }else{
     print("You should load a species list explicitely./n
