@@ -71,21 +71,17 @@ add_bycatch_records <- function(x = data_work,
                                'name')
   )
   ## Update species groups and classes
-  y <- y %>%
-    dplyr::mutate(SpeciesGroup = case_when(
-      spp %in% is.bird ~ 'Bycatch',
-      spp %in% is.mammal ~ 'Bycatch',
-      spp %in% is.elasmo ~ 'Bycatch',
-      spp %in% is.fish ~ 'Catch',
-      .default = 'Other')
-      ) %>%
-    dplyr::mutate(SpeciesClass = case_when(
+  y[, SpeciesGroup := dplyr::case_when(
+    spp %in% is.bird ~ 'Bycatch',
+    spp %in% is.mammal ~ 'Bycatch',
+    spp %in% is.elasmo ~ 'Bycatch',
+    spp %in% is.fish ~ 'Catch',
+    .default = 'Other')][, SpeciesClass := dplyr::case_when(
       spp %in% is.bird ~ 'Bird',
       spp %in% is.mammal ~ 'Mammal',
       spp %in% is.elasmo ~ 'Elasmobranch',
       spp %in% is.fish ~ 'Fish',
-      .default = 'Other')
-    )
+      .default = 'Other')]
 
   ## Remove rows with no info on Vessel ID & remove Havfisken #----
   y <- y[!y$vessel == "",]
