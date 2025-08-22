@@ -7,7 +7,7 @@
 fix.CQ(
   x =
     "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/",
-  spp_list = NULL
+  spp_list = list()
 )
 }
 \arguments{
