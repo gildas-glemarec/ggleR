@@ -30,7 +30,7 @@ add_bycatch_records <- function(x = data_work,
   is.fish = c('Cl','Scsc'),
   is.not.id = c('NA','NI'))"
           )
-    spp_list <- list(
+    spp_list <- tibble::lst(
       is.bird = c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad',
                   'Gar','Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel',
                   'Melanitta','Mf','Mn','Pc','Pcr','Pg','Sm','Ua'),

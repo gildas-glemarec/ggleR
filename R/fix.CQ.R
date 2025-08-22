@@ -21,9 +21,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
     if(exists('spp_list')){
       list2env(spp_list, envir = .GlobalEnv)
     }else{
-      print("You should load a species list explicitely./n
-    Here, the following species list is loaded per default. Check that it
-    is what you need or update otherwise./n
+      print("You should load a species list explicitely. Here, the following species list is loaded per default. Check that it is what you need or update otherwise./n
   spp_list <- list(
   is.bird = c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad','Gar',
               'Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta','Mf',
@@ -34,7 +32,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
   is.fish = c('Cl','Scsc'),
   is.not.id = c('NA','NI'))"
       )
-      spp_list <- list(
+      spp_list <- tibble::lst(
         is.bird = c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad',
                     'Gar','Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel',
                     'Melanitta','Mf','Mn','Pc','Pcr','Pg','Sm','Ua'),
