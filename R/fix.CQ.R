@@ -4,7 +4,7 @@
 #' @return a dataset
 #' @export
 fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/",
-                   spp_list = NULL){
+                   spp_list = list()){
   # Species <- NULL
   filenames <- list.files(x,
                           full.names = TRUE)
@@ -18,7 +18,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
     names(dat) <- strsplit(header, ';')[[1]] # add headers
     dat <- dat[-1,] ## Remove top row (duplicate of header)
     ## Species list #----
-    if(exists('spp_list')){
+    if( length(spp_list) == 0 ){
       list2env(spp_list, envir = .GlobalEnv)
     }else{
       print("You should load a species list explicitely. Here, the following species list is loaded per default. Check that it is what you need or update otherwise./n
