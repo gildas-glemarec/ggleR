@@ -18,7 +18,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
     names(dat) <- strsplit(header, ';')[[1]] # add headers
     dat <- dat[-1,] ## Remove top row (duplicate of header)
     ## Species list #----
-    if(exists(spp_list)){
+    if(exists('spp_list')){
       list2env(spp_list, envir = .GlobalEnv)
     }else{
       print("You should load a species list explicitely./n
