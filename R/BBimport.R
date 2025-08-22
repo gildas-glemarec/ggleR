@@ -2,7 +2,7 @@
 #' Read, format, and merge Notes and Annotations from Black Box Analyzer
 #' @param x EM data annotations/notes with geographic coordinates in decimal as lon/lat
 #' @param by.year Are the files sorted by year (default)?
-#' @param incl.fish Should the bycatch data also include (targeted) fish species (e.g. lumpfish, mackerel, etc.)? Defaults to FALSE
+#' @param incl.fish Incl. the catches not recorded both as notes and in catch quantification. this is the case for some fish species. Defaults to FALSE
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @import data.table
 #' @export
@@ -251,7 +251,9 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
   if(incl.fish == TRUE){
     tmp.catch <- BBdata %>%
       dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
-      dplyr::filter(colour.name %in% c("Gray","Grey","DarkKhaki","Thistle",
+      dplyr::filter(colour.name %in% c("Gray","Grey",
+                                       "DarkKhaki",
+                                       "Thistle",
                                        "SaddleBrown")) %>%
       dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
       dplyr::group_by(IDhaul) %>%

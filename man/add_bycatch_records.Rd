@@ -7,7 +7,7 @@
 add_bycatch_records(
   x = data_work,
   y = NULL,
-  alt_spp_list = F,
+  alt_spp_list = NULL,
   rm_errors = TRUE
 )
 }
@@ -16,9 +16,9 @@ add_bycatch_records(
 
 \item{y}{A data frame. Usually the output of fix.CQ("path_to_bycatch_data")}
 
-\item{alt_spp_list}{Experimental. Are you providing an alternative species list? Defaults to FALSE.}
-
 \item{rm_errors}{Defaults to TRUE. Removes the problematic bycatch events (those to fix manually) and prints them}
+
+\item{spp_list}{A species list must be provided. The format is an R list of character vectors. The names must correspond to the ones used in BlackBox Analyzer Catch Quantification records.}
 }
 \value{
 data.frame object
