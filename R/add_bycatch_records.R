@@ -14,22 +14,21 @@ add_bycatch_records <- function(x = data_work,
     print("You forgot to indicate the path to your EM data file(s).")
   }
   ## Species list #----
-  if( length(spp_list) != 0 ){
-    list2env(spp_list, envir = .GlobalEnv)
-  }else{
-    print("You should load a species list explicitely./n
-    Here, the following species list is loaded per default. Check that it
-    is what you need or update otherwise./n
-  spp_list <- list(
-  is.bird = c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad','Gar',
-              'Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta','Mf',
-              'Mn','Pc','Pcr','Pg','Sm','Ua'),
-  is.mammal = c('Ba','Hg','La','Mammal','Pp','Pv','Se','Seal'),
-  is.elasmo = c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','Ray','Rb',
-                'Rc','Rm','Sa','Sc','Shark'),
-  is.fish = c('Cl','Scsc'),
-  is.not.id = c('NA','NI'))"
-          )
+  if( length(spp_list) == 0 ){
+
+    message("You should load a species list explicitely.
+      Here, the following species list is loaded per default. Check that it is what you need orupdate otherwise.
+      spp_list <- list(
+      is.bird = c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad',
+      'Gar','Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta','Mf','Mn',
+      'Pc','Pcr','Pg','Sm','Ua'),
+      is.mammal = c('Ba','Hg','La','Mammal','Pp','Pv','Se','Seal'),
+      is.elasmo = c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','Ray','Rb',
+      'Rc','Rm','Sa','Sc','Shark'),
+      is.fish = c('Cl','Scsc'),
+      is.not.id = c('NA','NI'))"
+    )
+
     spp_list <- tibble::lst(
       is.bird = c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad',
                   'Gar','Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel',
@@ -40,6 +39,11 @@ add_bycatch_records <- function(x = data_work,
       is.fish = c('Cl','Scsc'),
       is.not.id = c('NA','NI'))
     list2env(spp_list, envir = .GlobalEnv)
+
+  }else{
+
+    list2env(spp_list, envir = .GlobalEnv)
+
   }
 
   ## Format input data and merge #----

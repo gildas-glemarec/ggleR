@@ -17,21 +17,23 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
     dat <- utils::read.csv2(textConnection(tmp), header=FALSE) # read tmp in as a csv
     names(dat) <- strsplit(header, ';')[[1]] # add headers
     dat <- dat[-1,] ## Remove top row (duplicate of header)
+
     ## Species list #----
-    if( length(spp_list) != 0 ){
-      list2env(spp_list, envir = .GlobalEnv)
-    }else{
-      print("You should load a species list explicitely. Here, the following species list is loaded per default. Check that it is what you need or update otherwise./n
-  spp_list <- list(
-  is.bird = c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad','Gar',
-              'Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta','Mf',
-              'Mn','Pc','Pcr','Pg','Sm','Ua'),
-  is.mammal = c('Ba','Hg','La','Mammal','Pp','Pv','Se','Seal'),
-  is.elasmo = c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','Ray','Rb',
-                'Rc','Rm','Sa','Sc','Shark'),
-  is.fish = c('Cl','Scsc'),
-  is.not.id = c('NA','NI'))"
+    if( length(spp_list) == 0 ){
+
+      message("You should load a species list explicitely.
+      Here, the following species list is loaded per default. Check that it is what you need orupdate otherwise.
+      spp_list <- list(
+      is.bird = c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad',
+      'Gar','Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel','Melanitta','Mf','Mn',
+      'Pc','Pcr','Pg','Sm','Ua'),
+      is.mammal = c('Ba','Hg','La','Mammal','Pp','Pv','Se','Seal'),
+      is.elasmo = c('Ar','Do','Gg','Ln','Ma','Mas','Mu','Mustelus','Ray','Rb',
+      'Rc','Rm','Sa','Sc','Shark'),
+      is.fish = c('Cl','Scsc'),
+      is.not.id = c('NA','NI'))"
       )
+
       spp_list <- tibble::lst(
         is.bird = c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad',
                     'Gar','Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel',
@@ -42,10 +44,16 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
         is.fish = c('Cl','Scsc'),
         is.not.id = c('NA','NI'))
       list2env(spp_list, envir = .GlobalEnv)
+
+    }else{
+
+      list2env(spp_list, envir = .GlobalEnv)
+
     }
+
     dat <- subset(dat, Species %in% data.frame(group = rep(names(spp_list),
-                                                             lengths(spp_list)),
-                                                 value = unlist(spp_list))$value)
+                                                           lengths(spp_list)),
+                                               value = unlist(spp_list))$value)
   },
   filenames)
   CQdata <- data.table::rbindlist(list_CQdata, fill = TRUE)
