@@ -9,7 +9,7 @@
 BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/annotations_notes/",
                      by.year = TRUE,
                      incl.fish = FALSE) {
-  Gear.type <- note.type <- review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- IDevent <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- Treatment.Group <- NULL
+  Gear.type <- note.type <- review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- Treatment.Group <- NULL
   `%notin%` <- Negate(`%in%`)
   ## Get all files together as a list #----
   if( by.year == FALSE ){

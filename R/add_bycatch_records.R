@@ -3,12 +3,14 @@
 #' @param y A data frame. Usually the output of fix.CQ("path_to_bycatch_data")
 #' @param spp_list A species list must be provided. The format is an R list of character vectors. The names must correspond to the ones used in BlackBox Analyzer Catch Quantification records.
 #' @param rm_errors Defaults to TRUE. Removes the problematic bycatch events (those to fix manually) and prints them
+#' @param incl.fish Incl. the catches not recorded both as notes and in catch quantification. this is the case for some fish species. Defaults to FALSE
 #' @return data.frame object
 #' @export
 add_bycatch_records <- function(x = data_work,
                                 y = NULL,
                                 spp_list = list(),
-                                rm_errors = TRUE){
+                                rm_errors = TRUE,
+                                incl.fish = FALSE){
   d2shore <- i.soak <- soak <- IDhaul <- time.bc <- spp <- colour.name <- path_to_spp_lists <- data_work <- Date <- d <- m <- quarter <- preID <- vessel <- haul <- IDhaul <- ID3 <- time.start <- mesh.colour <- idx <- review.info <- ind <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
   if(missing(y) | missing(x)) {
     print("You forgot to indicate the path to your EM data file(s).")
@@ -97,11 +99,13 @@ add_bycatch_records <- function(x = data_work,
   y$time.bc <- lubridate::dmy_hms(y$time.bc)
   y$Date <- as.Date(lubridate::dmy_hms(y$date))
   data.table::setorderv(y, cols = c("vessel","time.bc"), c(1, 1))
+
   ## Create IDhaul  #----
   ### Be aware that if the haul crosses 00:00, then the date of
   ### the bycatch event and the IDhaul haul might be different
   y$preID <- paste(y$vessel, substr(y$FishingActivity, 1, 10), sep = ".")
   y$IDhaul <- paste(y$preID, y$haul, sep = ".")
+  y$IDhaul <- as.factor(y$IDhaul)
   # y <- y %>%
   #   tidyr::separate(Date, c("y","m","d")) %>%
   #   tidyr::unite(col = Date, c(d,m,y), sep = "-") %>%
@@ -114,37 +118,67 @@ add_bycatch_records <- function(x = data_work,
   ## the number in the var "Count"
   y <- rbind(y,y[which(y$Count>1),])
 
-  y <- y %>%
-    dplyr::group_by(IDhaul) %>%
-    dplyr::mutate(ID3 = rank(IDhaul,
-                             ties.method = "first"))
-
-  y <- y %>%
-    dplyr::mutate(IDbc = paste(IDhaul, ID3, sep = ".")) %>%
-    dplyr::select(-ID3)
-  y$IDhaul <- as.factor(y$IDhaul)
+  ## Create IDbc (and IDcatch if incl.fish = TRUE) #----
+  rnum <- as.numeric(rownames(y))
+  keep <- c("IDhaul", "SpeciesGroup","IDevent")
+  ### Create IDevent#----
+  y <- y[, ID3 := data.table::frank(.I, ties.method = "first")
+         , by = IDhaul][, IDevent := paste(IDhaul, "event", ID3, sep = ".")]
+  y <- y[, ID3:=NULL]
+  y$IDevent <- as.factor(y$IDevent)
+  ### Create IDbc #----
+  tmp.bc <- y[, ..keep][SpeciesGroup %in% c("Bycatch")][
+    , ID3 := data.table::frank(.I, ties.method = "dense"), by = IDhaul][
+      , IDbc := paste(IDhaul, ID3, sep = ".")]
+  y <- merge(y, subset(tmp.bc, select = c(-ID3,-IDhaul,-SpeciesGroup)),
+             by = 'IDevent',
+             all.x = TRUE)
+  setorderv(y, cols = c('vessel', 'Date'))
   y$IDbc <- as.factor(y$IDbc)
+  ### Create IDcatch #----
+  if(incl.fish == TRUE){
+    tmp.catch <- y[, ..keep][SpeciesGroup %in% c("Catch")][
+      , ID3 := data.table::frank(.I, ties.method = "dense"), by = IDhaul][
+        , IDcatch := paste(IDhaul, ID3, sep = ".")]
+    y <- merge(y, subset(tmp.catch, select = c(-ID3,-IDhaul,-SpeciesGroup)),
+               by = 'IDevent',
+               all.x = TRUE)
+    setorderv(y, cols = c('vessel', 'Date'))
+    y$IDcatch <- as.factor(y$IDcatch)
+  }
+  y[, IDevent:=NULL]
 
-  ## Merge Annotations/Notes and Bycatch registrations #----
+  ## Merge Annotations/Notes and Bycatch/Catch registrations #----
   data.table::setDT(y, key = 'IDbc')
   data.table::setDT(x, key = 'IDbc')
-
+  if(incl.fish == FALSE){
   merged_data <- merge(y[, c("FishingActivity","haul",
                              "name","comments","preID",
                              "Date","date","IDhaul","vessel") := NULL],
                        x,
                        all = TRUE)
   data.table::setcolorder(merged_data, c("review.info", "date", "IDFD",
-                                         "IDhaul", "IDbc", "spp", "status",
-                                         "netlength", "soak", "std_effort",
-                                         "mesh.colour", "vessel"))
+                                         "IDhaul", "IDbc", "spp",
+                                         "status", "netlength", "soak",
+                                         "std_effort", "mesh.colour", "vessel"))
+  }else{
+    merged_data <- merge(y[, c("FishingActivity","haul",
+                               "name","comments","preID",
+                               "Date","date","IDhaul","vessel",
+                               "IDbc", "IDcatch") := NULL],
+                         x,
+                         all = TRUE)
+    data.table::setcolorder(merged_data, c("review.info", "date", "IDFD",
+                                           "IDhaul", "IDbc", "IDcatch", "spp",
+                                           "status", "netlength", "soak",
+                                           "std_effort", "mesh.colour", "vessel"))
+  }
   merged_data[, c("y","m","d") := NULL]
   data.table::setorder(merged_data, vessel, time.start)
   merged_data <- merged_data %>%
     dplyr::group_by(IDhaul) %>%
     tidyr::fill(mesh.colour) %>%
     data.table::as.data.table()
-
   ## Remove some duplicated rows (when there is at least one event in a haul,
   ## the "activity" row becomes redundant)
   merged_data$ind <- (stringr::str_detect(merged_data$Id, "^a"))
