@@ -192,30 +192,33 @@ add_bycatch_records <- function(x = data_work,
                                          "std_effort", "mesh.colour", "vessel"))
   merged_data[, c("y","m","d") := NULL]
   data.table::setorder(merged_data, vessel, time.start)
-  merged_data <- merged_data %>%
-    dplyr::group_by(IDhaul) %>%
-    tidyr::fill(mesh.colour) %>%
-    data.table::as.data.table()
+  # merged_data <- merged_data %>%
+  #   dplyr::group_by(IDhaul) %>%
+  #   tidyr::fill(mesh.colour) %>%
+  #   data.table::as.data.table()
+  merged_data[, mesh.colour := data.table::nafill(mesh.colour,
+                                                  type = "locf"),
+              by = IDhaul]
   ## Remove some duplicated rows (when there is at least one event in a haul,
   ## the "activity" row becomes redundant)
   merged_data$ind <- (stringr::str_detect(merged_data$Id, "^a"))
-  merged_data <- merged_data[, idx := .N, by = IDhaul][idx == 1 | is.na(review.info) | idx > 1 & ind != TRUE,]
+  merged_data <- merged_data[, idx := .N, by = IDhaul][
+    idx == 1 | is.na(review.info) | idx > 1 & ind != TRUE,]
   merged_data[, c("idx","Count","Id","ind") := NULL]
 
   ## Error list #----
   if(rm_errors == FALSE){
     return(merged_data)
   }else{
-    errors1 <- merged_data %>%
-      dplyr::filter(colour.name == 'Aqua' & !spp %in% is.elasmo |
-                      colour.name == 'Black' & !spp %in% is.mammal |
-                      colour.name == 'Blue' & !spp %in% is.bird |
-                      colour.name %in% c("Gray","Grey",
-                                         "DarkKhaki",
-                                         "Thistle",
-                                         "SaddleBrown") & !note.type %in%
-                      c('Cod','Lumpsucker','Flatfish','Sole','Mackerel')
-      )
+    errors1 <- merged_data[
+      (colour.name == "Aqua" & !spp %in% is.elasmo) |
+        (colour.name == "Black" & !spp %in% is.mammal) |
+        (colour.name == "Blue" & !spp %in% is.bird) |
+        (colour.name %in% c("Gray", "Grey", "DarkKhaki", "Thistle",
+                            "SaddleBrown") &
+           !note.type %in% c("Cod", "Lumpsucker", "Flatfish", "Sole",
+                             "Mackerel")),
+    ]
     errors2 <- merged_data[is.na(merged_data$review.info), ]
     if(dim(errors1)[1]==0 & dim(errors2)[1]==0){
       message("No error detected in the input data. Congratulations!")
@@ -237,14 +240,13 @@ Windows, you can try: write.csv(errors,
       ####!!!####!!!####!!!####!!!####")
     }
     merged_data <- merged_data[!is.na(merged_data$review.info), ][
-      !(colour.name == 'Aqua' & !spp %in% is.elasmo)][
-        !(colour.name == 'Black' & !spp %in% is.mammal)][
-          !(colour.name == 'Blue' & !spp %in% is.bird)][
-            !(colour.name %in% c("Gray","Grey",
-                                 "DarkKhaki",
-                                 "Thistle",
-                                 "SaddleBrown") & !note.type %in%
-                c('Cod','Lumpsucker','Flatfish','Sole','Mackerel'))
+      (colour.name == "Aqua" & !spp %in% is.elasmo) |
+        (colour.name == "Black" & !spp %in% is.mammal) |
+        (colour.name == "Blue" & !spp %in% is.bird) |
+        (colour.name %in% c("Gray", "Grey", "DarkKhaki", "Thistle",
+                            "SaddleBrown") &
+           !note.type %in% c("Cod", "Lumpsucker", "Flatfish", "Sole",
+                             "Mackerel")),
           ]
     data.table::setorder(merged_data, vessel, time.start)
     return(merged_data)
