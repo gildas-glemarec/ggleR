@@ -192,13 +192,11 @@ add_bycatch_records <- function(x = data_work,
                                          "std_effort", "mesh.colour", "vessel"))
   merged_data[, c("y","m","d") := NULL]
   data.table::setorder(merged_data, vessel, time.start)
-  # merged_data <- merged_data %>%
-  #   dplyr::group_by(IDhaul) %>%
-  #   tidyr::fill(mesh.colour) %>%
-  #   data.table::as.data.table()
-  merged_data[, mesh.colour := data.table::nafill(mesh.colour,
-                                                  type = "locf"),
-              by = IDhaul]
+  merged_data <- merged_data %>%
+    dplyr::group_by(IDhaul) %>%
+    tidyr::fill(mesh.colour) %>%
+    data.table::as.data.table()
+
   ## Remove some duplicated rows (when there is at least one event in a haul,
   ## the "activity" row becomes redundant)
   merged_data$ind <- (stringr::str_detect(merged_data$Id, "^a"))
