@@ -282,6 +282,14 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     BBdata <- merge(BBdata, tmp.catch.sub, by = 'IDevent', all.x = TRUE) %>%
       dplyr::arrange(vessel, as.Date(date), IDevent)
 
+  }else{
+    BBdata <- BBdata %>%
+      dplyr::filter(!colour.name %in% c("Gray","Grey",
+                                        "DarkKhaki",
+                                        "Thistle",
+                                        "SaddleBrown")) %>%
+      dplyr::filter(note.type != "")%>%
+      dplyr::arrange(vessel, as.Date(date), IDevent)
   }
 
   ## Add variable sealmarks #----
