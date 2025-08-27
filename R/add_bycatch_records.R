@@ -50,7 +50,7 @@ add_bycatch_records <- function(x = data_work,
 
   ## Format input data and merge #----
   data.table::setDT(y, key = 'SpecieslistId')
-  data.table::setnames(x = y,
+  data.table::setnames(y,
                        old = c('HarbourNumber',
                                'HaulNo',
                                'Species',
@@ -160,24 +160,34 @@ add_bycatch_records <- function(x = data_work,
                                "Date","date","IDhaul","vessel") := NULL],
                          x,
                          all = TRUE)
-    data.table::setcolorder(merged_data, c("review.info", "date", "IDFD",
-                                           "IDhaul", "IDbc", "spp",
-                                           "status", "netlength", "soak",
-                                           "std_effort", "mesh.colour", "vessel"))
   }else{
-    data.table::setDT(y, key = 'IDcatch.sub')
-    data.table::setDT(x, key = 'IDcatch.sub')
-    merged_data <- merge(y[, c("FishingActivity","haul",
-                               "name","comments","preID",
-                               "Date","date","IDhaul","vessel",
-                               "IDbc", "IDcatch") := NULL],
+    y.Bycatch <- y[SpeciesGroup == 'Bycatch'][, c("IDcatch.sub","FishingActivity",
+                                                  "haul", "name","comments","preID",
+                                                  "Date","date","IDhaul",
+                                                  "vessel") := NULL]
+    data.table::setDT(y.Bycatch, key = 'IDbc')
+    data.table::setDT(x, key = 'IDbc')
+    merged_data <- merge(y.Bycatch,
                          x,
                          all = TRUE)
-    data.table::setcolorder(merged_data, c("review.info", "date", "IDFD",
-                                           "IDhaul", "IDbc", "IDcatch", "spp",
-                                           "status", "netlength", "soak",
-                                           "std_effort", "mesh.colour", "vessel"))
+    y.Catch <- y[SpeciesGroup == 'Catch'][, c("FishingActivity",
+                                              "haul", "name","comments","preID",
+                                              "Date","date","IDhaul","vessel",
+                                              "IDbc") := NULL]
+    data.table::setDT(y.Catch, key = 'IDcatch.sub')
+    data.table::setDT(x, key = 'IDcatch.sub')
+    cols_to_update <- c("SpecieslistId", "time.bc", "Count", "spp", "seen_drop",
+                        "status", "lon.bc", "lat.bc", "VideoFileName",
+                        "SpeciesGroup", "SpeciesClass")
+    for (col in cols_to_update) {
+      merged_data[y.Catch, (col) := get(paste0("i.", col)), on = "IDcatch.sub"]
+    }
+    merged_data[, 'IDcatch.sub' := NULL]
   }
+  data.table::setcolorder(merged_data, c("review.info", "date", "IDFD",
+                                         "IDhaul", "IDbc", "spp",
+                                         "status", "netlength", "soak",
+                                         "std_effort", "mesh.colour", "vessel"))
   merged_data[, c("y","m","d") := NULL]
   data.table::setorder(merged_data, vessel, time.start)
   merged_data <- merged_data %>%
