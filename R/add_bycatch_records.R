@@ -152,6 +152,7 @@ add_bycatch_records <- function(x = data_work,
   y[, IDevent:=NULL]
 
   ## Merge Annotations/Notes and Bycatch/Catch registrations #----
+  ### Without fish catches #----
   if(incl.fish == FALSE){
     data.table::setDT(y, key = 'IDbc')
     data.table::setDT(x, key = 'IDbc')
@@ -160,7 +161,8 @@ add_bycatch_records <- function(x = data_work,
                                "Date","date","IDhaul","vessel") := NULL],
                          x,
                          all = TRUE)
-  }else{
+  }else{ ### With fish catches #----
+
     y.Bycatch <- y[SpeciesGroup == 'Bycatch'][, c("IDcatch.sub","FishingActivity",
                                                   "haul", "name","comments","preID",
                                                   "Date","date","IDhaul",
@@ -200,6 +202,7 @@ add_bycatch_records <- function(x = data_work,
   merged_data <- merged_data[, idx := .N, by = IDhaul][idx == 1 | is.na(review.info) | idx > 1 & ind != TRUE,]
   merged_data[, c("idx","Count","Id","ind") := NULL]
 
+  ## Error list #----
   if(rm_errors == FALSE){
     return(merged_data)
   }else{
@@ -217,7 +220,7 @@ add_bycatch_records <- function(x = data_work,
     if(dim(errors1)[1]==0 & dim(errors2)[1]==0){
       message("No error detected in the input data. Congratulations!")
     }else{
-      ## Print error message #----
+      ### Print error message #----
       errors <- rbind(errors2, errors1)
       assign("errors", errors, envir = .GlobalEnv)
       utils::View(errors)
