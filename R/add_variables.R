@@ -5,14 +5,18 @@
 #' @param study_period Should all years (default), or only specific years be compiled (defined as c(year1, year2, etc.))?
 #' @param path_to_soak Some soak time info is missing (not found in BB). Manual fix based on a prior extraction (input is a csv file)
 #' @param path.to.coastline ESRI Shapefile of the region (used to estimate distance to shore). By default, the file is Europe (Bounding box:  xmin: 943609.8 ymin: -375446 xmax: 7601958 ymax: 6825119; Projected CRS: ETRS89-extended / LAEA Europe)
+#' @param path.to.old.notes CSV file wit h a previous version of Notes and Annotations
 #' @return Same dataset with additional columns
 #' @export
-add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
+add_variables <- function(x = data_work,
+                          study_period = NULL,
+                          give_me_more = TRUE,
                           path_to_soak = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/soak/",
                           path.to.coastline = "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp",
-                          path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif") {
+                          path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif",
+                          path.to.old.notes = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/processed data/NotesAnnotations.csv") {
 
-  . <- time.bc <- IDhaul <- soak <- i.soak <- d2shore <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
+  . <- depth <- icesrect <- lon.haul <- lat.haul <- lon <- lat <- time.bc <- IDhaul <- soak <- i.soak <- d2shore <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
 
   x$rnum <- as.integer(row.names(x))
   data.table::setDT(x)
@@ -98,6 +102,14 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
   if (give_me_more == TRUE){
     ## Add info on depth (m) at point #----
 
+    ### First, we can recycle the work what we have done previously and update
+    ### only the rows for which we do not have depth and d2shore already
+    old.x <- data.table::fread(path.to.old.notes)
+    old.x <- subset(old.x, select = c('IDevent','depth','d2shore'))
+    x <- merge(x, old.x, by = "IDevent", all.x = TRUE)
+
+    ## Now we can update the values that are missing (i.e. NA in depth and d2shore)
+
     ### Define the ERDDAP dataset ID and the variable you want to retrieve
     #### https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
     dataset_id <- "bathymetry_dtm_2024"
@@ -133,15 +145,16 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
       return(depth)
     }
 
-    x$depth <- NA
+    x.tmp <- x[ is.na(depth) | is.na(d2shore) ]
+
     chunk_size <- 500
-    num_chunks <- ceiling(nrow(x) / chunk_size)
+    num_chunks <- ceiling(nrow(x.tmp) / chunk_size)
     depth_in_chuncks <- list()
 
     for (i in 1:num_chunks) {
       # Calculate the start and end indices for the current chunk
       start_idx <- (i - 1) * chunk_size + 1
-      end_idx <- min(i * chunk_size, nrow(x))
+      end_idx <- min(i * chunk_size, nrow(x.tmp))
 
       # Extract the current chunk of data
       x_chunk <- x[start_idx:end_idx, ]
@@ -158,29 +171,29 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
       Sys.sleep(1)
 
     }
-    x$depth <- unlist(depth_in_chuncks)
+    x.tmp$depth <- unlist(depth_in_chuncks) ## Check from here
 
     ## For the points that are not found, we can use a backup plan:
     depth.ras.dk <- terra::rast(x = path.to.raster)
-    x <- data.table::as.data.table(x)
-    if("lon.haul" %in% names(x)){
-      dk.sppts <- sf::st_as_sf(x, coords = c('lon.haul','lat.haul'), na.fail = FALSE)
-    } else {dk.sppts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
+    x.tmp <- data.table::as.data.table(x.tmp)
+    if("lon.haul" %in% names(x.tmp)){
+      dk.sppts <- sf::st_as_sf(x.tmp, coords = c('lon.haul','lat.haul'), na.fail = FALSE)
+    } else {dk.sppts <- sf::st_as_sf(x.tmp, coords = c('lon','lat'), na.fail = FALSE)
     }
     depth.dk.df <- (terra::extract(x = depth.ras.dk,
                                    y = dk.sppts,
                                    df = TRUE))$D5_2020
-    for (i in 1: length(x$depth)){
-      if( is.na(x$depth[i]) ){
-        x$depth[i] <- depth.dk.df[i] }
+    for (i in 1: length(x.tmp$depth)){
+      if( is.na(x.tmp$depth[i]) ){
+        x.tmp$depth[i] <- depth.dk.df[i] }
     }
-    x <- x[, depth := data.table::fifelse(depth>0, -2, depth)]
+    x.tmp <- x.tmp[, depth := data.table::fifelse(depth>0, -2, depth)]
 
     ## Add info on distance (m) to nearest point on shore #----
     coastline <- sf::st_read(path.to.coastline
                              # "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp"
     )
-    x_sf <- x  %>%
+    x_sf <- x.tmp  %>%
       sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
                    crs = 4326) %>%
       sf::st_transform(3035)
@@ -192,7 +205,7 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
     ## In the map we use here, there are a couple a islets in the Sound that
     ## do not appear to be correct. As a result, we could rarely have d2shore=0
     ## Fix by forcing a minimum d2shore of 20 metres
-    x <- x %>%
+    x.tmp <- x.tmp %>%
       dplyr::mutate(d2shore = ifelse(d2shore == 0, 20, d2shore))
 
     # # ## Older version (coastline shapefile incomplete with missing islets)
@@ -207,6 +220,9 @@ add_variables <- function(x = data_work, give_me_more = T, study_period = NULL,
     # # dist <- sf::st_distance(x_sf, coastline[1:53,])
     # # ## Store the results
     # # x$d2shore <- as.numeric(apply(dist, 1, min))
+
+    x.tmp <- subset(x.tmp, select = c('IDevent','depth','d2shore'))
+    x <- merge(x, x.tmp, by = "IDevent", all.x = TRUE)
 
     ## Add variable ICES rectangle and ICES subrectangle #----
 

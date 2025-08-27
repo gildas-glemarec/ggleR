@@ -5,7 +5,7 @@
 #' @export
 fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/",
                    spp_list = list()){
-  # Species <- NULL
+  Species <- NULL
   filenames <- list.files(x,
                           full.names = TRUE)
   list_CQdata <- Map(function(x){

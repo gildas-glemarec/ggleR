@@ -11,7 +11,7 @@ add_bycatch_records <- function(x = data_work,
                                 spp_list = list(),
                                 rm_errors = TRUE,
                                 incl.fish = FALSE){
-  d2shore <- i.soak <- soak <- IDhaul <- time.bc <- spp <- colour.name <- path_to_spp_lists <- data_work <- Date <- d <- m <- quarter <- preID <- vessel <- haul <- IDhaul <- ID3 <- time.start <- mesh.colour <- idx <- review.info <- ind <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
+  is.elasmo <- is.bird <- is.mammal <- note.type <- SpeciesGroup <- SpeciesClass <- IDevent <- IDbc <- IDcatch.sub <- d2shore <- i.soak <- soak <- IDhaul <- time.bc <- spp <- colour.name <- path_to_spp_lists <- data_work <- Date <- d <- m <- quarter <- preID <- vessel <- haul <- IDhaul <- ID3 <- time.start <- mesh.colour <- idx <- review.info <- ind <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
   if(missing(y) | missing(x)) {
     print("You forgot to indicate the path to your EM data file(s).")
   }
@@ -93,7 +93,7 @@ add_bycatch_records <- function(x = data_work,
   y[,c("TripId","FishingTripId","FishingActivityId","ReferenceCode",
        "MeshSize","MeasurementTimeUTC","Length","Weight",
        "Volume","VolumeUnit","State","GpsTimeUtc","CreatedTime",
-       "CameraId",NA) := NULL]
+       "CameraId") := NULL]
 
   y$date <- y$time.bc
   y$time.bc <- lubridate::dmy_hms(y$time.bc)
@@ -118,14 +118,16 @@ add_bycatch_records <- function(x = data_work,
   ## the number in the var "Count"
   y <- rbind(y,y[which(y$Count>1),])
 
-  ## Create IDbc (and IDcatch if incl.fish = TRUE) #----
+  ## Create IDbc (and IDcatch.sub if incl.fish = TRUE) #----
   rnum <- as.numeric(rownames(y))
   keep <- c("IDhaul", "SpeciesGroup","IDevent")
-  ### Create IDevent#----
+
+  ### Create IDevent #----
   y <- y[, ID3 := data.table::frank(.I, ties.method = "first")
          , by = IDhaul][, IDevent := paste(IDhaul, "event", ID3, sep = ".")]
   y <- y[, ID3:=NULL]
   y$IDevent <- as.factor(y$IDevent)
+
   ### Create IDbc #----
   tmp.bc <- y[, ..keep][SpeciesGroup %in% c("Bycatch")][
     , ID3 := data.table::frank(.I, ties.method = "dense"), by = IDhaul][
@@ -133,35 +135,38 @@ add_bycatch_records <- function(x = data_work,
   y <- merge(y, subset(tmp.bc, select = c(-ID3,-IDhaul,-SpeciesGroup)),
              by = 'IDevent',
              all.x = TRUE)
-  setorderv(y, cols = c('vessel', 'Date'))
+  data.table::setorderv(y, cols = c('vessel', 'Date'))
   y$IDbc <- as.factor(y$IDbc)
-  ### Create IDcatch #----
+
+  ### Create IDcatch.sub #----
   if(incl.fish == TRUE){
     tmp.catch <- y[, ..keep][SpeciesGroup %in% c("Catch")][
       , ID3 := data.table::frank(.I, ties.method = "dense"), by = IDhaul][
-        , IDcatch := paste(IDhaul, ID3, sep = ".")]
+        , IDcatch.sub := paste(IDhaul, ID3, sep = ".")]
     y <- merge(y, subset(tmp.catch, select = c(-ID3,-IDhaul,-SpeciesGroup)),
                by = 'IDevent',
                all.x = TRUE)
-    setorderv(y, cols = c('vessel', 'Date'))
-    y$IDcatch <- as.factor(y$IDcatch)
+    data.table::setorderv(y, cols = c('vessel', 'Date'))
+    y$IDcatch.sub <- as.factor(y$IDcatch.sub)
   }
   y[, IDevent:=NULL]
 
   ## Merge Annotations/Notes and Bycatch/Catch registrations #----
-  data.table::setDT(y, key = 'IDbc')
-  data.table::setDT(x, key = 'IDbc')
   if(incl.fish == FALSE){
-  merged_data <- merge(y[, c("FishingActivity","haul",
-                             "name","comments","preID",
-                             "Date","date","IDhaul","vessel") := NULL],
-                       x,
-                       all = TRUE)
-  data.table::setcolorder(merged_data, c("review.info", "date", "IDFD",
-                                         "IDhaul", "IDbc", "spp",
-                                         "status", "netlength", "soak",
-                                         "std_effort", "mesh.colour", "vessel"))
+    data.table::setDT(y, key = 'IDbc')
+    data.table::setDT(x, key = 'IDbc')
+    merged_data <- merge(y[, c("FishingActivity","haul",
+                               "name","comments","preID",
+                               "Date","date","IDhaul","vessel") := NULL],
+                         x,
+                         all = TRUE)
+    data.table::setcolorder(merged_data, c("review.info", "date", "IDFD",
+                                           "IDhaul", "IDbc", "spp",
+                                           "status", "netlength", "soak",
+                                           "std_effort", "mesh.colour", "vessel"))
   }else{
+    data.table::setDT(y, key = 'IDcatch.sub')
+    data.table::setDT(x, key = 'IDcatch.sub')
     merged_data <- merge(y[, c("FishingActivity","haul",
                                "name","comments","preID",
                                "Date","date","IDhaul","vessel",

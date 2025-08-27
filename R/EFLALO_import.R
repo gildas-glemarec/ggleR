@@ -10,7 +10,7 @@ EFLALO_import <- function(x,
                           study_period = NULL
 ){
 
-  . <- LE_D2S <- LE_GEAR <- LE_CYEAR <- FT_MAX.KG <- FT_MAX.EUR <- FT_TARGET <- LE_EURO_AAS <- LE_KG_LUM <- LE_KG <- LE_EURO <- VE_F.LEN <- LE_MS <- LE_LAT <- LE_LON <- quarter <- vessel.length <- LE_DIV <- Date <- FD <- IDFD <- d <- eart <- LE_F.MESH <- VE_REF <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- LE_ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- LE_MSZ <- mesh <- metier_level6_ret <- LE_MET <- path <-  read.csv <- redskb <- restrict_study_period <- LE_RECT <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
+  . <- FT_TARGET.KG <- FT_TARGET.EUR <- LE_DEP <- LE_D2S <- LE_GEAR <- LE_CYEAR <- FT_MAX.KG <- FT_MAX.EUR <- FT_TARGET <- LE_EURO_AAS <- LE_KG_LUM <- LE_KG <- LE_EURO <- VE_F.LEN <- LE_MS <- LE_LAT <- LE_LON <- quarter <- vessel.length <- LE_DIV <- Date <- FD <- IDFD <- d <- eart <- LE_F.MESH <- VE_REF <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- LE_ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- LE_MSZ <- mesh <- metier_level6_ret <- LE_MET <- path <-  read.csv <- redskb <- restrict_study_period <- LE_RECT <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
 
   `%notin%` <- Negate(`%in%`)
   Mode <- function(x) {
