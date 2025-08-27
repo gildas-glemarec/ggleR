@@ -2,13 +2,11 @@
 #' Read, format, and merge Notes and Annotations from Black Box Analyzer
 #' @param x EM data annotations/notes with geographic coordinates in decimal as lon/lat
 #' @param by.year Are the files sorted by year (default)?
-#' @param incl.fish Incl. the catches not recorded both as notes and in catch quantification. this is the case for some fish species. Defaults to FALSE
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @import data.table
 #' @export
 BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/annotations_notes/",
-                     by.year = TRUE,
-                     incl.fish = FALSE) {
+                     by.year = TRUE) {
   sealmarks <- Gear.type <- note.type <- review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- Treatment.Group <- NULL
   `%notin%` <- Negate(`%in%`)
   ## Get all files together as a list #----
@@ -219,7 +217,6 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
   ## Bind the files in the list as one dt #----
   BBdata <- data.table::rbindlist(list_BBdata)
 
-  ## Add variable IDbc (and IDcatch if incl.fish == TRUE) #----
   ### Include only the bycatch groups we are interested in
   # Aqua           Elasmobranch
   # Black          Mammal
@@ -248,7 +245,6 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
   BBdata <- merge(BBdata, tmp.bc, by = 'IDevent', all.x = TRUE) %>%
     dplyr::arrange(vessel, as.Date(date), IDevent)
 
-  if(incl.fish == TRUE){
     ## First let's create IDcatch for all the notes with fish
     tmp.catch <- BBdata %>%
       dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
@@ -281,16 +277,6 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     tmp.catch.sub <- subset(tmp.catch.sub, select = c('IDevent','IDcatch.sub'))
     BBdata <- merge(BBdata, tmp.catch.sub, by = 'IDevent', all.x = TRUE) %>%
       dplyr::arrange(vessel, as.Date(date), IDevent)
-
-  }else{
-    BBdata <- BBdata %>%
-      dplyr::filter(!colour.name %in% c("Gray","Grey",
-                                        "DarkKhaki",
-                                        "Thistle",
-                                        "SaddleBrown")) %>%
-      dplyr::filter(note.type != "")%>%
-      dplyr::arrange(vessel, as.Date(date), IDevent)
-  }
 
   ## Add variable sealmarks #----
   BBdata <- BBdata %>%

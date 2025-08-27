@@ -3,14 +3,12 @@
 #' @param y A data frame. Usually the output of fix.CQ("path_to_bycatch_data")
 #' @param spp_list A species list must be provided. The format is an R list of character vectors. The names must correspond to the ones used in BlackBox Analyzer Catch Quantification records.
 #' @param rm_errors Defaults to TRUE. Removes the problematic bycatch events (those to fix manually) and prints them
-#' @param incl.fish Incl. the catches not recorded both as notes and in catch quantification. this is the case for some fish species. Defaults to FALSE
 #' @return data.frame object
 #' @export
 add_bycatch_records <- function(x = data_work,
                                 y = NULL,
                                 spp_list = list(),
-                                rm_errors = TRUE,
-                                incl.fish = FALSE){
+                                rm_errors = TRUE){
   is.elasmo <- is.bird <- is.mammal <- note.type <- SpeciesGroup <- SpeciesClass <- IDevent <- IDbc <- IDcatch.sub <- d2shore <- i.soak <- soak <- IDhaul <- time.bc <- spp <- colour.name <- path_to_spp_lists <- data_work <- Date <- d <- m <- quarter <- preID <- vessel <- haul <- IDhaul <- ID3 <- time.start <- mesh.colour <- idx <- review.info <- ind <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
   if(missing(y) | missing(x)) {
     print("You forgot to indicate the path to your EM data file(s).")
@@ -139,8 +137,8 @@ add_bycatch_records <- function(x = data_work,
   y$IDbc <- as.factor(y$IDbc)
 
   ### Create IDcatch.sub #----
-  if(incl.fish == TRUE){
-    tmp.catch <- y[, ..keep][SpeciesGroup %in% c("Catch")][
+  # if(incl.fish == TRUE){
+    tmp.catch <- data.table::copy(y)[, ..keep][SpeciesGroup %in% c("Catch")][
       , ID3 := data.table::frank(.I, ties.method = "dense"), by = IDhaul][
         , IDcatch.sub := paste(IDhaul, ID3, sep = ".")]
     y <- merge(y, subset(tmp.catch, select = c(-ID3,-IDhaul,-SpeciesGroup)),
@@ -148,22 +146,22 @@ add_bycatch_records <- function(x = data_work,
                all.x = TRUE)
     data.table::setorderv(y, cols = c('vessel', 'Date'))
     y$IDcatch.sub <- as.factor(y$IDcatch.sub)
-  }
+  # }
   y[, IDevent:=NULL]
 
   ## Merge Annotations/Notes and Bycatch/Catch registrations #----
-  ### Without fish catches #----
-  if(incl.fish == FALSE){
-    data.table::setDT(y, key = 'IDbc')
-    data.table::setDT(x, key = 'IDbc')
-    merged_data <- merge(y[, c("FishingActivity","haul",
-                               "name","comments","preID",
-                               "Date","date","IDhaul","vessel") := NULL],
-                         x,
-                         all = TRUE)
-  }else{ ### With fish catches #----
+  # ### Without fish catches #----
+  # if(incl.fish == FALSE){
+  #   data.table::setDT(y, key = 'IDbc')
+  #   data.table::setDT(x, key = 'IDbc')
+  #   merged_data <- merge(y[, c("FishingActivity","haul",
+  #                              "name","comments","preID",
+  #                              "Date","date","IDhaul","vessel") := NULL],
+  #                        x,
+  #                        all = TRUE)
+  # }else{ ### With fish catches #----
 
-    y.Bycatch <- y[SpeciesGroup == 'Bycatch'][, c("IDcatch.sub","FishingActivity",
+    y.Bycatch <- data.table::copy(y)[SpeciesGroup == 'Bycatch'][, c("IDcatch.sub","FishingActivity",
                                                   "haul", "name","comments","preID",
                                                   "Date","date","IDhaul",
                                                   "vessel") := NULL]
@@ -172,7 +170,7 @@ add_bycatch_records <- function(x = data_work,
     merged_data <- merge(y.Bycatch,
                          x,
                          all = TRUE)
-    y.Catch <- y[SpeciesGroup == 'Catch'][, c("FishingActivity",
+    y.Catch <- data.table::copy(y)[SpeciesGroup == 'Catch'][, c("FishingActivity",
                                               "haul", "name","comments","preID",
                                               "Date","date","IDhaul","vessel",
                                               "IDbc") := NULL]
@@ -185,7 +183,7 @@ add_bycatch_records <- function(x = data_work,
       merged_data[y.Catch, (col) := get(paste0("i.", col)), on = "IDcatch.sub"]
     }
     merged_data[, 'IDcatch.sub' := NULL]
-  }
+  # }
   data.table::setcolorder(merged_data, c("review.info", "date", "IDFD",
                                          "IDhaul", "IDbc", "spp",
                                          "status", "netlength", "soak",

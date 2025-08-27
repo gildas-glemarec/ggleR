@@ -8,8 +8,7 @@ add_bycatch_records(
   x = data_work,
   y = NULL,
   spp_list = list(),
-  rm_errors = TRUE,
-  incl.fish = FALSE
+  rm_errors = TRUE
 )
 }
 \arguments{
@@ -20,8 +19,6 @@ add_bycatch_records(
 \item{spp_list}{A species list must be provided. The format is an R list of character vectors. The names must correspond to the ones used in BlackBox Analyzer Catch Quantification records.}
 
 \item{rm_errors}{Defaults to TRUE. Removes the problematic bycatch events (those to fix manually) and prints them}
-
-\item{incl.fish}{Incl. the catches not recorded both as notes and in catch quantification. this is the case for some fish species. Defaults to FALSE}
 }
 \value{
 data.frame object
