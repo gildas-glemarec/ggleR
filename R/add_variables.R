@@ -86,6 +86,7 @@ add_variables <- function(x = data_work,
   soakdata <- data.table::rbindlist(list_soak,fill=TRUE)
   soakdata <- soakdata[, c('IDhaul','soak')]
   soakdata$IDhaul <- as.factor(soakdata$IDhaul)
+  soakdata$soak <- as.numeric(soakdata$soak)
   soakdata <- data.table::setkey(soakdata,IDhaul)
   soakdata <- soakdata[IDhaul!='']
   x <- data.table::setkey(x,IDhaul)
@@ -109,125 +110,124 @@ add_variables <- function(x = data_work,
     x <- merge(x, old.x, by = "IDevent", all.x = TRUE)
 
     ## Now we can update the values that are missing (i.e. NA in depth and d2shore)
+    x.tmp <- x[ is.na(depth) | is.na(d2shore) ]
+    x.tmp <- x.tmp[ !is.na(lon.haul) & !is.na(lat.haul) ] ## Needed to estimate depth and d2shore
 
-    ### Define the ERDDAP dataset ID and the variable you want to retrieve
-    #### https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
-    dataset_id <- "bathymetry_dtm_2024"
-    variable <- "elevation"
-    erddap_url <- "https://erddap.emodnet.eu/erddap/"
-    out <- rerddap::info(datasetid = dataset_id,
-                         url = erddap_url)
-    depth_EMODNET <- function(lat, lon) {
+    if( length(x.tmp$depth) > 0 ){
 
-      if ( !is.na(lat) &
-           !is.na(lon) &
-           lat > 15.000520833333333 &
-           lat < 89.99947916660017 &
-           lon > -35.99947916666667 &
-           lon < 42.99947916663591){
-        # Query the ERDDAP server
-        Sys.sleep(0.1)
-        result <- suppressMessages(
-          rerddap::griddap(
-            out,
-            fields = variable,
-            latitude = c(lat,lat),
-            longitude = c(lon,lon))
+      ### Define the ERDDAP dataset ID and the variable you want to retrieve
+      #### https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/cf51df64-56f9-4a99-b1aa-36b8d7b743a1
+      dataset_id <- "bathymetry_dtm_2024"
+      variable <- "elevation"
+      erddap_url <- "https://erddap.emodnet.eu/erddap/"
+      out <- rerddap::info(datasetid = dataset_id,
+                           url = erddap_url)
+      depth_EMODNET <- function(lat, lon) {
+
+        if ( !is.na(lat) &
+             !is.na(lon) &
+             lat > 15.000520833333333 &
+             lat < 89.99947916660017 &
+             lon > -35.99947916666667 &
+             lon < 42.99947916663591){
+          # Query the ERDDAP server
+          Sys.sleep(0.1)
+          result <- suppressMessages(
+            rerddap::griddap(
+              out,
+              fields = variable,
+              latitude = c(lat,lat),
+              longitude = c(lon,lon))
+          )
+
+          # Extract the depth value
+          depth <- result$data[[variable]]
+
+        } else(
+          depth <- NA_integer_
         )
 
-        # Extract the depth value
-        depth <- result$data[[variable]]
+        return(depth)
+      }
 
-      } else(
-        depth <- NA_integer_
-      )
+      chunk_size <- 500
+      num_chunks <- ceiling(nrow(x.tmp) / chunk_size)
+      depth_in_chuncks <- list()
 
-      return(depth)
+      for (i in 1:num_chunks) {
+        # Calculate the start and end indices for the current chunk
+        start_idx <- (i - 1) * chunk_size + 1
+        end_idx <- min(i * chunk_size, nrow(x.tmp))
+
+        # Extract the current chunk of data
+        x_chunk <- x[start_idx:end_idx, ]
+
+        # Query the server with the current chunk
+        one_chunck <-  mapply(depth_EMODNET,
+                              x_chunk$lat.haul,
+                              x_chunk$lon.haul)
+        # Store the result
+        depth_in_chuncks[[i]] <- one_chunck
+
+        # Print progress
+        cat("Processed chunk", i, "of", num_chunks, "\n")
+        Sys.sleep(1)
+
+      }
+      x.tmp$depth <- unlist(depth_in_chuncks)
+
+      ## For the points that are not found, we can use a backup plan:
+      depth.ras.dk <- terra::rast(x = path.to.raster)
+      x.tmp.sub <- x.tmp[is.na(depth)]
+      if ( length(x.tmp.sub$depth) > 0){
+
+        if( "lon.haul" %in% names(x.tmp.sub) ){
+          dk.sppts <- sf::st_as_sf(x.tmp.sub,
+                                   coords = c('lon.haul','lat.haul'),
+                                   na.fail = FALSE) } else {
+                                     dk.sppts <- sf::st_as_sf(x.tmp.sub,
+                                                              coords = c('lon','lat'),
+                                                              na.fail = FALSE)
+                                   }
+        depth.dk.df <- (terra::extract(x = depth.ras.dk,
+                                       y = dk.sppts,
+                                       df = TRUE))$D5_2020
+        for (i in 1: length(x.tmp.sub$depth)){
+          if( is.na(x.tmp.sub$depth[i]) ){
+            x.tmp.sub$depth[i] <- depth.dk.df[i] }
+        }
+        x.tmp.sub <- x.tmp.sub[, depth := data.table::fifelse(depth>0, -2, depth)]
+
+      }
+
+      x.tmp <- x.tmp[subset(x.tmp.sub, select = c('IDhaul', 'depth')),
+                     depth := i.depth]
+
+      ## Add info on distance (m) to nearest point on shore #----
+      coastline <- sf::st_read(path.to.coastline)
+      x_sf <- x.tmp  %>%
+        sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
+                     crs = 4326) %>%
+        sf::st_transform(3035)
+      distances <- sapply(1:nrow(x_sf), function(i) {
+        point <- x_sf[i, ]
+        min(sf::st_distance(point, coastline))
+      })
+      x.tmp$d2shore <- distances
+      ## In the map we use here, there are a couple a islets in the Sound that
+      ## do not appear to be correct. As a result, we could rarely have d2shore=0
+      ## Fix by forcing a minimum d2shore of 20 metres
+      x.tmp <- x.tmp %>%
+        dplyr::mutate(d2shore = ifelse(d2shore == 0, 20, d2shore))
+
+      x.tmp <- subset(x.tmp, select = c('IDevent','depth','d2shore'))
+      x <- merge(x, x.tmp, by = "IDevent", all.x = TRUE)
+
     }
-
-    x.tmp <- x[ is.na(depth) | is.na(d2shore) ]
-
-    chunk_size <- 500
-    num_chunks <- ceiling(nrow(x.tmp) / chunk_size)
-    depth_in_chuncks <- list()
-
-    for (i in 1:num_chunks) {
-      # Calculate the start and end indices for the current chunk
-      start_idx <- (i - 1) * chunk_size + 1
-      end_idx <- min(i * chunk_size, nrow(x.tmp))
-
-      # Extract the current chunk of data
-      x_chunk <- x[start_idx:end_idx, ]
-
-      # Query the server with the current chunk
-      one_chunck <-  mapply(depth_EMODNET,
-                            x_chunk$lat.haul,
-                            x_chunk$lon.haul)
-      # Store the result
-      depth_in_chuncks[[i]] <- one_chunck
-
-      # Print progress
-      cat("Processed chunk", i, "of", num_chunks, "\n")
-      Sys.sleep(1)
-
-    }
-    x.tmp$depth <- unlist(depth_in_chuncks) ## Check from here
-
-    ## For the points that are not found, we can use a backup plan:
-    depth.ras.dk <- terra::rast(x = path.to.raster)
-    x.tmp <- data.table::as.data.table(x.tmp)
-    if("lon.haul" %in% names(x.tmp)){
-      dk.sppts <- sf::st_as_sf(x.tmp, coords = c('lon.haul','lat.haul'), na.fail = FALSE)
-    } else {dk.sppts <- sf::st_as_sf(x.tmp, coords = c('lon','lat'), na.fail = FALSE)
-    }
-    depth.dk.df <- (terra::extract(x = depth.ras.dk,
-                                   y = dk.sppts,
-                                   df = TRUE))$D5_2020
-    for (i in 1: length(x.tmp$depth)){
-      if( is.na(x.tmp$depth[i]) ){
-        x.tmp$depth[i] <- depth.dk.df[i] }
-    }
-    x.tmp <- x.tmp[, depth := data.table::fifelse(depth>0, -2, depth)]
-
-    ## Add info on distance (m) to nearest point on shore #----
-    coastline <- sf::st_read(path.to.coastline
-                             # "Q:/20-forskning/12-gis/Dynamisk/GEOdata2020/BasicLayers/Coastlines/Europe/EEA Europe/EEA_Coastline_20170228.shp"
-    )
-    x_sf <- x.tmp  %>%
-      sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
-                   crs = 4326) %>%
-      sf::st_transform(3035)
-    distances <- sapply(1:nrow(x_sf), function(i) {
-      point <- x_sf[i, ]
-      min(sf::st_distance(point, coastline))
-    })
-    x$d2shore <- distances
-    ## In the map we use here, there are a couple a islets in the Sound that
-    ## do not appear to be correct. As a result, we could rarely have d2shore=0
-    ## Fix by forcing a minimum d2shore of 20 metres
-    x.tmp <- x.tmp %>%
-      dplyr::mutate(d2shore = ifelse(d2shore == 0, 20, d2shore))
-
-    # # ## Older version (coastline shapefile incomplete with missing islets)
-    # # coastline <- sf::st_read("Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/",
-    # #                         "coastline")
-    # # x_sf <- tidyr::drop_na(x, 'date')  %>%
-    # #  sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE) %>%
-    # #  sf::st_set_crs(4326)
-    # # ### And then project:
-    # # x_sf <- x_sf %>% sf::st_transform(32632)
-    # # ## Calculate the distance between each obs. and the closest coast, by:
-    # # dist <- sf::st_distance(x_sf, coastline[1:53,])
-    # # ## Store the results
-    # # x$d2shore <- as.numeric(apply(dist, 1, min))
-
-    x.tmp <- subset(x.tmp, select = c('IDevent','depth','d2shore'))
-    x <- merge(x, x.tmp, by = "IDevent", all.x = TRUE)
 
     ## Add variable ICES rectangle and ICES subrectangle #----
-
-    if("lon.haul" %in% names(x)){
-      dk.sppts <- sf::st_as_sf(x, coords = c('lon.haul','lat.haul'),
+      dk.sppts <- sf::st_as_sf(x,
+                               coords = c('lon.haul','lat.haul'),
                                na.fail = FALSE)
       suppressWarnings(
         x[, icesrect:= data.table::fifelse(!is.na(lon.haul) & !is.na(lat.haul),
@@ -241,24 +241,8 @@ add_variables <- function(x = data_work,
                                                  ggleR::ices.subrect(lon.haul,
                                                                      lat.haul),
                                                  NA)))
-    } else {dk.sppts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
 
-    x[, icesrect:= data.table::fifelse(!is.na(lon) & !is.na(lat),
-                                       mapplots::ices.rect2(lon, lat),
-                                       NA_character_)]
-    suppressWarnings(
-      x <- x %>%
-        dplyr::rowwise() %>%
-        dplyr::mutate(subrect = dplyr::if_else(!is.na(icesrect),
-                                               ggleR::ices.subrect(lon.haul,
-                                                                   lat.haul),
-                                               NA)))
-    }
-
-    ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ## ICES area #----
+    ## Add ICES area #----
     x <- ggleR::pts.ices.area(x)
     return(x)
   }
