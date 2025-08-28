@@ -1,10 +1,12 @@
 #' Fix the catch quantification export format
 #' @param x Path to the catch quantification files sorted by year or by vessel
 #' @param spp_list A species list must be provided. The format is an R list of character vectors. The names must correspond to the ones used in BlackBox Analyzer Catch Quantification records.
+#' #' @param incl.fish Include info on fish catches (defaults to FALSE)
 #' @return a dataset
 #' @export
 fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/",
-                   spp_list = list()){
+                   spp_list = list(),
+                   incl.fish = FALSE){
   Species <- NULL
   filenames <- list.files(x,
                           full.names = TRUE)
@@ -34,7 +36,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
       is.not.id = c('NA','NI'))"
       )
 
-      spp_list <- tibble::lst(
+      spp_list <<- tibble::lst(
         is.bird = c('Ag','Alcidae','Anatidae','At','Bird','Cg','Fg','Ga','Gad',
                     'Gar','Gaviidae','Gi','Lar','Larus','Lm','Mb','Mel',
                     'Melanitta','Mf','Mn','Pc','Pcr','Pg','Sm','Ua'),
@@ -143,7 +145,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
   y$IDbc <- as.factor(y$IDbc)
 
   ### Create IDcatch.sub #----
-  # if(incl.fish == TRUE){
+  if(incl.fish == TRUE){
   tmp.catch <- data.table::copy(y)[, ..keep][SpeciesGroup %in% c("Catch")][
     , ID3 := data.table::frank(.I, ties.method = "dense"), by = IDhaul][
       , IDcatch.sub := paste(IDhaul, ID3, sep = ".")]
@@ -152,7 +154,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
              all.x = TRUE)
   data.table::setorderv(y, cols = c('vessel', 'Date'))
   y$IDcatch.sub <- as.factor(y$IDcatch.sub)
-  # }
+  }
   y[, IDevent:=NULL]
 
-  return(CQdata)}
+  return(y)}
