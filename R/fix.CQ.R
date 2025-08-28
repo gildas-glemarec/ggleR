@@ -56,5 +56,103 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
                                                value = unlist(spp_list))$value)
   },
   filenames)
-  CQdata <- data.table::rbindlist(list_CQdata, fill = TRUE)
+  y <- data.table::rbindlist(list_CQdata, fill = TRUE)
+
+  ## Format input data and merge #----
+  data.table::setDT(y, key = 'SpecieslistId')
+  data.table::setnames(y,
+                       old = c('HarbourNumber',
+                               'HaulNo',
+                               'Species',
+                               'Tags',
+                               'MeasurementTimeLocal',
+                               'Longitude',
+                               'Latitude',
+                               'CatchCategory',
+                               'Remark',
+                               'CreatedBy'),
+                       new = c('vessel',
+                               'haul',
+                               'spp',
+                               'status',
+                               'time.bc',
+                               'lon.bc',
+                               'lat.bc',
+                               'seen_drop',
+                               'comments',
+                               'name')
+  )
+  ## Update species groups and classes
+  y[, SpeciesGroup := dplyr::case_when(
+    spp %in% is.bird ~ 'Bycatch',
+    spp %in% is.mammal ~ 'Bycatch',
+    spp %in% is.elasmo ~ 'Bycatch',
+    spp %in% is.fish ~ 'Catch',
+    .default = 'Other')][, SpeciesClass := dplyr::case_when(
+      spp %in% is.bird ~ 'Bird',
+      spp %in% is.mammal ~ 'Mammal',
+      spp %in% is.elasmo ~ 'Elasmobranch',
+      spp %in% is.fish ~ 'Fish',
+      .default = 'Other')]
+
+  ## Remove rows with no info on Vessel ID & remove Havfisken #----
+  y <- y[!y$vessel == "",]
+  y <- y[!is.na(y$vessel),]
+  y <- y[!y$vessel == "HAV01",]
+
+  y[,c("TripId","FishingTripId","FishingActivityId","ReferenceCode",
+       "MeshSize","MeasurementTimeUTC","Length","Weight",
+       "Volume","VolumeUnit","State","GpsTimeUtc","CreatedTime",
+       "CameraId") := NULL]
+
+  y$date <- y$time.bc
+  y$time.bc <- lubridate::dmy_hms(y$time.bc)
+  y$Date <- as.Date(lubridate::dmy_hms(y$date))
+  data.table::setorderv(y, cols = c("vessel","time.bc"), c(1, 1))
+
+  ## Create IDhaul  #----
+  ### Be aware that if the haul crosses 00:00, then the date of
+  ### the bycatch event and the IDhaul haul might be different
+  y$preID <- paste(y$vessel, substr(y$FishingActivity, 1, 10), sep = ".")
+  y$IDhaul <- paste(y$preID, y$haul, sep = ".")
+  y$IDhaul <- as.factor(y$IDhaul)
+
+  ## Rarely, there only one entry in CQ (i.e. one image) for multiple animals
+  ## of the same spp/status. In this case we need to duplicate that row by
+  ## the number in the var "Count"
+  y <- rbind(y,y[which(y$Count>1),])
+
+  ## Create IDbc (and IDcatch.sub if incl.fish = TRUE) #----
+  rnum <- as.numeric(rownames(y))
+  keep <- c("IDhaul", "SpeciesGroup","IDevent")
+
+  ### Create IDevent #----
+  y <- y[, ID3 := data.table::frank(.I, ties.method = "first")
+         , by = IDhaul][, IDevent := paste(IDhaul, "event", ID3, sep = ".")]
+  y <- y[, ID3:=NULL]
+  y$IDevent <- as.factor(y$IDevent)
+
+  ### Create IDbc #----
+  tmp.bc <- y[, ..keep][SpeciesGroup %in% c("Bycatch")][
+    , ID3 := data.table::frank(.I, ties.method = "dense"), by = IDhaul][
+      , IDbc := paste(IDhaul, ID3, sep = ".")]
+  y <- merge(y, subset(tmp.bc, select = c(-ID3,-IDhaul,-SpeciesGroup)),
+             by = 'IDevent',
+             all.x = TRUE)
+  data.table::setorderv(y, cols = c('vessel', 'Date'))
+  y$IDbc <- as.factor(y$IDbc)
+
+  ### Create IDcatch.sub #----
+  # if(incl.fish == TRUE){
+  tmp.catch <- data.table::copy(y)[, ..keep][SpeciesGroup %in% c("Catch")][
+    , ID3 := data.table::frank(.I, ties.method = "dense"), by = IDhaul][
+      , IDcatch.sub := paste(IDhaul, ID3, sep = ".")]
+  y <- merge(y, subset(tmp.catch, select = c(-ID3,-IDhaul,-SpeciesGroup)),
+             by = 'IDevent',
+             all.x = TRUE)
+  data.table::setorderv(y, cols = c('vessel', 'Date'))
+  y$IDcatch.sub <- as.factor(y$IDcatch.sub)
+  # }
+  y[, IDevent:=NULL]
+
   return(CQdata)}
