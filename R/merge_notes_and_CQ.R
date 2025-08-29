@@ -30,19 +30,21 @@ merge_notes_and_CQ <- function(x = NotesAnnotations,
                          all = TRUE)
   }else{
     ### With fish catches #----
-    y.Bycatch <- data.table::copy(y)[SpeciesGroup == 'Bycatch'][, c("IDcatch.sub","FishingActivity",
-                                                                    "haul", "name","comments","preID",
-                                                                    "Date","date","IDhaul",
-                                                                    "vessel") := NULL]
+    y.Bycatch <- data.table::copy(y)[SpeciesGroup == 'Bycatch'][
+      , c("IDcatch.sub","FishingActivity",
+          "haul", "name","comments","preID",
+          "Date","date","IDhaul",
+          "vessel") := NULL]
     data.table::setDT(y.Bycatch, key = 'IDbc')
     data.table::setDT(x, key = 'IDbc')
     merged_data <- merge(y.Bycatch,
                          x,
                          all = TRUE)
-    y.Catch <- data.table::copy(y)[SpeciesGroup == 'Catch'][, c("FishingActivity",
-                                                                "haul", "name","comments","preID",
-                                                                "Date","date","IDhaul","vessel",
-                                                                "IDbc") := NULL]
+    y.Catch <- data.table::copy(y)[SpeciesGroup == 'Catch'][
+      , c("FishingActivity",
+          "haul", "name","comments","preID",
+          "Date","date","IDhaul","vessel",
+          "IDbc") := NULL]
     data.table::setDT(y.Catch, key = 'IDcatch.sub')
     data.table::setDT(x, key = 'IDcatch.sub')
     cols_to_update <- c("SpecieslistId", "time.bc", "Count", "spp", "seen_drop",
@@ -52,12 +54,19 @@ merge_notes_and_CQ <- function(x = NotesAnnotations,
       merged_data[y.Catch, (col) := get(paste0("i.", col)), on = "IDcatch.sub"]
     }
     merged_data[, 'IDcatch.sub' := NULL]
+    merged_data[, spp := dplyr::case_when(
+      is.na(spp) & note.type == "Lumpsucker" ~ 'Cl',
+      is.na(spp) & note.type == "Cod" ~ 'Gm',
+      is.na(spp) & note.type == "Mackerel" ~ 'Scsc',
+      is.na(spp) & note.type  %in% c("Flatfish", "Sole") ~ 'Flatfish',
+      .default = spp)]
   }
 
-  data.table::setcolorder(merged_data, c("review.info", "date", "IDFD",
-                                         "IDhaul", "IDbc", "spp",
-                                         "status", "netlength", "soak",
-                                         "std_effort", "mesh.colour", "vessel"))
+  merged_data <- data.table::setcolorder(data.table::copy(merged_data),
+                                         c("review.info", "date", "IDFD",
+                                           "IDhaul", "IDbc", "spp",
+                                           "status", "netlength", "soak",
+                                           "std_effort", "mesh.colour", "vessel"))
   merged_data[, c("y","m","d") := NULL]
   data.table::setorder(merged_data, vessel, time.start)
   merged_data <- merged_data %>%
