@@ -90,12 +90,14 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
     spp %in% is.mammal ~ 'Bycatch',
     spp %in% is.elasmo ~ 'Bycatch',
     spp %in% is.fish ~ 'Catch',
-    .default = 'Other')][, SpeciesClass := dplyr::case_when(
+    spp %in% is.not.id ~ 'Other',
+    .default = NA_character_)][, SpeciesClass := dplyr::case_when(
       spp %in% is.bird ~ 'Bird',
       spp %in% is.mammal ~ 'Mammal',
       spp %in% is.elasmo ~ 'Elasmobranch',
       spp %in% is.fish ~ 'Fish',
-      .default = 'Other')]
+      spp %in% is.not.id ~ 'Other',
+      .default = NA_character_)]
 
   ## Remove rows with no info on Vessel ID & remove Havfisken #----
   y <- y[!y$vessel == "",]
