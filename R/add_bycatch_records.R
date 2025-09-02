@@ -193,6 +193,7 @@ add_bycatch_records <- function(x = data_work,
   merged_data <- merged_data %>%
     dplyr::group_by(IDhaul) %>%
     tidyr::fill(mesh.colour) %>%
+    tidyr::fill(VideoFileName) %>%
     data.table::as.data.table()
 
   ## Remove some duplicated rows (when there is at least one event in a haul,

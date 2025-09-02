@@ -158,5 +158,5 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
   y$IDcatch.sub <- as.factor(y$IDcatch.sub)
   }
   y[, IDevent:=NULL]
-
+  y[, VideoFileName:=NULL]
   return(y)}

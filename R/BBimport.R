@@ -52,7 +52,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       dplyr::mutate(gps = if_else(is.na(Start.latitude),
                                   0, 1))
     x <- x[with(x, order(x$Vesselid,x$time.start)),]
-    x <- x[!x$Type == "Videofile",]
+    # x <- x[!x$Type == "Videofile",]
     x <- x[!x$Type == "Trip",]
     x <- x[!x$Type == "BlackBoxNote",]
     x <- x[!x$Type == "MiniDisc",]
@@ -154,7 +154,8 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                     treatment = Treatment.Group,
                     note.type = Note.type,
                     comments = Note,
-                    add.comments = Activity.comment
+                    add.comments = Activity.comment,
+                    VideoFileName = Videofile
       ) %>%
       dplyr::mutate(review.info = dplyr::case_when(
         is.na(review.info) & is.na(mesh.colour) ~ 0,
