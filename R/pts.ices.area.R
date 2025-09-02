@@ -19,7 +19,7 @@ pts.ices.area <- function(x,
   sf::sf_use_s2(FALSE)
   x <- sf::st_join(x = x.sp, y = ices.area)
 
-  data.table::setDT(x, key = 'IDFD')
+  data.table::setDT(x, key = 'IDhaul')
   data.table::setnames(x = x, old = 'Area_27', new = 'ices.area')
   x$ices.area <- factor(x$ices.area)
   x$ices.area <- forcats::fct_na_value_to_level(x$ices.area)

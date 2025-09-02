@@ -112,6 +112,12 @@ add_variables <- function(x = data_work,
     ## Now we can update the values that are missing (i.e. NA in depth and d2shore)
     x.tmp <- x[ is.na(depth) | is.na(d2shore) ]
     x.tmp <- x.tmp[ !is.na(lon.haul) & !is.na(lat.haul) ] ## Needed to estimate depth and d2shore
+    x.tmp <- x.tmp  %>%
+      # sf::st_as_sf(coords = c('lon.haul','lat.haul'), na.fail = FALSE,
+      #              crs = 4326) %>%
+      # sf::st_transform(3035) %>%
+      dplyr::select(lon.haul, lat.haul, IDhaul, depth, d2shore) %>%
+      dplyr::distinct()
 
     if( length(x.tmp$depth) > 0 ){
 
@@ -178,7 +184,7 @@ add_variables <- function(x = data_work,
 
       ## For the points that are not found, we can use a backup plan:
       depth.ras.dk <- terra::rast(x = path.to.raster)
-      x.tmp.sub <- x.tmp[is.na(depth)]
+      x.tmp.sub <- x.tmp[is.na('depth'),]
       if ( length(x.tmp.sub$depth) > 0){
 
         if( "lon.haul" %in% names(x.tmp.sub) ){
@@ -198,10 +204,11 @@ add_variables <- function(x = data_work,
         }
         x.tmp.sub <- x.tmp.sub[, depth := data.table::fifelse(depth>0, -2, depth)]
 
-      }
+        x.tmp <- x.tmp[subset(x.tmp.sub,
+                              select = c('IDhaul', 'depth')),
+                       depth := i.depth]
 
-      x.tmp <- x.tmp[subset(x.tmp.sub, select = c('IDhaul', 'depth')),
-                     depth := i.depth]
+      }
 
       ## Add info on distance (m) to nearest point on shore #----
       coastline <- sf::st_read(path.to.coastline)
@@ -214,36 +221,47 @@ add_variables <- function(x = data_work,
         min(sf::st_distance(point, coastline))
       })
       x.tmp$d2shore <- distances
+
       ## In the map we use here, there are a couple a islets in the Sound that
       ## do not appear to be correct. As a result, we could rarely have d2shore=0
       ## Fix by forcing a minimum d2shore of 20 metres
       x.tmp <- x.tmp %>%
         dplyr::mutate(d2shore = ifelse(d2shore == 0, 20, d2shore))
 
-      x.tmp <- subset(x.tmp, select = c('IDevent','depth','d2shore'))
-      x <- merge(x, x.tmp, by = "IDevent", all.x = TRUE)
+      x[x.tmp, `:=`(
+        depth = data.table::fcoalesce(depth, i.depth),
+        d2shore = data.table::fcoalesce(d2shore, i.d2shore)
+      ), on = "IDhaul"]
 
     }
 
-    ## Add variable ICES rectangle and ICES subrectangle #----
-      dk.sppts <- sf::st_as_sf(x,
-                               coords = c('lon.haul','lat.haul'),
-                               na.fail = FALSE)
-      suppressWarnings(
-        x[, icesrect:= data.table::fifelse(!is.na(lon.haul) & !is.na(lat.haul),
-                                           mapplots::ices.rect2(lon.haul,
-                                                                lat.haul),
-                                           NA_character_)])
-      suppressWarnings(
-        x <- x %>%
-          dplyr::rowwise() %>%
-          dplyr::mutate(subrect = dplyr::if_else(!is.na(icesrect),
-                                                 ggleR::ices.subrect(lon.haul,
-                                                                     lat.haul),
-                                                 NA)))
+    ## Add variable ICES area, ICES rectangle and ICES subrectangle #----
+    x.sub <- subset(x, select = c('lon.haul','lat.haul','IDhaul')) %>%
+      dplyr::distinct()
 
-    ## Add ICES area #----
-    x <- ggleR::pts.ices.area(x)
+    x.sub <- ggleR::pts.ices.area(x.sub)
+
+    dk.sppts <- sf::st_as_sf(x.sub,
+                             coords = c('lon.haul','lat.haul'),
+                             na.fail = FALSE)
+    suppressWarnings(
+      x.sub[, icesrect:= data.table::fifelse(!is.na(lon.haul) & !is.na(lat.haul),
+                                         mapplots::ices.rect2(lon.haul,
+                                                              lat.haul),
+                                         NA_character_)])
+    suppressWarnings(
+      x.sub <- x.sub %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate(subrect = dplyr::if_else(!is.na(icesrect),
+                                               ggleR::ices.subrect(lon.haul,
+                                                                   lat.haul),
+                                               NA)))
+
+    x <- merge(x,
+               subset(x.sub, select = c('ices.area','icesrect','subrect',
+                                        'IDhaul')),
+               by = 'IDhaul')
+
     return(x)
   }
   return(x)
