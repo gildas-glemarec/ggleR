@@ -32,9 +32,9 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     x <- x[!x$Vesselid == "",]
     x <- x[!is.na(x$Vesselid),]
     x <- x[!x$Vesselid == "HAV01",]
-    ## Keep only notes and annotations #----
+    ## Keep only notes and annotations and videos #----
     x <- x %>%
-      dplyr::filter(substr(Id,1,1) == "a" | substr(Id,1,1) == "n")
+      dplyr::filter(substr(Id,1,1) == "a" | substr(Id,1,1) == "n" | substr(Id,1,1) == "v")
     ## Remove the Green/Red and PaleGreen/LightSalmon notes (manual markings of start/stop) #----
     x <- x %>%
       dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon',
@@ -97,10 +97,10 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
         tidyr::fill(IDhaul) %>%
         dplyr::ungroup()
     ## Fill down the rows the video file name #----
-    x <- x %>%
-      dplyr::group_by(IDhaul) %>%
-      tidyr::fill(File.name) %>%
-      data.table::as.data.table()
+    x$File.name[x$File.name == ""] <- NA
+    x$File.name <- zoo::na.locf(x$File.name)
+    ## Remove so-called video notes #----
+    x <- x[!x$Type == "Videofile",]
     ## Fix the problem where the first pinger appears before the beginning of the activity #----
     for(i in 1:(length(x$Id)-1)){
       if(x$Type[i] == 'Note' &
@@ -220,8 +220,6 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       dplyr::ungroup()
   },
   list_BBdata)
-
-  x <- x[!x$Type == "Videofile",]
 
   ## Bind the files in the list as one dt #----
   BBdata <- data.table::rbindlist(list_BBdata)
