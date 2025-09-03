@@ -77,7 +77,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       dplyr::rename(haul_number = Haul.no) %>%
       dplyr::mutate(Mesh.color = na_if(Mesh.color,"")) %>%
       ## Create IDhaul for Activities (i.e. hauling) #----
-      dplyr::mutate(IDhaul = dplyr::case_when(Activity.type == 'Gear in' ~
+    dplyr::mutate(IDhaul = dplyr::case_when(Activity.type == 'Gear in' ~
                                               paste(IDFD, haul_number, sep = "."),
                                             .default = NA)) %>%
       dplyr::mutate(haul.lon.start = NA,
@@ -93,11 +93,45 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                     haul.lat.stop = dplyr::case_when(Activity.type == 'Gear in'~
                                                        End.latitude,.default = NA_integer_)) %>%
       ## Copy the haul characteristics (stored as Activity down in the corresponding Notes) #----
+    dplyr::arrange(Vesselid, time.start) %>%
+      tidyr::fill(IDhaul) %>%
+      dplyr::ungroup()
+    ##
+    y <- copy(x)
+    y$File.name_concat <- y$File.name
+    y <- y[y$Type == "Videofile", ]
+    y$time_dummy <- lubridate::floor_date(lubridate::ymd_hms(y$time.start),
+                                          unit ="hours")
+    y = subset(y, select = c(Id, Vesselid,
+                             File.name_concat, File.name, time_dummy, Camera))
+    i <- 1
+    while (i < nrow(y)) {
+      j <- i + 1
+      # While var[i] == var[j] and j <= nrow(dt)
+      while (j <= nrow(y) &&
+             y$Camera[i] != y$Camera[j] &&
+             y$time_dummy[i] == y$time_dummy[j] ){
+    # Concatenate var2[j] to var2_concat[i]
+    y$File.name_concat[i] <- paste(y$File.name_concat[i],
+                                   y$File.name[j], sep = ", ")
+    j <- j + 1
+  }
+  # Move to the next unique group
+  i <- j
+    }
+    y <- y[!duplicated(c(y$File.name, y$File.name_concat), fromLast = TRUE), ]
+    y <- y[complete.cases(y),]
+    y <- y %>%
+      dplyr::select(Id, File.name_concat) %>%
+      dplyr::rename(File.name = File.name_concat)
+    x <- subset(x, select = c(-File.name, -Video.size..MB., -Camera))
+    x <- merge(x, y, by = 'Id', all.x = T)
+    x <-  x %>%
       dplyr::arrange(Vesselid, time.start) %>%
-        tidyr::fill(IDhaul) %>%
-        dplyr::ungroup()
+      dplyr::filter(Type != 'Videofile' |
+        Type == 'Videofile' & !is.na(File.name))
+
     ## Fill down the rows the video file name #----
-    x$File.name[x$File.name == ""] <- NA
     x$File.name <- zoo::na.locf(x$File.name)
     ## Remove so-called video notes #----
     x <- x[!x$Type == "Videofile",]
@@ -221,77 +255,77 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
   },
   list_BBdata)
 
-  ## Bind the files in the list as one dt #----
-  BBdata <- data.table::rbindlist(list_BBdata)
+## Bind the files in the list as one dt #----
+BBdata <- data.table::rbindlist(list_BBdata)
 
-  ### Include only the bycatch groups we are interested in
-  # Aqua           Elasmobranch
-  # Black          Mammal
-  # Blue           Bird
-  # Brown          Pearl net stop
-  # DarkKhaki      Cod
-  # DeepPink       Seal damage
-  # Gray           Lumpsucker
-  # LawnGreen      Pearl net start
-  # Orange         Andet
-  # Purple         Plastic
-  # SaddleBrown    Flatfish or Sole
-  # Thistle        Mackerel
-  # Yellow         Pinger
+### Include only the bycatch groups we are interested in
+# Aqua           Elasmobranch
+# Black          Mammal
+# Blue           Bird
+# Brown          Pearl net stop
+# DarkKhaki      Cod
+# DeepPink       Seal damage
+# Gray           Lumpsucker
+# LawnGreen      Pearl net start
+# Orange         Andet
+# Purple         Plastic
+# SaddleBrown    Flatfish or Sole
+# Thistle        Mackerel
+# Yellow         Pinger
 
-  tmp.bc <- BBdata %>%
-    dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
-    dplyr::filter(colour.name %in% c("Black","Blue","Aqua")) %>%
-    dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
-    dplyr::group_by(IDhaul) %>%
-    dplyr::mutate(ID3 = rank(haul_number,
-                             ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
-    dplyr::ungroup() %>%
-    dplyr::mutate(IDbc = paste(IDhaul, ID3, sep = ".")) %>%
-    dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
-  BBdata <- merge(BBdata, tmp.bc, by = 'IDevent', all.x = TRUE) %>%
-    dplyr::arrange(vessel, as.Date(date), IDevent)
+tmp.bc <- BBdata %>%
+  dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
+  dplyr::filter(colour.name %in% c("Black","Blue","Aqua")) %>%
+  dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
+  dplyr::group_by(IDhaul) %>%
+  dplyr::mutate(ID3 = rank(haul_number,
+                           ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
+  dplyr::ungroup() %>%
+  dplyr::mutate(IDbc = paste(IDhaul, ID3, sep = ".")) %>%
+  dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
+BBdata <- merge(BBdata, tmp.bc, by = 'IDevent', all.x = TRUE) %>%
+  dplyr::arrange(vessel, as.Date(date), IDevent)
 
-  ## First let's create IDcatch for all the notes with fish
-  tmp.catch <- BBdata %>%
-    dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
-    dplyr::filter(colour.name %in% c("Gray","Grey",
-                                     "DarkKhaki",
-                                     "Thistle",
-                                     "SaddleBrown")) %>%
-    dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
-    dplyr::group_by(IDhaul) %>%
-    dplyr::mutate(ID3 = rank(haul_number,
-                             ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
-    dplyr::ungroup() %>%
-    dplyr::mutate(IDcatch = paste(IDhaul, ID3, sep = ".")) %>%
-    dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
-  BBdata <- merge(BBdata, tmp.catch, by = 'IDevent', all.x = TRUE) %>%
-    dplyr::arrange(vessel, as.Date(date), IDevent)
+## First let's create IDcatch for all the notes with fish
+tmp.catch <- BBdata %>%
+  dplyr::select(c(haul_number, IDhaul, IDevent, colour.name, note.type)) %>%
+  dplyr::filter(colour.name %in% c("Gray","Grey",
+                                   "DarkKhaki",
+                                   "Thistle",
+                                   "SaddleBrown")) %>%
+  dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
+  dplyr::group_by(IDhaul) %>%
+  dplyr::mutate(ID3 = rank(haul_number,
+                           ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
+  dplyr::ungroup() %>%
+  dplyr::mutate(IDcatch = paste(IDhaul, ID3, sep = ".")) %>%
+  dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
+BBdata <- merge(BBdata, tmp.catch, by = 'IDevent', all.x = TRUE) %>%
+  dplyr::arrange(vessel, as.Date(date), IDevent)
 
-  ## Then let's create IDcatch.sub for the subset of species for which we have CQ data
-  tmp.catch.sub <- BBdata %>%
-    dplyr::filter(colour.name %in% c("Gray","Grey", ## Lumpsucker
-                                     "Thistle" ## Mackerel
-    )) %>%
-    dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
-    dplyr::group_by(IDhaul) %>%
-    dplyr::mutate(ID3 = rank(haul_number,
-                             ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
-    dplyr::ungroup() %>%
-    dplyr::mutate(IDcatch.sub = paste(IDhaul, ID3, sep = ".")) %>%
-    dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
-  tmp.catch.sub <- subset(tmp.catch.sub, select = c('IDevent','IDcatch.sub'))
-  BBdata <- merge(BBdata, tmp.catch.sub, by = 'IDevent', all.x = TRUE) %>%
-    dplyr::arrange(vessel, as.Date(date), IDevent)
+## Then let's create IDcatch.sub for the subset of species for which we have CQ data
+tmp.catch.sub <- BBdata %>%
+  dplyr::filter(colour.name %in% c("Gray","Grey", ## Lumpsucker
+                                   "Thistle" ## Mackerel
+  )) %>%
+  dplyr::filter(note.type != "") %>% ## This removes notes inserted automatically using BB integrated AI tool
+  dplyr::group_by(IDhaul) %>%
+  dplyr::mutate(ID3 = rank(haul_number,
+                           ties.method = "first")) %>% # ID3 = bycatch "number" (rank) per haul
+  dplyr::ungroup() %>%
+  dplyr::mutate(IDcatch.sub = paste(IDhaul, ID3, sep = ".")) %>%
+  dplyr::select(-ID3,-haul_number,-IDhaul,-colour.name,-note.type)
+tmp.catch.sub <- subset(tmp.catch.sub, select = c('IDevent','IDcatch.sub'))
+BBdata <- merge(BBdata, tmp.catch.sub, by = 'IDevent', all.x = TRUE) %>%
+  dplyr::arrange(vessel, as.Date(date), IDevent)
 
-  ## Add variable sealmarks #----
-  BBdata <- BBdata %>%
-    dplyr::mutate(sealmarks = dplyr::if_else(colour.name == "DeepPink", 1, 0)) %>%
-    dplyr::group_by(IDhaul) %>%
-    dplyr::mutate(sealmarks = ifelse(any(sealmarks == 1), 1, sealmarks)) %>%
-    dplyr::ungroup()
+## Add variable sealmarks #----
+BBdata <- BBdata %>%
+  dplyr::mutate(sealmarks = dplyr::if_else(colour.name == "DeepPink", 1, 0)) %>%
+  dplyr::group_by(IDhaul) %>%
+  dplyr::mutate(sealmarks = ifelse(any(sealmarks == 1), 1, sealmarks)) %>%
+  dplyr::ungroup()
 
-  ## Return final dt #----
-  return(BBdata)
+## Return final dt #----
+return(BBdata)
 }
