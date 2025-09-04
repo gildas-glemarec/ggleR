@@ -111,7 +111,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                              'start',
                              'end'))
     data.table::setkey(y, Vesselid, start, end)
-    z <- data.table::copy(z)
+    z <- data.table::copy(x)
     z <- z[z$Type != "Videofile", ]
     z <- data.table::as.data.table(z)
     data.table::setnames(z,
