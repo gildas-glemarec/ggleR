@@ -128,7 +128,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
 
     ## Remove so-called video notes #----
     x <- x[!x$Type == "Videofile",]
-    x <- cbind(x, dt1$video_files)
+    x <- cbind(x, dt1[, xid :=NULL])
     rm(y)
     rm(z)
     rm(dt1)
@@ -229,7 +229,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                     note.type = Note.type,
                     comments = Note,
                     add.comments = Activity.comment,
-                    VideoFileName = dt1$video_files
+                    VideoFileName = video_files
       ) %>%
       dplyr::mutate(review.info = dplyr::case_when(
         is.na(review.info) & is.na(mesh.colour) ~ 0,
