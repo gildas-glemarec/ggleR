@@ -111,7 +111,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                              'start',
                              'end'))
     data.table::setkey(y, Vesselid, start, end)
-
+    z <- data.table::copy(z)
     z <- z[z$Type != "Videofile", ]
     z <- data.table::as.data.table(z)
     data.table::setnames(z,
@@ -125,10 +125,13 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                  type="any", which=TRUE)
     dt1[, video_files := y$File.name[yid], by = xid]
     dt1 <- dt1[, .(video_files = paste(video_files, collapse = ", ")), by = xid]
+
     ## Remove so-called video notes #----
     x <- x[!x$Type == "Videofile",]
     x <- cbind(x, dt1$video_files)
-
+    rm(y)
+    rm(z)
+    rm(dt1)
     #   # y$File.name_concat <- y$File.name
     #   # y <- y[y$Type == "Videofile", ]
     #   # y$time_dummy <- lubridate::floor_date(lubridate::ymd_hms(y$time.start),
