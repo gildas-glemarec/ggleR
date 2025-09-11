@@ -14,8 +14,9 @@ fix.CQ(
 \arguments{
 \item{x}{Path to the catch quantification files sorted by year or by vessel}
 
-\item{spp_list}{A species list must be provided. The format is an R list of character vectors. The names must correspond to the ones used in BlackBox Analyzer Catch Quantification records.
-#' @param incl.fish Include info on fish catches (defaults to FALSE)}
+\item{spp_list}{A species list must be provided. The format is an R list of character vectors. The names must correspond to the ones used in BlackBox Analyzer Catch Quantification records.}
+
+\item{incl.fish}{Include info on fish catches (defaults to FALSE)}
 }
 \value{
 a dataset
