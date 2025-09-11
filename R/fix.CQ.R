@@ -1,7 +1,7 @@
 #' Fix the catch quantification export format
 #' @param x Path to the catch quantification files sorted by year or by vessel
 #' @param spp_list A species list must be provided. The format is an R list of character vectors. The names must correspond to the ones used in BlackBox Analyzer Catch Quantification records.
-#' #' @param incl.fish Include info on fish catches (defaults to FALSE)
+#' @param incl.fish Include info on fish catches (defaults to FALSE)
 #' @return a dataset
 #' @export
 fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/",
