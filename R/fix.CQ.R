@@ -111,7 +111,8 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
 
   y$date <- y$time.bc
   y$time.bc <- lubridate::dmy_hms(y$time.bc)
-  y$Date <- as.Date(lubridate::dmy_hms(y$date))
+  y$Date <- as.Date(lubridate::dmy_hms(y$date),
+                    tz = "Europe/Copenhagen")
   data.table::setorderv(y, cols = c("vessel","time.bc"), c(1, 1))
 
   ## Create IDhaul  #----
