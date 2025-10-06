@@ -71,27 +71,32 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     x$IDFD <- paste(x$Vesselid, x$Date, sep = ".")
 
     x <- x %>%
-      dplyr::filter(Activity.type != 'Gear out') %>%
+      dplyr::filter(Activity.type %notin% c('Gear out', 'Gear set')) %>%
       dplyr::filter(Note.type %notin% c('Anchor 1', 'Anchor 2', 'Start', 'Stop')) %>%
       dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon', 'Green',
                                          'Red', 'MediumTurquoise')) %>%
       dplyr::rename(haul_number = Haul.no) %>%
       dplyr::mutate(Mesh.color = na_if(Mesh.color,"")) %>%
       ## Create IDhaul for Activities (i.e. hauling) #----
-    dplyr::mutate(IDhaul = dplyr::case_when(Activity.type == 'Gear in' ~
+    dplyr::mutate(IDhaul = dplyr::case_when(Activity.type %in% c('Gear in',
+                                                                 'Gear haul') ~
                                               paste(IDFD, haul_number, sep = "."),
                                             .default = NA)) %>%
       dplyr::mutate(haul.lon.start = NA,
                     haul.lat.start = NA,
                     haul.lon.stop = NA,
                     haul.lat.stop = NA) %>%
-      dplyr::mutate(haul.lon.start = dplyr::case_when(Activity.type == 'Gear in'~
+      dplyr::mutate(haul.lon.start = dplyr::case_when(Activity.type %in% c('Gear in',
+                                                                           'Gear haul')~
                                                         Start.longitude,.default = NA_integer_),
-                    haul.lat.start = dplyr::case_when(Activity.type == 'Gear in'~
+                    haul.lat.start = dplyr::case_when(Activity.type %in% c('Gear in',
+                                                                           'Gear haul')~
                                                         Start.latitude,.default = NA_integer_),
-                    haul.lon.stop = dplyr::case_when(Activity.type == 'Gear in'~
+                    haul.lon.stop = dplyr::case_when(Activity.type %in% c('Gear in',
+                                                                          'Gear haul')~
                                                        End.longitude,.default = NA_integer_),
-                    haul.lat.stop = dplyr::case_when(Activity.type == 'Gear in'~
+                    haul.lat.stop = dplyr::case_when(Activity.type %in% c('Gear in',
+                                                                          'Gear haul')~
                                                        End.latitude,.default = NA_integer_)) %>%
       ## Copy the haul characteristics (stored as Activity down in the corresponding Notes) #----
     dplyr::arrange(Vesselid, time.start) %>%
