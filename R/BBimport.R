@@ -53,7 +53,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     x$time.stop <- as.character(x$End.time.local..log.)
 
     x <- x |>
-      dplyr::mutate(gps = if_else(is.na(Start.latitude),
+      dplyr::mutate(gps = dplyr::if_else(is.na(Start.latitude),
                                   0, 1))
     x <- x[with(x, order(x$Vesselid,x$time.start)),]
     # x <- x[!x$Type == "Videofile",]
@@ -79,7 +79,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       dplyr::filter(Color.name %notin% c('PaleGreen', 'LightSalmon', 'Green',
                                          'Red', 'MediumTurquoise')) |>
       dplyr::rename(haul_number = Haul.no) |>
-      dplyr::mutate(Mesh.color = na_if(Mesh.color,"")) |>
+      dplyr::mutate(Mesh.color = dplyr::na_if(Mesh.color,"")) |>
       ## Create IDhaul for Activities (i.e. hauling) #----
     dplyr::mutate(IDhaul = dplyr::case_when(Activity.type %in% c('Gear in',
                                                                  'Gear haul') ~
