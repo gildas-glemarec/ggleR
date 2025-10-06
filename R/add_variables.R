@@ -262,6 +262,9 @@ add_variables <- function(x = data_work,
                                         'IDhaul')),
                by = 'IDhaul')
 
+    ## Remove all duplicated rows
+    x <- x %>% dplyr::distinct()
+
     return(x)
   }
   return(x)

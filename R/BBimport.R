@@ -207,6 +207,8 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       tidyr::fill(haul.lat.start) %>%
       tidyr::fill(haul.lon.stop) %>%
       tidyr::fill(haul.lat.stop) %>%
+      tidyr::fill(camera) %>%
+      tidyr::fill(quality) %>%
       dplyr::ungroup() %>%
       dplyr::select(vessel = Vesselid,
                     date,
