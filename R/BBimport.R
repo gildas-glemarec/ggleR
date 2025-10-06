@@ -41,9 +41,11 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                          'Green', 'Red'))
 
     x$Start.time.local..log. <- as.POSIXct(strptime(x$Start.time.local..log.,
-                                                    "%d-%m-%Y %H:%M:%S"))
+                                                    "%d-%m-%Y %H:%M:%S"),
+                                           tz = "Europe/Copenhagen")
     x$End.time.local..log. <- as.POSIXct(strptime(x$End.time.local..log.,
-                                                  "%d-%m-%Y %H:%M:%S"))
+                                                  "%d-%m-%Y %H:%M:%S"),
+                                         tz = "Europe/Copenhagen")
     x <- x[x$Start.time.local..log. <= x$End.time.local..log., ] ## Rm rows where it ends before it starts
     x$date <- as.Date(x$Start.time.local..log.)
     x$time.start <- as.character(x$Start.time.local..log.)
