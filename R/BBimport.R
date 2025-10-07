@@ -131,7 +131,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     dt1 <- dt1[, .(video_files = paste(video_files, collapse = ", ")), by = xid]
     ## Remove so-called video notes #----
     x <- x[!x$Type == "Videofile",]
-    x <- cbind(x, dt1[, xid :=NULL])
+    x <- cbind(x, dt1[, xid := NULL])
     rm(y)
     rm(z)
     rm(dt1)
@@ -139,52 +139,17 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     ## Copy the haul characteristics (stored as Activity down in the corresponding Notes) #----
     x <- x |>
       dplyr::arrange(Vesselid, time.start) |>
+      dplyr::group_by(Vesselid) |>
       tidyr::fill(IDhaul) |>
       dplyr::ungroup()
 
-    #   # y$File.name_concat <- y$File.name
-    #   # y <- y[y$Type == "Videofile", ]
-    #   # y$time_dummy <- lubridate::floor_date(lubridate::ymd_hms(y$time.start),
-    #   #                                       unit ="hours")
-    #   # y = subset(y, select = c(Id, Vesselid,
-    #   #                          File.name_concat, File.name, time_dummy, Camera))
-    # #   i <- 1
-    # #   while (i < nrow(y)) {
-    # #     j <- i + 1
-    # #     # While var[i] == var[j] and j <= nrow(dt)
-    # #     while (j <= nrow(y) &&
-    # #            y$Camera[i] != y$Camera[j] &&
-    # #            y$time_dummy[i] == y$time_dummy[j] ){
-    # #   # Concatenate var2[j] to var2_concat[i]
-    # #   y$File.name_concat[i] <- paste(y$File.name_concat[i],
-    # #                                  y$File.name[j], sep = ", ")
-    # #   j <- j + 1
-    # # }
-    # # # Move to the next unique group
-    # # i <- j
-    # #   }
-    # #   y <- y[!duplicated(c(y$File.name, y$File.name_concat), fromLast = TRUE), ]
-    # #   y <- y[complete.cases(y),]
-    # #   y <- y |>
-    # #     dplyr::select(Id, File.name_concat) |>
-    # #     dplyr::rename(File.name = File.name_concat)
-    # #   x <- subset(x, select = c(-File.name, -Video.size..MB., -Camera))
-    # #   x <- merge(x, y, by = 'Id', all.x = T)
-    # #   x <-  x |>
-    # #     dplyr::arrange(Vesselid, time.start) |>
-    # #     dplyr::filter(Type != 'Videofile' |
-    # #       Type == 'Videofile' & !is.na(File.name))
-    #
-    #   ## Fill down the rows the video file name #----
-    #   x$File.name <- zoo::na.locf(x$File.name)
-    #   ## Remove so-called video notes #----
-    #   x <- x[!x$Type == "Videofile",]
     ## Fix the problem where the first pinger appears before the beginning of the activity #----
     for(i in 1:(length(x$Id)-1)){
       if(x$Note.type[i] == 'Pinger' &
          x$Type[i+1] == 'Activity' &
          x$time.start[i] < x$time.start[i+1] &
-         x$time.stop[i] > x$time.start[i+1]){
+         x$time.stop[i] > x$time.start[i+1] &
+         x$Vesselid[i] == x$Vesselid[i+1]){
         # x <- x[-i, ] ##Removes the row
         x$IDhaul[i] <- x$IDhaul[i+1]
         x$haul_number[i] <- x$haul_number[i+1]
