@@ -54,7 +54,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
 
     x <- x |>
       dplyr::mutate(gps = dplyr::if_else(is.na(Start.latitude),
-                                  0, 1))
+                                         0, 1))
     x <- x[with(x, order(x$Vesselid,x$time.start)),]
     # x <- x[!x$Type == "Videofile",]
     x <- x[!x$Type == "Trip",]
@@ -100,13 +100,9 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                                        End.longitude,.default = NA_integer_),
                     haul.lat.stop = dplyr::case_when(Activity.type %in% c('Gear in',
                                                                           'Gear haul')~
-                                                       End.latitude,.default = NA_integer_)) |>
-      ## Copy the haul characteristics (stored as Activity down in the corresponding Notes) #----
-    dplyr::arrange(Vesselid, time.start) |>
-      dplyr::group_by(IDFD) |>
-      tidyr::fill(IDhaul) |>
-      dplyr::ungroup()
-    ##
+                                                       End.latitude,.default = NA_integer_))
+
+    ## List the corresponding video files for each activity/note
     y <- data.table::copy(x)
     y <- y[y$Type == "Videofile", ]
     y <- data.table::as.data.table(y)
@@ -128,19 +124,24 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                          new = c('start'))
     z$end <- z$start
     data.table::setkey(z, Vesselid, start, end)
-
     dt1 <- data.table::foverlaps(z, y,
                                  by.x = c("Vesselid", "start", "end"),
                                  type="any", which=TRUE)
     dt1[, video_files := y$File.name[yid], by = xid]
     dt1 <- dt1[, .(video_files = paste(video_files, collapse = ", ")), by = xid]
-
     ## Remove so-called video notes #----
     x <- x[!x$Type == "Videofile",]
     x <- cbind(x, dt1[, xid :=NULL])
     rm(y)
     rm(z)
     rm(dt1)
+
+    ## Copy the haul characteristics (stored as Activity down in the corresponding Notes) #----
+    x <- x |>
+      dplyr::arrange(Vesselid, time.start) |>
+      tidyr::fill(IDhaul) |>
+      dplyr::ungroup()
+
     #   # y$File.name_concat <- y$File.name
     #   # y <- y[y$Type == "Videofile", ]
     #   # y$time_dummy <- lubridate::floor_date(lubridate::ymd_hms(y$time.start),
@@ -180,7 +181,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     #   x <- x[!x$Type == "Videofile",]
     ## Fix the problem where the first pinger appears before the beginning of the activity #----
     for(i in 1:(length(x$Id)-1)){
-      if(x$Type[i] == 'Note' &
+      if(x$Note.type[i] == 'Pinger' &
          x$Type[i+1] == 'Activity' &
          x$time.start[i] < x$time.start[i+1] &
          x$time.stop[i] > x$time.start[i+1]){
@@ -248,8 +249,8 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
         is.na(review.info) & !is.na(colour.name) ~ 1,
         .default = review.info)) |>
       dplyr::group_by(IDhaul) |>
-      dplyr::mutate(review.info = if_else(rep(any(review.info == 1),
-                                              dplyr::n()), 1, review.info)
+      dplyr::mutate(review.info = dplyr::if_else(rep(any(review.info == 1),
+                                                     dplyr::n()), 1, review.info)
       ) |>
       dplyr::ungroup() |>
       ## Is there  mitigation in place? #----
