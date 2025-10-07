@@ -103,6 +103,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                                        End.latitude,.default = NA_integer_)) |>
       ## Copy the haul characteristics (stored as Activity down in the corresponding Notes) #----
     dplyr::arrange(Vesselid, time.start) |>
+      dplyr::group_by(IDFD) |>
       tidyr::fill(IDhaul) |>
       dplyr::ungroup()
     ##
