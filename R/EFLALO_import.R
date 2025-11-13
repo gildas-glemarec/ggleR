@@ -253,8 +253,13 @@ EFLALO_import <- function(x,
                                                                  '120-200mm'))]
   ## Add mean depth and mean distance to shore of the ICES rectangle the fishing
   ## operations are marked in
-  ices.rectangles <- sf::st_read("./data/ices.rectangles_meandepth_meand2shore.gpkg",
-                                 quiet = TRUE)
+  file_url <- "https://github.com/gildas-glemarec/ggleR/raw/refs/heads/main/data/ices.rectangles_meandepth_meand2shore.gpkg"
+  local_path <- here::here("data", "ices.rectangles_meandepth_meand2shore.gpkg")
+  if (!dir.exists(dirname(local_path))) {
+    dir.create(dirname(local_path), recursive = TRUE)
+  }
+  download.file(file_url, destfile = local_path, mode = "wb")
+  ices.rectangles <- sf::st_read(local_path, quiet = T)
   ices.rectangles$LE_RECT <- ices.rectangles$ICESNAME
   logbook <- logbook[subset(ices.rectangles,
                             select = c('LE_RECT','d2shore.mean','depth.mean')),
