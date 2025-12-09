@@ -23,7 +23,8 @@ mistral_chat <- function(prompt,
   api_key <- api_key %||% Sys.getenv("MISTRAL_API_KEY")
 
   if (is.null(api_key) || api_key == "") {
-    stop("API key not provided. Set it as an argument or as an environment
+    stop(
+      message("API key not provided. Set it as an argument or as an environment
          variable 'MISTRAL_API_KEY'.
 
 To create a Mistral API key, follow these steps:
