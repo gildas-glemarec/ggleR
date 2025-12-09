@@ -315,7 +315,7 @@ logbook_import_fast <- function(x,
   # logbook <- get.depth(logbook,
   #                      path.to.raster = 'Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif')
   ices.rectangles <- readRDS('Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/ICES_rect.RDS')
-  # ices.rectangles <- sf::read_sf('H:/c-users/Maps/DepthDK/ICES rect depth.gpkg')
+  # ices.rectangles <- sf::read_sf('H:/c-users/Maps/DepthDK/ICES_rect_depth.gpkg')
   ices.rectangles$icesrect <- ices.rectangles$ICESNAME
   logbook <- logbook[subset(ices.rectangles,
                             select = c('icesrect','d2shore','depth')),

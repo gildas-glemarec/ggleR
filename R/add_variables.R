@@ -5,6 +5,7 @@
 #' @param study_period Should all years (default), or only specific years be compiled (defined as c(year1, year2, etc.))?
 #' @param path_to_soak Some soak time info is missing (not found in BB). Manual fix based on a prior extraction (input is a csv file)
 #' @param path.to.coastline ESRI Shapefile of the region (used to estimate distance to shore). By default, the file is Europe (Bounding box:  xmin: 943609.8 ymin: -375446 xmax: 7601958 ymax: 6825119; Projected CRS: ETRS89-extended / LAEA Europe)
+#' @param path.to.raster Raster of depth
 #' @param path.to.old.notes CSV file wit h a previous version of Notes and Annotations
 #' @return Same dataset with additional columns
 #' @export

@@ -13,12 +13,21 @@ Imports:
     data.table,
     dplyr,
     forcats,
+    geosphere,
+    here,
+    httr,
+    jsonlite,
     lazyeval,
     lubridate,
     mapplots,
     sf,
     stringr,
     terra,
+    tibble,
     tidyr,
     utils,
-    rerddap
+    rerddap,
+    worrms
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

@@ -29,6 +29,8 @@ add_variables(
 
 \item{path.to.coastline}{ESRI Shapefile of the region (used to estimate distance to shore). By default, the file is Europe (Bounding box:  xmin: 943609.8 ymin: -375446 xmax: 7601958 ymax: 6825119; Projected CRS: ETRS89-extended / LAEA Europe)}
 
+\item{path.to.raster}{Raster of depth}
+
 \item{path.to.old.notes}{CSV file wit h a previous version of Notes and Annotations}
 }
 \value{

@@ -7,7 +7,7 @@
 fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/",
                    spp_list = list(),
                    incl.fish = FALSE){
-  Species <- NULL
+  Species <- SpeciesGroup <- SpeciesClass <- ID3 <- IDhaul <- IDevent <- ..keep <- IDbc <- IDcatch.sub <- VideoFileName <- NULL
   filenames <- list.files(x,
                           full.names = TRUE)
   list_CQdata <- Map(function(x){
