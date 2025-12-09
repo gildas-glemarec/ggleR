@@ -24,36 +24,19 @@ mistral_chat <- function(prompt,
 
   if (is.null(api_key) || api_key == "") {
     stop(
-      message("API key not provided. Set it as an argument or as an environment
-         variable 'MISTRAL_API_KEY'.
-
-To create a Mistral API key, follow these steps:
-
-Log in to the Mistral Console: Go to https://console.mistral.ai/ and log in with
-your account. If you don’t have an account, you’ll need to create one first.
-
-Navigate to the API Keys Section: Once logged in, look for the ''API Key''
-section in the left-hand menu or under your workspace settings. The direct link
-is often https://console.mistral.ai/api-keys/ or similar.
-
-Generate a New API Key: In the API Keys section, click on the button to''Create
-new key'' or''Generate a new key.'' You may be asked to provide a name for the
-key or set an expiration date.
-
-Copy Your API Key: After generating the key, it will be displayed on the screen.
-Copy it immediately—for security reasons, you won’t be able to see it again
-after leaving the page. If you lose it, you’ll need to generate a new one.
-
-Store Your API Key Securely: Save your API key in a secure place, such as an
-environment variable or a secure password manager.
-
-In R console: usethis::edit_r_environ()
-
-Add this line in the file: MISTRAL_API_KEY=your_api_key_here
-
-Save the file and restart your R session for the changes to take effect.
-
-")
+      paste0(
+        "API key not provided. Set it as an argument or as an environment variable 'MISTRAL_API_KEY'.", "\n",
+        "To create a Mistral API key, follow these steps:", "\n",
+        "1. Go to https://console.mistral.ai/ and log in. If you don’t have an account, create one first.", "\n",
+        "2. Once logged in, go to the ''API Key'' section ", "\n",
+        "3. Click on ''Create new key'' (set a name and expiration date if required).", "\n",
+        "4. Copy Your API Key! You won’t be able to see it again after leaving the page. If you lose it, too bad.", "\n",
+        "5. Store Your API Key Securely.", "\n",
+        "6. In R console, type: usethis::edit_r_environ()", "\n",
+        "7. Add this line in the file: MISTRAL_API_KEY=your_api_key_here", "\n",
+        "8. Save the file and restart your R session for the changes to take effect."
+      )
+    )
   }
 
   url <- "https://api.mistral.ai/v1/chat/completions"
