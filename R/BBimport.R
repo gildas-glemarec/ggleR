@@ -170,6 +170,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     x <- x |>
       dplyr::group_by(IDhaul) |>
       tidyr::fill(haul_number) |>
+      tidyr::fill(Activity.comment) |>
       tidyr::fill(Gear.type) |>
       tidyr::fill(Distance..m.) |>
       tidyr::fill(Soaking.time..h.) |>
@@ -240,9 +241,11 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                                      collapse = "|"),
                                                add.comments)] ~ 'thin-twine nets',
         mitigation == '1' &
-          add.comments %in% add.comments[grepl(paste(c("low net", "low-net"),
+          add.comments %in% add.comments[grepl(paste(c("low net", "low-net",
+                                                       'LAVE GARN'),
                                                      collapse = "|"),
-                                               add.comments)] ~ 'low nets',
+                                               add.comments,
+                                               ignore.case = TRUE)] ~ 'low nets',
         #colour.name == "colour-to-define" ~ 'some_mitigation_device',
         #colour.name == "colour-to-define" ~ 'other_mitigation',
         .default = NA)) |>
