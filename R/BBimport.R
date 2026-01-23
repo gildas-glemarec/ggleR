@@ -165,6 +165,8 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       }
     }
 
+    x$Review.info <- as.numeric(x$Review.info)
+
     x <- x |>
       dplyr::group_by(IDhaul) |>
       tidyr::fill(haul_number) |>
