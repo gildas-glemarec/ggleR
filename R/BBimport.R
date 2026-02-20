@@ -102,6 +102,13 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                                                           'Gear haul')~
                                                        End.latitude,.default = NA_integer_))
 
+    # ## Copy the haul additional comments (currently stored as Activity.comment) down in the corresponding Notes #----
+    # x <- x |>
+    #   dplyr::arrange(Vesselid, time.start) |>
+    #   dplyr::group_by(Vesselid, date, haul_number) |>
+    #   tidyr::fill(Activity.comment) |>
+    #   dplyr::ungroup()
+
     ## List the corresponding video files for each activity/note
     y <- data.table::copy(x)
     y <- y[y$Type == "Videofile", ]
@@ -167,22 +174,26 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
 
     x$Review.info <- as.numeric(x$Review.info)
 
+    x$Activity.comment[x$Activity.comment == ""] <- NA
+    x$Gear.type[x$Gear.type == ""] <- NA
+    x$Mesh.color[x$Mesh.color == ""] <- NA
     x <- x |>
       dplyr::group_by(IDhaul) |>
-      tidyr::fill(haul_number) |>
-      tidyr::fill(Activity.comment) |>
-      tidyr::fill(Gear.type) |>
-      tidyr::fill(Distance..m.) |>
-      tidyr::fill(Soaking.time..h.) |>
-      tidyr::fill(Mesh.color) |>
-      tidyr::fill(Review.info) |>
-      tidyr::fill(haul.lon.start) |>
-      tidyr::fill(haul.lat.start) |>
-      tidyr::fill(haul.lon.stop) |>
-      tidyr::fill(haul.lat.stop) |>
-      tidyr::fill(camera) |>
-      tidyr::fill(quality) |>
-      dplyr::ungroup() |>
+      tidyr::fill(haul_number, .direction = "downup") |>
+      tidyr::fill(Activity.comment, .direction = "downup") |>
+      tidyr::fill(Gear.type, .direction = "downup") |>
+      tidyr::fill(Distance..m., .direction = "downup") |>
+      tidyr::fill(Soaking.time..h., .direction = "downup") |>
+      tidyr::fill(Mesh.color, .direction = "downup") |>
+      tidyr::fill(Review.info, .direction = "downup") |>
+      tidyr::fill(haul.lon.start, .direction = "downup") |>
+      tidyr::fill(haul.lat.start, .direction = "downup") |>
+      tidyr::fill(haul.lon.stop, .direction = "downup") |>
+      tidyr::fill(haul.lat.stop, .direction = "downup") |>
+      tidyr::fill(camera, .direction = "downup") |>
+      tidyr::fill(quality, .direction = "downup") |>
+      dplyr::ungroup()
+    x <- x |>
       dplyr::select(vessel = Vesselid,
                     date,
                     review.info = Review.info,
