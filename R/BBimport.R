@@ -172,8 +172,8 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       }
     }
 
+    ## Fill the "notes" from the "activity". Fix the vector classes first
     x$Review.info <- as.numeric(x$Review.info)
-
     x$Activity.comment[x$Activity.comment == ""] <- NA
     x$Gear.type[x$Gear.type == ""] <- NA
     x$Mesh.color[x$Mesh.color == ""] <- NA
@@ -182,6 +182,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       tidyr::fill(haul_number, .direction = "downup") |>
       tidyr::fill(Activity.comment, .direction = "downup") |>
       tidyr::fill(Gear.type, .direction = "downup") |>
+      tidyr::fill(Treatment.Group, .direction = "downup") |>
       tidyr::fill(Distance..m., .direction = "downup") |>
       tidyr::fill(Soaking.time..h., .direction = "downup") |>
       tidyr::fill(Mesh.color, .direction = "downup") |>
