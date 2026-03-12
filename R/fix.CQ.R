@@ -7,7 +7,7 @@
 fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/catch_quantification/",
                    spp_list = list(),
                    incl.fish = FALSE){
-  Species <- SpeciesGroup <- SpeciesClass <- ID3 <- IDhaul <- IDevent <- ..keep <- IDbc <- IDcatch.sub <- VideoFileName <- NULL
+  Species <- SpeciesGroup <- SpeciesClass <- ID3 <- IDhaul <- IDevent <- ..keep.var <- IDbc <- IDcatch.sub <- VideoFileName <- NULL
   filenames <- list.files(x,
                           full.names = TRUE)
   list_CQdata <- Map(function(x){
@@ -129,7 +129,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
 
   ## Create IDbc (and IDcatch.sub if incl.fish = TRUE) #----
   rnum <- as.numeric(rownames(y))
-  keep <- c("IDhaul", "SpeciesGroup","IDevent")
+  keep.var <- c("IDhaul", "SpeciesGroup","IDevent")
 
   ### Create IDevent #----
   y <- y[, ID3 := data.table::frank(.I, ties.method = "first")
@@ -138,7 +138,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
   y$IDevent <- as.factor(y$IDevent)
 
   ### Create IDbc #----
-  tmp.bc <- y[, ..keep][SpeciesGroup %in% c("Bycatch")][
+  tmp.bc <- y[, ..keep.var][SpeciesGroup %in% c("Bycatch")][
     , ID3 := data.table::frank(.I, ties.method = "dense"), by = IDhaul][
       , IDbc := paste(IDhaul, ID3, sep = ".")]
   y <- merge(y, subset(tmp.bc, select = c(-ID3,-IDhaul,-SpeciesGroup)),
@@ -149,7 +149,7 @@ fix.CQ <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/bla
 
   ### Create IDcatch.sub #----
   if(incl.fish == TRUE){
-  tmp.catch <- data.table::copy(y)[, ..keep][SpeciesGroup %in% c("Catch")][
+  tmp.catch <- data.table::copy(y)[, ..keep.var][SpeciesGroup %in% c("Catch")][
     , ID3 := data.table::frank(.I, ties.method = "dense"), by = IDhaul][
       , IDcatch.sub := paste(IDhaul, ID3, sep = ".")]
   y <- merge(y, subset(tmp.catch, select = c(-ID3,-IDhaul,-SpeciesGroup)),
