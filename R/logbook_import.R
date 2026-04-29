@@ -11,9 +11,9 @@ logbook_import_fast <- function(x,
                                 path_to_harbour_list = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/by.year",
                                 path_to_harbour_shp = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/XYhavn.shp"){
 
-   . <- landing_harbour <- mostICESrect <- square2 <- newID <- dfadfvd_ret <- lgrad <- bgrad <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- metier_level_6_new <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
+  . <- landing_harbour <- mostICESrect <- square2 <- newID <- dfadfvd_ret <- lgrad <- bgrad <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- metier_level_6_new <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
 
-   `%notin%` <- Negate(`%in%`)
+  `%notin%` <- Negate(`%in%`)
   Mode <- function(x) {
     ux <- unique(x)
     ux[which.max(tabulate(match(x, ux)))]
@@ -119,8 +119,8 @@ logbook_import_fast <- function(x,
                     )
     ) %>%
     dplyr::mutate(vessel.length.split15 = if_else(vessel.length < 15,
-                                '<15m',
-                                '>15m'))
+                                                  '<15m',
+                                                  '>15m'))
   logbook <- data.table::as.data.table(logbook)
 
   ## Eyeballing the mesh size + registered gear + target species,
@@ -266,12 +266,16 @@ logbook_import_fast <- function(x,
   ## owner (and thus also home harbour) from one year to the next
   harbours$fid.year <- paste(harbours$fid, harbours$year, sep='.')
   harbours <- unique(harbours, by = "fid.year")
-  logbook$fid.year <- paste(logbook$fid, as.character(logbook$y), sep='.')
-
-  # Merge logbook with harbours to add home_harbour, lon_home, and lat_home
+  logbook$fid.year <- paste(logbook$fid,
+                            ifelse( logbook$y > max(harbours$y),
+                                    as.character(max(harbours$y)),
+                                    as.character(logbook$y) ),
+                            sep = '.')
+  ## Merge logbook with harbours to add home_harbour, lon_home, and lat_home
   logbook <- logbook[subset(harbours,
                             select = c('fid.year','lon','lat','lplads')),
-                     on = 'fid.year']
+                     on = .(fid.year), nomatch = 0] ## left join
+  #                  on = 'fid.year] ## inner join
   # logbook <- data.table::merge(logbook,
   #                  subset(harbours,
   #                         select = c('fid.year','lon','lat','lplads')),
