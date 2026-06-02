@@ -31,50 +31,29 @@ logbook_import_fast <- function(x,
   logbook <- data.table::data.table(logbook)
 
   ## Housekeeping
-  logbook <- data.table::data.table(logbook %>%
-                                      dplyr::filter(redskb %in% c('GN','GND','GNS','GTN','GTR')) %>%
-                                      dplyr::filter(stringr::str_starts(metier_level_6_new, "GN")) %>%
-                                      dplyr::mutate(maske = dplyr::na_if(maske,"")) %>%
-                                      dplyr::mutate(maske = dplyr::na_if(maske,".")) %>%
-                                      ## Filter out rows based on "faulty" landings
-                                      dplyr::filter(!latin %in%
-                                                      c("Anguilla anguilla", ## Mostly caught in fykes
-                                                        # "Osteichthyes", "", ## too vague
-                                                        ## Crustacean/Gastropods/Bivalves are not targeted
-                                                        ## in the region w. GN:
-                                                        "Palaemon serratus","Astacus astacus",
-                                                        "Nephrops norvegicus",
-                                                        "Pandalus borealis", "Crangon crangon",
-                                                        "Buccinum undatum", "Gastropoda",
-                                                        "Mytilus edulis","Spisula solida",
-                                                        ## Some typical freshwater spp are mentioned:
-                                                        # "Abramis brama","Tinca tinca",
-                                                        ## Others have no distribution in DK:
-                                                        "Boreogadus saida",
-                                                        ## Or live in much deeper waters:
-                                                        "Coryphaenoides rupestris",
-                                                        ## Not fished in gillnets or bycatches
-                                                        "Scomber scombrus",
-                                                        "Trachurus trachurus",
-                                                        "Abramis brama","Acipenser sturio",
-                                                        "Alosa fallax","Belone belone",
-                                                        "Brama brama","Chimaera monstrosa",
-                                                        "Conger conger","Coregonus lavaretus",
-                                                        "Esox lucius","Hippoglossoides platessoides",
-                                                        "Labrus bergylta","Lamna nasus",
-                                                        "Molva dypterygia","Mustelus lenticulatus",
-                                                        "Mustelus mustelus","Oncorhynchus mykiss",
-                                                        "Osmerus eperlanus","Perca fluviatilis",
-                                                        "Phycis blennoides","Prionace glauca",
-                                                        "Rajidae","Reinhardtius hippoglossoides",
-                                                        "Rutilus rutilus","Salmo salar",
-                                                        "Salmo trutta","Scyliorhinus canicula",
-                                                        "Sparus aurata","Thunnus thynnus",
-                                                        "Zeus faber","Echinus esculentus")) %>%
-                                      dplyr::filter(!eart %in% c("Additional Payment")) %>%
-                                      ## Quick fix
-                                      dplyr::mutate(square = dplyr::if_else(square=='40B2','40G2',square)),
-                                    key = 'fid')
+  ## ## Update June 2026: limit filtering to L6new and species landed
+  logbook <- data.table::data.table(
+    logbook %>%
+      dplyr::filter(stringr::str_starts(metier_level_6_new, "GN")) %>%
+      dplyr::mutate(maske = dplyr::na_if(maske,"")) %>%
+      dplyr::mutate(maske = dplyr::na_if(maske,".")) %>%
+      ## Filter out rows based on "faulty" landings
+      dplyr::filter(!latin %in%
+                      ## Crustacean/Gastropods/Bivalves are not targeted
+                      ## in the region w. GN:
+                      "Palaemon serratus",
+                    "Astacus astacus",
+                    "Nephrops norvegicus",
+                    "Pandalus borealis",
+                    "Crangon crangon",
+                    "Buccinum undatum",
+                    "Gastropoda",
+                    "Mytilus edulis",
+                    "Spisula solida") %>%
+      dplyr::filter(!eart %in% c("Additional Payment")) %>%
+      ## Quick fix
+      dplyr::mutate(square = dplyr::if_else(square=='40B2','40G2',square)),
+    key = 'fid')
 
   ## Assign correct name to ICES area
   logbook[, ices.area := ifelse(dfadfvd_ret == '3AI', 'isefjord',
@@ -127,11 +106,7 @@ logbook_import_fast <- function(x,
   ## there are issues. Let's fix the obvious
   logbook$maske <- as.numeric(as.character(logbook$maske))
   logbook[, maske := ifelse(maske>=400, NA, maske)]
-  # logbook$metier_level_6_new <- as.character(logbook$metier_level_6_new)
-  # logbook[, metier_level6_ret := ifelse(latin == "Clupea harengus" &
-  #                                         metier_level6_ret != "GNS_SPF_32-109_0_0",
-  #                                       "GNS_SPF_32-109_0_0", metier_level6_ret)]
-  ## Some rows have info on metier, but not on mesh. We can assume that they use
+  ## Some rows have info on metier, but not on mesh. We assume that they use
   ## they use the minimal mesh size in the category
   # table(logbook[is.na(maske)]$metier_level_6_new)
   logbook[, maske := ifelse(metier_level_6_new == "GNS_SPF_>=220_0_0" & maske < 220 |
@@ -240,13 +215,8 @@ logbook_import_fast <- function(x,
   harbours <- data.table::data.table(harbours, key = 'fid')
   harbours <- unique(logbook, by = 'fid')[
     , c('fid','vessel.length.split15')][harbours, on = 'fid']
-  # harbours <- data.table::merge(unique(logbook, by = 'fid')[
-  #   , c('fid','vessel.length.split15')],
-  #   harbours,
-  #   by = 'fid')
   harbours <- harbours[, c('fid', 'year', 'landing_harbour', 'home_harbour',
                            'vessel.length.split15'
-                           # , 'n_trips', 'hel'
   )]
   data.table::setnames(harbours, old = 'home_harbour', new = 'lplads')
   data.table::setkey(harbours, 'lplads')
@@ -276,10 +246,6 @@ logbook_import_fast <- function(x,
                             select = c('fid.year','lon','lat','lplads')),
                      on = .(fid.year), nomatch = 0] ## left join
   #                  on = 'fid.year] ## inner join
-  # logbook <- data.table::merge(logbook,
-  #                  subset(harbours,
-  #                         select = c('fid.year','lon','lat','lplads')),
-  #                  by = c('fid.year') )
   data.table::setnames(logbook, old = c('lon','lat','lplads'),
                        new = c('lon_home','lat_home','home_harbour'))
 
@@ -298,35 +264,11 @@ logbook_import_fast <- function(x,
                                             no = icesrect)]
 
   ## Register fishing location as centroid of ICES stat. rect.
-  # logbook[, lon := mapplots::ices.rect(logbook$icesrect)[,1]]
-  # logbook[, lat := mapplots::ices.rect(logbook$icesrect)[,2]]
-  #
-  ## Calculate depth and distance to shore of the ICES rect centroids
-  # get.depth <- function(x,
-  #                       path.to.raster = "Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif"){
-  #   ## Depth at point
-  #   depth.ras.dk <- terra::rast(x = path.to.raster)
-  #   x <- data.table::as.data.table(x)
-  #   dk.sfpts <- sf::st_as_sf(x, coords = c('lon','lat'), na.fail = FALSE)
-  #   depth.dk.df <- (terra::extract(x = depth.ras.dk,
-  #                                  y = dk.sfpts,
-  #                                  df = TRUE))$alldepth
-  #   x <- data.table::data.table(x)[, depth:= depth.dk.df]
-  #   x <- x[, depth := data.table::fifelse(depth>0, -2, depth)]
-  #   return(x)
-  #   gc()
-  # }
-  # logbook <- get.depth(logbook,
-  #                      path.to.raster = 'Q:/scientific-projects/cctv-monitoring/data/GIS/alldepth.tif')
   ices.rectangles <- readRDS('Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/ICES_rect.RDS')
-  # ices.rectangles <- sf::read_sf('H:/c-users/Maps/DepthDK/ICES_rect_depth.gpkg')
   ices.rectangles$icesrect <- ices.rectangles$ICESNAME
   logbook <- logbook[subset(ices.rectangles,
                             select = c('icesrect','d2shore','depth')),
                      on = c('icesrect')][!is.na(fid)]
-  # logbook <- data.table::merge(logbook,
-  #                  subset(ices.rectangles, select = c('ICESNAME','d2shore','depth')),
-  #                  by.x = 'icesrect', by.y = 'ICESNAME', all.x = TRUE)
 
   ## Create an ID for each (unique) fishing day (FD)
   logbook <- logbook %>%
@@ -374,21 +316,6 @@ logbook_import_fast <- function(x,
                                                                          'latin')],
                      on = c('IDFD')]
   names(logbook)[names(logbook)=="i.latin"] <- "target"
-  # logbook <- merge(logbook,
-  #                  logbook[logbook[, .I[base::which.max(vrd)],
-  #                                  by = 'IDFD']$V1][, .SD, .SDcols = c('IDFD',
-  #                                                                      'latin')],
-  #                  by = 'IDFD')
-
-  ### Main target in WEIGHT landed ##
-  ## The following will create 2 new variables (latin and target), which are the
-  ## most important catch in terms of landings weight per trip
-  # logbook <- data.table::merge(logbook,
-  #                  logbook[, .SD[which.max(hel)],
-  #                          by = 'IDFD'][, .SD, .SDcols = c('IDFD', 'latin')],
-  #                  by = 'IDFD')
-  # names(logbook)[names(logbook)=="latin.x"] <- "latin"
-  # names(logbook)[names(logbook)=="latin.y"] <- "target"
 
   ## If lumpsucker is landed, then we assume that lumpsucker is the main target
   ## species for that fishing day - Good for now, but in the future, we should
@@ -396,8 +323,6 @@ logbook_import_fast <- function(x,
   ## that lumpsucker is the main target species for that fishing day"
   logbook[, target := lapply(.SD, function(x) if(base::any(target == 'Cyclopterus lumpus'))
     'Cyclopterus lumpus' else target), by = .(IDFD)]
-
-  ##### I
 
   return(logbook)
 }

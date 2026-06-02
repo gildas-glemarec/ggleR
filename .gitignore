@@ -55,3 +55,4 @@ rsconnect/
 ### Other specific files
 R/EFLALO_import.R
 R/ICES.rect.addon.R
+.positai
