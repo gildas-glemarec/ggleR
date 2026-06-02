@@ -39,40 +39,41 @@ logbook_import_fast <- function(x,
       dplyr::mutate(maske = dplyr::na_if(maske,".")) %>%
       ## Filter out rows based on "faulty" landings
       dplyr::filter(!latin %in% c(
-                      ## Crustacean/Gastropods/Bivalves are not targeted
-                      ## in the region w. GN:
-                      "Palaemon serratus",
-                    "Astacus astacus",
-                    "Nephrops norvegicus",
-                    "Pandalus borealis",
-                    "Crangon crangon",
-                    "Buccinum undatum",
-                    "Gastropoda",
-                    "Mytilus edulis",
-                    "Spisula solida") ) %>%
+        ## Crustacean/Gastropods/Bivalves are not targeted
+        ## in the region w. GN:
+        "Palaemon serratus",
+        "Astacus astacus",
+        "Nephrops norvegicus",
+        "Pandalus borealis",
+        "Crangon crangon",
+        "Buccinum undatum",
+        "Gastropoda",
+        "Mytilus edulis",
+        "Spisula solida") ) %>%
       dplyr::filter(!eart %in% c("Additional Payment")) %>%
       ## Quick fix
       dplyr::mutate(square = dplyr::if_else(square=='40B2','40G2',square)),
     key = 'fid')
 
   ## Assign correct name to ICES area
-  logbook[, ices.area := ifelse(dfadfvd_ret == '3AI', 'isefjord',
-                                ifelse(dfadfvd_ret == '3AN', '3.a.20',
-                                       ifelse(dfadfvd_ret == '3AS', '3.a.21',
-                                              ifelse(dfadfvd_ret == '3B', '3.b.23',
-                                                     ifelse(dfadfvd_ret == '3C22', '3.c.22',
-                                                            ifelse(dfadfvd_ret == '3D24', '3.d.24',
-                                                                   ifelse(dfadfvd_ret == '3D25', '3.d.25',
-                                                                          ifelse(dfadfvd_ret == '3D26', '3.d.26',
-                                                                                 ifelse(dfadfvd_ret == '4A', '4.a',
-                                                                                        ifelse(dfadfvd_ret == '4B', '4.b',
-                                                                                               ifelse(dfadfvd_ret == '4BX', '3.c.22', ## Yes, this is correct!
-                                                                                                      ifelse(dfadfvd_ret == '4C', '4.c',
-                                                                                                             ifelse(dfadfvd_ret == '3AI3', 'isefjord',
-                                                                                                                    ifelse(dfadfvd_ret == '4L', 'limfjord',
-                                                                                                                           ifelse(dfadfvd_ret == '4R', 'ringk.fjord',
-                                                                                                                                  ifelse(dfadfvd_ret == '4N', 'nissum.fjord',
-                                                                                                                                         'NA'))))))))))))))))]
+  logbook[, ices.area := data.table::fcase(
+    dfadfvd_ret == '3AI' | dfadfvd_ret == '3AI3', 'isefjord',
+    dfadfvd_ret == '3AN', '3.a.20',
+    dfadfvd_ret == '3AS', '3.a.21',
+    dfadfvd_ret == '3B', '3.b.23',
+    dfadfvd_ret == '3C22' | dfadfvd_ret == '4BX', '3.c.22',
+    dfadfvd_ret == '3D24', '3.d.24',
+    dfadfvd_ret == '3D25', '3.d.25',
+    dfadfvd_ret == '3D26', '3.d.26',
+    dfadfvd_ret == '4A', '4.a',
+    dfadfvd_ret == '4B', '4.b',
+    dfadfvd_ret == '4C', '4.c',
+    dfadfvd_ret == '4L', 'limfjord',
+    dfadfvd_ret == '4R', 'ringk.fjord',
+    dfadfvd_ret == '4N', 'nissum.fjord',
+    default = NA_character_
+  )]
+
   ## We have no data from the Baltic Proper, so we need to remove those hauls in
   ## subdivisions 24, 25 and 26.
   logbook <- logbook[ices.area %notin% c('3.d.24','3.d.25','3.d.26',
@@ -86,129 +87,116 @@ logbook_import_fast <- function(x,
   logbook$flag <- as.character('DK')
 
   ## Vessel length
+  logbook[, oal := data.table::fcase(
+    is.na(oal) | oal == '.' & fid == 'AS191', "8.94",
+    is.na(oal) | oal == '.' & fid == 'L39', "8.62",
+    is.na(oal) | oal == '.' & fid == 'SG237', "9", ## this one is made up
+    default = oal
+  )]
   logbook$vessel.length <- as.numeric(logbook$oal)
-  logbook <- logbook %>%
-    dplyr::mutate(f.length =
-                    dplyr::case_when(vessel.length < 8 ~ "<8m",
-                                     dplyr::between(vessel.length, 8, 10) ~ "8-10m",
-                                     dplyr::between(vessel.length, 10, 12) ~ "10-12m",
-                                     dplyr::between(vessel.length, 12, 15) ~ "12-15m",
-                                     vessel.length > 15 ~ ">15m",
-                                     TRUE ~ as.character(vessel.length)
-                    )
-    ) %>%
-    dplyr::mutate(vessel.length.split15 = if_else(vessel.length < 15,
-                                                  '<15m',
-                                                  '>15m'))
-  logbook <- data.table::as.data.table(logbook)
+  logbook[, f.length := data.table::fcase(
+    (vessel.length < 8), "<8m",
+    (dplyr::between(vessel.length, 8, 10)), "8-10m",
+    (dplyr::between(vessel.length, 10, 12)), "10-12m",
+    (dplyr::between(vessel.length, 12, 15)), "12-15m",
+    (vessel.length > 15), ">15m",
+    default = as.character(vessel.length)
+  )]
+  logbook[, vessel.length.split15 := data.table::fifelse(vessel.length < 15,
+                                                         '<15m', '>15m')]
 
   ## Eyeballing the mesh size + registered gear + target species,
   ## there are issues. Let's fix the obvious
   logbook$maske <- as.numeric(as.character(logbook$maske))
-  logbook[, maske := ifelse(maske>=400, NA, maske)]
+  logbook[, maske := data.table::fifelse(maske>=400, NA, maske)]
   ## Some rows have info on metier, but not on mesh. We assume that they use
   ## they use the minimal mesh size in the category
-  # table(logbook[is.na(maske)]$metier_level_6_new)
-  logbook[, maske := ifelse(metier_level_6_new == "GNS_SPF_>=220_0_0" & maske < 220 |
-                              metier_level_6_new == "GNS_DEF_>=220_0_0" & maske < 220,
-                            230,
-                            ifelse(metier_level_6_new=="GND_ANA_>=157_0_0" & maske < 157 |
-                                     metier_level_6_new=="GNS_ANA_>=157_0_0" & maske < 157 |
-                                     metier_level_6_new=="GNS_SPF_>=157_0_0" & maske < 157 |
-                                     metier_level_6_new=="GNS_DEF_>=157_0_0" & maske < 157,
-                                   157,
-                                   ifelse(metier_level_6_new=="GNS_SPF_120-219_0_0"& maske < 120|
-                                            metier_level_6_new=="GND_DEF_120-219_0_0"& maske < 120|
-                                            metier_level_6_new=="GNS_DEF_120-219_0_0" & maske < 120,
-                                          120,
-                                          ifelse(metier_level_6_new=="GNS_ANA_110-156_0_0" & maske < 110|
-                                                   metier_level_6_new=="GNS_DEF_110-156_0_0"& maske < 110|
-                                                   metier_level_6_new=="GNS_SPF_110-156_0_0"& maske < 110,
-                                                 110,
-                                                 ifelse(metier_level_6_new=="GNS_DEF_100-119_0_0" & maske < 100|
-                                                          metier_level_6_new=="GNS_SPF_100-119_0_0" & maske < 100,
-                                                        100,
-                                                        ifelse(metier_level_6_new=="GNS_DEF_90-109_0_0"& maske<90|
-                                                                 metier_level_6_new=="GNS_ANA_90-109_0_0"& maske<90|
-                                                                 metier_level_6_new=="GNS_SPF_90-99_0_0" & maske<90|
-                                                                 metier_level_6_new=="GNS_DEF_90-99_0_0" & maske<90,
-                                                               90,
-                                                               ifelse(metier_level_6_new=="GNS_FWS_>0_0_0"& maske<18|
-                                                                        metier_level_6_new=='GNS_CRU_>0_0_0'& maske<18,
-                                                                      18,
-                                                                      ifelse(metier_level_6_new=="GNS_SPF_32-109_0_0"& maske<32,
-                                                                             32,
-                                                                             ifelse(metier_level_6_new=="GNS_SPF_10-30_0_0" & maske<10,
-                                                                                    10,
-                                                                                    ifelse(metier_level_6_new=='GND_SPF_50-70_0_0' & maske<50|
-                                                                                             metier_level_6_new=='GNS_SPF_50-70_0_0' & maske<50|
-                                                                                             metier_level_6_new=='GNS_DEF_50-70_0_0' & maske<50,
-                                                                                           50,
-                                                                                           maske
-                                                                                    ))))))))))]
-  logbook[, mesh := ifelse(test = !is.na(maske), yes = maske,
-                           ifelse(metier_level_6_new == "GNS_SPF_>=220_0_0" |
-                                    metier_level_6_new == "GNS_DEF_>=220_0_0" |
-                                    metier_level_6_new == "GNS_CRU_>=220_0_0",
-                                  230, # Mean value for these metiers
-                                  ifelse(metier_level_6_new == "GND_ANA_>=157_0_0" |
-                                           metier_level_6_new == "GNS_ANA_>=157_0_0" |
-                                           metier_level_6_new == "GNS_SPF_>=157_0_0" |
-                                           metier_level_6_new == "GNS_DEF_>=157_0_0" |
-                                           metier_level_6_new ==  "GNS_SPF_120-219_0_0" |
-                                           metier_level_6_new ==  "GND_DEF_120-219_0_0" |
-                                           metier_level_6_new ==  "GNS_DEF_120-219_0_0" |
-                                           metier_level_6_new ==  "GNS_CRU_120-219_0_0",
-                                         170, # Mean value for these metiers
-                                         ifelse(metier_level_6_new == "GNS_ANA_110-156_0_0" |
-                                                  metier_level_6_new == "GNS_DEF_110-156_0_0" |
-                                                  metier_level_6_new == "GNS_SPF_110-156_0_0",
-                                                130, # Mean value for these metiers
-                                                ifelse(metier_level_6_new == "GNS_DEF_100-119_0_0" |
-                                                         metier_level_6_new == "GNS_SPF_100-119_0_0" |
-                                                         metier_level_6_new == "GNS_CRU_100-119_0_0",
-                                                       110, # Mean value for these metiers
-                                                       ifelse(metier_level_6_new == "GNS_DEF_90-109_0_0" |
-                                                                metier_level_6_new == "GNS_ANA_90-109_0_0" |
-                                                                metier_level_6_new == "GNS_SPF_90-99_0_0" |
-                                                                metier_level_6_new == "GNS_DEF_90-99_0_0" |
-                                                                metier_level_6_new == "GNS_CRU_90-99_0_0" |
-                                                                metier_level_6_new == "GNS_FWS_>0_0_0"|
-                                                                metier_level_6_new == 'GNS_SPF_>0_0_0',
-                                                              90, # Mean value for these metiers
-                                                              ifelse(metier_level_6_new == "GNS_SPF_32-109_0_0" |
-                                                                       metier_level_6_new == "GNS_DEF_32-89_0_0" |
-                                                                       metier_level_6_new == "GNS_SPF_32-89_0_0" |
-                                                                       metier_level_6_new == "GNS_DEF_50-70_0_0",
-                                                                     50, # Mean value for this metiers
-                                                                     ifelse(metier_level_6_new == "GNS_SPF_10-30_0_0" |
-                                                                              metier_level_6_new == "GNS_ANA_>0_0_0" |
-                                                                              metier_level_6_new == "GNS_CAT_>0_0_0" |
-                                                                              metier_level_6_new == "GNS_CRU_10-30_0_0" |
-                                                                              metier_level_6_new == "GNS_SPF_16-31_0_0",
-                                                                            20, # Mean value for this metiers),
-                                                                            ifelse(metier_level_6_new == 'GND_SPF_50-70_0_0' |
-                                                                                     metier_level_6_new == 'GNS_CRU_50-70_0_0' |
-                                                                                     metier_level_6_new == 'GNS_SPF_50-70_0_0' |
-                                                                                     metier_level_6_new == 'GNS_DEF_50-70_0_0' |
-                                                                                     metier_level_6_new == 'GNS_SPF_>0_0_0',
-                                                                                   60,
-                                                                                   ifelse(metier_level_6_new == 'GNS_CRU_>0_0_0',
-                                                                                          160,
-                                                                                          ifelse(metier_level_6_new == 'GNS_CRU_31-49_0_0' |
-                                                                                                   metier_level_6_new == 'GNS_DEF_31-49_0_0' |
-                                                                                                   metier_level_6_new == 'GNS_SPF_31-49_0_0',
-                                                                                                 40,
-                                                                                                 ifelse(metier_level_6_new == 'GNS_CRU_71-89_0_0' |
-                                                                                                          metier_level_6_new == 'GNS_DEF_71-89_0_0' |
-                                                                                                          metier_level_6_new == 'GNS_DEF_71-89_0_0',
-                                                                                                        80,
-                                                                                                        as.numeric(NA))
-                                                                                          )))))))))))]
+  # table(logbook[is.na(maske)]$metier_level_6_new, useNA = 'always')
+  logbook[, maske := data.table::fcase(
+    # 230
+    (metier_level_6_new == "GNS_SPF_>=220_0_0" &
+       maske < 220) |
+      (metier_level_6_new == "GNS_DEF_>=220_0_0" &
+         maske < 220), 230,
+    # 157
+    (metier_level_6_new %in% c("GND_ANA_>=157_0_0", "GNS_ANA_>=157_0_0",
+                               "GNS_SPF_>=157_0_0", "GNS_DEF_>=157_0_0") &
+       maske < 157), 157,
+    # 120
+    (metier_level_6_new %in% c("GNS_SPF_120-219_0_0", "GND_DEF_120-219_0_0",
+                               "GNS_DEF_120-219_0_0") &
+       maske < 120), 120,
+    # 110
+    (metier_level_6_new %in% c("GNS_ANA_110-156_0_0", "GNS_DEF_110-156_0_0",
+                               "GNS_SPF_110-156_0_0") & maske < 110), 110,
+    # 100
+    (metier_level_6_new %in% c("GNS_DEF_100-119_0_0", "GNS_SPF_100-119_0_0") &
+       maske < 100), 100,
+    # 90
+    (metier_level_6_new %in% c("GNS_DEF_90-109_0_0", "GNS_ANA_90-109_0_0",
+                               "GNS_SPF_90-99_0_0", "GNS_DEF_90-99_0_0") &
+       maske < 90), 90,
+    # 18
+    (metier_level_6_new %in% c("GNS_FWS_>0_0_0", "GNS_CRU_>0_0_0") &
+       maske < 18), 18,
+    # 32
+    (metier_level_6_new == "GNS_SPF_32-109_0_0" &
+       maske < 32), 32,
+    # 10
+    (metier_level_6_new == "GNS_SPF_10-30_0_0" &
+       maske < 10), 10,
+    # 50
+    (metier_level_6_new %in% c("GND_SPF_50-70_0_0", "GNS_SPF_50-70_0_0",
+                               "GNS_DEF_50-70_0_0") &
+       maske < 50), 50,
+    # Default: keep original maske
+    default = maske
+  )]
+  # table(logbook$maske, useNA = 'always')
+  logbook[, mesh := data.table::fcase(
+    !is.na(maske), maske,
+    # 230
+    metier_level_6_new %in% c("GNS_SPF_>=220_0_0", "GNS_DEF_>=220_0_0", "GNS_CRU_>=220_0_0"), 230,
+    # 170
+    metier_level_6_new %in% c(
+      "GND_ANA_>=157_0_0", "GNS_ANA_>=157_0_0", "GNS_SPF_>=157_0_0", "GNS_DEF_>=157_0_0",
+      "GNS_SPF_120-219_0_0", "GND_DEF_120-219_0_0", "GNS_DEF_120-219_0_0", "GNS_CRU_120-219_0_0"
+    ), 170,
+    # 130
+    metier_level_6_new %in% c("GNS_ANA_110-156_0_0", "GNS_DEF_110-156_0_0", "GNS_SPF_110-156_0_0"), 130,
+    # 110
+    metier_level_6_new %in% c("GNS_DEF_100-119_0_0", "GNS_SPF_100-119_0_0", "GNS_CRU_100-119_0_0"), 110,
+    # 90
+    metier_level_6_new %in% c(
+      "GNS_DEF_90-109_0_0", "GNS_ANA_90-109_0_0", "GNS_SPF_90-99_0_0",
+      "GNS_DEF_90-99_0_0", "GNS_CRU_90-99_0_0", "GNS_FWS_>0_0_0", "GNS_SPF_>0_0_0"
+    ), 90,
+    # 50
+    metier_level_6_new %in% c("GNS_SPF_32-109_0_0", "GNS_DEF_32-89_0_0", "GNS_SPF_32-89_0_0", "GNS_DEF_50-70_0_0"), 50,
+    # 20
+    metier_level_6_new %in% c(
+      "GNS_SPF_10-30_0_0", "GNS_ANA_>0_0_0", "GNS_CAT_>0_0_0",
+      "GNS_CRU_10-30_0_0", "GNS_SPF_16-31_0_0"
+    ), 20,
+    # 60
+    metier_level_6_new %in% c(
+      "GND_SPF_50-70_0_0", "GNS_CRU_50-70_0_0", "GNS_SPF_50-70_0_0",
+      "GNS_DEF_50-70_0_0", "GNS_SPF_>0_0_0"
+    ), 60,
+    # 160
+    metier_level_6_new == "GNS_CRU_>0_0_0", 160,
+    # 40
+    metier_level_6_new %in% c("GNS_CRU_31-49_0_0", "GNS_DEF_31-49_0_0", "GNS_SPF_31-49_0_0"), 40,
+    # 80
+    metier_level_6_new %in% c("GNS_CRU_71-89_0_0", "GNS_DEF_71-89_0_0"), 80,
+    default = as.numeric(NA)
+  )]
+  # table(logbook$mesh, useNA = 'always')
   ## Add mesh as a factor
-  logbook[, f.mesh := data.table::fifelse(mesh<120, '<120mm',
-                                          data.table::fifelse(mesh>200, '>200mm',
-                                                              '120-200mm'))]
+  logbook[, f.mesh := data.table::fcase(mesh<120, '<120mm',
+                                        mesh>200, '>200mm',
+                                        default = '120-200mm')]
+
   ## Assume that vessels are fishing closest to their home harbour if they do not
   ## indicate fishing location (icesrect) in Danish logbooks
   harbours <- ggleR::load_data(path_to_harbour_list)
@@ -242,10 +230,16 @@ logbook_import_fast <- function(x,
                                     as.character(logbook$y) ),
                             sep = '.')
   ## Merge logbook with harbours to add home_harbour, lon_home, and lat_home
-  logbook <- logbook[subset(harbours,
+  logbook <- merge(logbook,
+                     subset(harbours,
                             select = c('fid.year','lon','lat','lplads')),
-                     on = .(fid.year), nomatch = 0] ## left join
-  #                  on = 'fid.year] ## inner join
+                     by = "fid.year",
+                     all.x = TRUE)
+  # logbook <- logbook[subset(harbours,
+  #                           select = c('fid.year','lon','lat','lplads')),
+  #                    on = .(fid.year)] ## Simple left join
+  # # on = .(fid.year), nomatch = 0] ## left join; drop unmatched rows from the left table
+  # #                  on = 'fid.year] ## inner join
   data.table::setnames(logbook, old = c('lon','lat','lplads'),
                        new = c('lon_home','lat_home','home_harbour'))
 
@@ -266,9 +260,12 @@ logbook_import_fast <- function(x,
   ## Register fishing location as centroid of ICES stat. rect.
   ices.rectangles <- readRDS('Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/ICES_rect.RDS')
   ices.rectangles$icesrect <- ices.rectangles$ICESNAME
-  logbook <- logbook[subset(ices.rectangles,
-                            select = c('icesrect','d2shore','depth')),
-                     on = c('icesrect')][!is.na(fid)]
+  logbook <- merge(logbook,
+                   subset(ices.rectangles,
+                          select = c('icesrect','d2shore','depth')),
+                   by = "icesrect",
+                   all.x = TRUE)
+  logbook <- logbook[!is.na(fid)]
 
   ## Create an ID for each (unique) fishing day (FD)
   logbook <- logbook %>%
@@ -279,13 +276,13 @@ logbook_import_fast <- function(x,
   logbook[, IDFD := paste(fid, Date, sep='.')]
   logbook[, FD := sum(dplyr::n_distinct(fngdato)),
           by = 'match_alle']
-
   logbook$m <- lubridate::month(logbook$fngdato)
   logbook$y <- lubridate::year(logbook$fngdato)
-  logbook[, quarter := data.table::fifelse(m %in% c(1,2,3), 'Q1',
-                                           data.table::fifelse(m %in% c(4,5,6), 'Q2',
-                                                               data.table::fifelse(m %in% c(7,8,9), 'Q3',
-                                                                                   'Q4')))]
+  logbook[, quarter := data.table::fcase(m %in% c(1,2,3), 'Q1',
+                                         m %in% c(4,5,6), 'Q2',
+                                         m %in% c(7,8,9), 'Q3',
+                                         m %in% c(10,11,12),'Q4',
+                                         default = NA_character_)]
   logbook$quarter <- factor(logbook$quarter, levels= c('Q1','Q2','Q3','Q4'))
 
   ## Main target species (landed) per fishing day
