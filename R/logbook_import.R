@@ -38,7 +38,7 @@ logbook_import_fast <- function(x,
       dplyr::mutate(maske = dplyr::na_if(maske,"")) %>%
       dplyr::mutate(maske = dplyr::na_if(maske,".")) %>%
       ## Filter out rows based on "faulty" landings
-      dplyr::filter(!latin %in%
+      dplyr::filter(!latin %in% c(
                       ## Crustacean/Gastropods/Bivalves are not targeted
                       ## in the region w. GN:
                       "Palaemon serratus",
@@ -49,7 +49,7 @@ logbook_import_fast <- function(x,
                     "Buccinum undatum",
                     "Gastropoda",
                     "Mytilus edulis",
-                    "Spisula solida") %>%
+                    "Spisula solida") ) %>%
       dplyr::filter(!eart %in% c("Additional Payment")) %>%
       ## Quick fix
       dplyr::mutate(square = dplyr::if_else(square=='40B2','40G2',square)),
