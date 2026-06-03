@@ -3,6 +3,7 @@
 #' @return a dataset
 #' @export
 spp.list.table <- function(x = unique.spp){
+  sc.name <- spp.code <- unique.spp <- NULL
 
   dt <- data.table::data.table(
     spp.code = x,
