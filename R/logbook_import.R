@@ -11,7 +11,7 @@ logbook_import <- function(x,
                                 path_to_harbour_list = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/by.year",
                                 path_to_harbour_shp = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/XYhavn.shp"){
 
-  . <- landing_harbour <- mostICESrect <- square2 <- newID <- dfadfvd_ret <- lgrad <- bgrad <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- metier_level_6_new <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
+  square_ret <- oal <- f.length <- vessel.length.split15 <- mostICESrect2 <- geom <- . <- landing_harbour <- mostICESrect <- square2 <- newID <- dfadfvd_ret <- lgrad <- bgrad <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- metier_level_6_new <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
 
   `%notin%` <- Negate(`%in%`)
   Mode <- function(x) {

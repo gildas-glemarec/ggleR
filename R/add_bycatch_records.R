@@ -9,7 +9,7 @@ add_bycatch_records <- function(x = data_work,
                                 y = NULL,
                                 spp_list = list(),
                                 rm_errors = TRUE){
-  is.elasmo <- is.bird <- is.mammal <- note.type <- SpeciesGroup <- SpeciesClass <- IDevent <- IDbc <- IDcatch.sub <- d2shore <- i.soak <- soak <- IDhaul <- time.bc <- spp <- colour.name <- path_to_spp_lists <- data_work <- Date <- d <- m <- quarter <- preID <- vessel <- haul <- IDhaul <- ID3 <- time.start <- mesh.colour <- idx <- review.info <- ind <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
+  ..keep <- VideoFileName <- is.elasmo <- is.bird <- is.mammal <- note.type <- SpeciesGroup <- SpeciesClass <- IDevent <- IDbc <- IDcatch.sub <- d2shore <- i.soak <- soak <- IDhaul <- time.bc <- spp <- colour.name <- path_to_spp_lists <- data_work <- Date <- d <- m <- quarter <- preID <- vessel <- haul <- IDhaul <- ID3 <- time.start <- mesh.colour <- idx <- review.info <- ind <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
   if(missing(y) | missing(x)) {
     print("You forgot to indicate the path to your EM data file(s).")
   }

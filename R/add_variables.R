@@ -17,7 +17,7 @@ add_variables <- function(x = data_work,
                           path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif",
                           path.to.old.notes = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/processed data/NotesAnnotations.csv") {
 
-  . <- depth <- icesrect <- lon.haul <- lat.haul <- lon <- lat <- time.bc <- IDhaul <- soak <- i.soak <- d2shore <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
+  i.depth <- i.d2shore <- . <- depth <- icesrect <- lon.haul <- lat.haul <- lon <- lat <- time.bc <- IDhaul <- soak <- i.soak <- d2shore <- data_work <- y <- m <- d <- quarter <- lat.start <- lat.stop <- lon.start <- lon.stop <- rnum <- NULL
 
   x$rnum <- as.integer(row.names(x))
   data.table::setDT(x)

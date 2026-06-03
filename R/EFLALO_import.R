@@ -5,6 +5,7 @@
 #' @param study_period A vector of years - e.g., c(2010:2020) - default is NULL
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @import data.table
+#' @importFrom utils download.file
 #' @export
 EFLALO_import <- function(x,
                           study_period = NULL
