@@ -52,7 +52,9 @@ logbook_import_fast <- function(x,
         "Spisula solida") ) %>%
       dplyr::filter(!eart %in% c("Additional Payment")) %>%
       ## Quick fix
-      dplyr::mutate(square = dplyr::if_else(square=='40B2','40G2',square)),
+      dplyr::mutate(square_ret = dplyr::if_else(square=='40B2',
+                                                '40G2',
+                                                square_ret)),
     key = 'fid')
 
   ## Assign correct name to ICES area
@@ -231,29 +233,30 @@ logbook_import_fast <- function(x,
                             sep = '.')
   ## Merge logbook with harbours to add home_harbour, lon_home, and lat_home
   logbook <- merge(logbook,
-                     subset(harbours,
-                            select = c('fid.year','lon','lat','lplads')),
-                     by = "fid.year",
-                     all.x = TRUE)
-  # logbook <- logbook[subset(harbours,
-  #                           select = c('fid.year','lon','lat','lplads')),
-  #                    on = .(fid.year)] ## Simple left join
-  # # on = .(fid.year), nomatch = 0] ## left join; drop unmatched rows from the left table
-  # #                  on = 'fid.year] ## inner join
+                   subset(harbours,
+                          select = c('fid.year','lon','lat','lplads')),
+                   by = "fid.year",
+                   all.x = TRUE)
+  ## For debugging:
+  # View(logbook[is.na(lplads) & square_ret == "NONE"])
+
   data.table::setnames(logbook, old = c('lon','lat','lplads'),
                        new = c('lon_home','lat_home','home_harbour'))
 
   ### Assign a fishing location ('icesrect') if there are none
   ### 1. Most frequent ICES rectangle from the same period (here: same month)?
-  logbook[, newID := paste(fid, m, sep = '_')]
-  logbook[, square2 := data.table::fifelse(square %notin% '99A9', square, NA_character_)]
-  logbook[, mostICESrect := Mode(square2), by = c('newID')]
-  logbook[, icesrect := data.table::fifelse(square == '99A9' & !is.na(mostICESrect),
+  logbook[, square2 := data.table::fifelse(square_ret %notin% 'NONE', square_ret, NA_character_)]
+  logbook[, mostICESrect := Mode(square2), by = c('fid', 'm')]
+  logbook[, mostICESrect2 := Mode(square2), by = c('fid')]
+  logbook[, mostICESrect := data.table::fifelse(is.na(mostICESrect),
+                                                mostICESrect2,
+                                                mostICESrect)]
+  logbook[, icesrect := data.table::fifelse(square_ret == 'NONE' & !is.na(mostICESrect),
                                             yes = mostICESrect,
-                                            no = square)]
+                                            no = square_ret)]
   ### 2. If there is no info on location of the effort, then use
   ###    the harbour location as a proxy
-  logbook[, icesrect := data.table::fifelse(square == '' | is.na(square) | icesrect == '99A9' | is.na(icesrect),
+  logbook[, icesrect := data.table::fifelse( icesrect == 'NONE' ,
                                             yes = mapplots::ices.rect2(lon_home, lat_home),
                                             no = icesrect)]
 
@@ -309,8 +312,9 @@ logbook_import_fast <- function(x,
   ## The following will create 2 new variables (latin and target), which are the
   ## most important catch in terms of landings value per trip
   logbook <- logbook[logbook[logbook[, .I[base::which.max(vrd)],
-                                     by = 'IDFD']$V1][, .SD, .SDcols = c('IDFD',
-                                                                         'latin')],
+                                     by = 'IDFD']$V1][
+                                       , .SD, .SDcols = c('IDFD',
+                                                          'latin')],
                      on = c('IDFD')]
   names(logbook)[names(logbook)=="i.latin"] <- "target"
 
@@ -320,6 +324,9 @@ logbook_import_fast <- function(x,
   ## that lumpsucker is the main target species for that fishing day"
   logbook[, target := lapply(.SD, function(x) if(base::any(target == 'Cyclopterus lumpus'))
     'Cyclopterus lumpus' else target), by = .(IDFD)]
+
+  ## Clean up the remains of the sf additions:
+  logbook[, geom := NULL]
 
   return(logbook)
 }
