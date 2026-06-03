@@ -6,7 +6,7 @@
 #' @param path_to_harbour_shp path to the directory where the harbours' shapefile is located
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @export
-logbook_import_fast <- function(x,
+logbook_import <- function(x,
                                 path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif",
                                 path_to_harbour_list = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/by.year",
                                 path_to_harbour_shp = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/XYhavn.shp"){
