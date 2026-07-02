@@ -333,6 +333,19 @@ logbook_import <- function(x,
   ## Clean up the remains of the sf additions:
   logbook[, geom := NULL]
 
+  ## Fix the encoding of Danish characters
+  logbook$fid.year  <- iconv(logbook$fid.year ,
+                             from = "", to = "UTF-8", sub = "")
+  logbook$fid <- iconv(logbook$fid,
+                       from = "", to = "UTF-8", sub = "")
+  logbook$match_alle <- iconv(logbook$match_alle,
+                              from = "", to = "UTF-8", sub = "")
+  logbook$dkart <- iconv(logbook$dkart,
+                         from = "", to = "UTF-8", sub = "")
+  logbook$IDFD <- iconv(logbook$IDFD,
+                        from = "", to = "UTF-8", sub = "")
+
+
   return(logbook)
 }
 
