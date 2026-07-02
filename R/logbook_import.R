@@ -264,7 +264,13 @@ logbook_import <- function(x,
   logbook[, icesrect := data.table::fifelse( icesrect == 'NONE' ,
                                              yes = mapplots::ices.rect2(lon_home, lat_home),
                                              no = icesrect)]
-
+  ### 3. If we still have no info on location of the effort (because we don't
+  ### the home harbour), then use the value of "dfadfvd_ret"
+  logbook[, icesrect := data.table::fcase( is.na(icesrect) & dfadfvd_ret == '3AI', '40G1',
+                                           is.na(icesrect) & dfadfvd_ret == '4L', '42F9',
+                                           is.na(icesrect) & dfadfvd_ret == '3C22', '39G0',
+                                           is.na(icesrect) & dfadfvd_ret == '3AN', '43F8'
+  )]
   ## Register fishing location as centroid of ICES stat. rect.
   ices.rectangles <- readRDS('Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/ICES_rect.RDS')
   ices.rectangles$icesrect <- ices.rectangles$ICESNAME
