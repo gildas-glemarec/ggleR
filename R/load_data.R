@@ -5,6 +5,6 @@
 #' @export
 load_data <- function(x) {
   files <- dir(x, pattern = '\\.csv', full.names = TRUE)
-  tables <- lapply(files, utils::read.csv)
+  tables <- lapply(files, function(file) data.table::fread(file, encoding = "Latin-1"))
   data.table::rbindlist(tables, fill=TRUE)
 }

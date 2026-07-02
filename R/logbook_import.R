@@ -1,15 +1,17 @@
 #' Format logbook / landings data to merge with EM data
 #' Dataset preparations
 #' @param x path to the directory where the logbook & sales notes are stored as .csv
+#' @param incl.all.ices.areas incl. fishing effort data from the Baltic Proper?
 #' @param path.to.raster path to the directory where the depth raster is
 #' @param path_to_harbour_list path to the directory where the list of vessels per harbour per year is located
 #' @param path_to_harbour_shp path to the directory where the harbours' shapefile is located
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @export
 logbook_import <- function(x,
-                                path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif",
-                                path_to_harbour_list = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/by.year",
-                                path_to_harbour_shp = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/XYhavn.shp"){
+                           incl.all.ices.areas = FALSE,
+                           path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif",
+                           path_to_harbour_list = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/by.year",
+                           path_to_harbour_shp = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/XYhavn.shp"){
 
   square_ret <- oal <- f.length <- vessel.length.split15 <- mostICESrect2 <- geom <- . <- landing_harbour <- mostICESrect <- square2 <- newID <- dfadfvd_ret <- lgrad <- bgrad <- quarter <- vessel.length <- DFADfvd_ret <- Date <- FD <- IDFD <- d <- eart <- f.mesh <- fid <- fngdato <- hel <- home_harbour <- i.bgrad <- i.lat <- i.lgrad <- i.lon <- i.lplads <- ices.area <- icesrect <- lat <- lat_home <- latin <- lon <- lon_home <- lplads <- m <- maske <- mesh <- metier_level6_ret <- metier_level_6_new <- path <-  read.csv <- redskb <- restrict_study_period <- square <- target <- tot.landings <- tot.val.landings <- vrd <- y <- NULL
 
@@ -18,7 +20,8 @@ logbook_import <- function(x,
     ux <- unique(x)
     ux[which.max(tabulate(match(x, ux)))]
   }
-  logbook <- ggleR::load_data(x)
+
+  logbook <- load_data(x)
 
   ## Temporal dummy variables
   logbook$fngdato <- base::as.Date(strptime(logbook$fngdato, "%y%m%d"))
@@ -76,10 +79,12 @@ logbook_import <- function(x,
     default = NA_character_
   )]
 
-  ## We have no data from the Baltic Proper, so we need to remove those hauls in
-  ## subdivisions 24, 25 and 26.
-  logbook <- logbook[ices.area %notin% c('3.d.24','3.d.25','3.d.26',
-                                         '3.d.27','3.d.28','3.d.29')]
+  if(incl.all.ices.areas == FALSE){
+    ## We have no data from the Baltic Proper, so we need to remove those hauls in
+    ## subdivisions 24, 25 and 26.
+    logbook <- logbook[ices.area %notin% c('3.d.24','3.d.25','3.d.26',
+                                           '3.d.27','3.d.28','3.d.29')]
+  }
 
   # ## Fix negative values of landings and landings value
   # logbook$hel <- abs(logbook$hel)
@@ -196,8 +201,8 @@ logbook_import <- function(x,
   # table(logbook$mesh, useNA = 'always')
   ## Add mesh as a factor
   logbook[, f.mesh := data.table::fcase(mesh<120, '<120mm',
-                                        mesh>200, '>200mm',
-                                        default = '120-200mm')]
+                                        mesh>199, '>199mm',
+                                        default = '120-199mm')]
 
   ## Assume that vessels are fishing closest to their home harbour if they do not
   ## indicate fishing location (icesrect) in Danish logbooks
@@ -257,8 +262,8 @@ logbook_import <- function(x,
   ### 2. If there is no info on location of the effort, then use
   ###    the harbour location as a proxy
   logbook[, icesrect := data.table::fifelse( icesrect == 'NONE' ,
-                                            yes = mapplots::ices.rect2(lon_home, lat_home),
-                                            no = icesrect)]
+                                             yes = mapplots::ices.rect2(lon_home, lat_home),
+                                             no = icesrect)]
 
   ## Register fishing location as centroid of ICES stat. rect.
   ices.rectangles <- readRDS('Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/ICES_rect.RDS')
@@ -279,8 +284,8 @@ logbook_import <- function(x,
   logbook[, IDFD := paste(fid, Date, sep='.')]
   logbook[, FD := sum(dplyr::n_distinct(fngdato)),
           by = 'match_alle']
-  logbook$m <- lubridate::month(logbook$fngdato)
-  logbook$y <- lubridate::year(logbook$fngdato)
+  logbook[, m := lubridate::month(fngdato)]
+  logbook[, y := lubridate::year(fngdato)]
   logbook[, quarter := data.table::fcase(m %in% c(1,2,3), 'Q1',
                                          m %in% c(4,5,6), 'Q2',
                                          m %in% c(7,8,9), 'Q3',
