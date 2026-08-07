@@ -150,6 +150,12 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       tidyr::fill(IDhaul) |>
       dplyr::ungroup()
 
+    ## In cases where soak time (Soaking.time..h.) is not automatically estimated, use the manually inserted info from "Soak Time Estimated" #----
+    x <- x |>
+      dplyr::mutate( Soaking.time..h. = if_else(!is.na(Soaking.time..h.),
+                                                Soaking.time..h.,
+                                                Soak.Time.Estimated) )
+
     ## Fix the problem where the first pinger appears before the beginning of the activity #----
     for(i in 1:(length(x$Id)-1)){
       if(x$Note.type[i] == 'Pinger' &
