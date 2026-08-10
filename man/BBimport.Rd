@@ -8,13 +8,19 @@ Read, format, and merge Notes and Annotations from Black Box Analyzer}
 BBimport(
   x =
     "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/annotations_notes/",
-  by.year = TRUE
+  add.logbook.info = TRUE,
+  validated_log_path =
+    "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/processed data/validated logbooks/",
+  by.year = TRUE,
+  keep.all.gears = FALSE
 )
 }
 \arguments{
 \item{x}{EM data annotations/notes with geographic coordinates in decimal as lon/lat}
 
 \item{by.year}{Are the files sorted by year (default)?}
+
+\item{keep.all.gears}{By default, only GN is included. Toggle on to keep everything (experimental)}
 }
 \value{
 A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).

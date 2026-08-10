@@ -21,11 +21,15 @@ export(spp.in.CQ)
 export(spp.list)
 export(spp.list.table)
 import(data.table)
-importFrom(data.table,":=")
-importFrom(data.table,.I)
-importFrom(data.table,.N)
-importFrom(data.table,.SD)
-importFrom(dplyr,"%>%")
-importFrom(dplyr,if_else)
-importFrom(dplyr,na_if)
+importFrom(data.table,
+  ":=",
+  .I,
+  .N,
+  .SD
+)
+importFrom(dplyr,
+  "%>%",
+  if_else,
+  na_if
+)
 importFrom(utils,download.file)

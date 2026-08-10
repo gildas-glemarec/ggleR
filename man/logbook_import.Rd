@@ -7,6 +7,7 @@ Dataset preparations}
 \usage{
 logbook_import(
   x,
+  incl.all.ices.areas = FALSE,
   path.to.raster = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/D5_2020.tif",
   path_to_harbour_list =
     "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/harbours/by.year",
@@ -16,6 +17,8 @@ logbook_import(
 }
 \arguments{
 \item{x}{path to the directory where the logbook & sales notes are stored as .csv}
+
+\item{incl.all.ices.areas}{incl. fishing effort data from the Baltic Proper?}
 
 \item{path.to.raster}{path to the directory where the depth raster is}
 

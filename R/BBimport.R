@@ -2,64 +2,72 @@
 #' Read, format, and merge Notes and Annotations from Black Box Analyzer
 #' @param x EM data annotations/notes with geographic coordinates in decimal as lon/lat
 #' @param by.year Are the files sorted by year (default)?
+#' @param keep.all.gears By default, only GN is included. Toggle on to keep everything (experimental)
 #' @return A dataset with all notes/annotations in long format, where rows are unique for hauls for no or one bycatch within that haul (each additional bycatch is listed as one supplementary row).
 #' @import data.table
 #' @export
 BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/annotations_notes/",
+                     add.logbook.info = TRUE,
                      validated_log_path  = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/processed data/validated logbooks/",
-                     by.year = TRUE) {
+                     by.year = TRUE,
+                     keep.all.gears = FALSE ) {
   start <- end <- video_files <- yid <- xid <- . <- camera <- quality <- sealmarks <- Gear.type <- note.type <- review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- Treatment.Group <- NULL
+
   `%notin%` <- Negate(`%in%`)
 
+  ## Add validated information recorded by fishers and not present in BB #----
+  if( add.logbook.info == TRUE){
 
-  ## Get the validated logbooks from fishers as one file #----
-  if( by.year == FALSE ){
-    log_files <- list.files(validated_log_path,
-                            pattern = "^[A-Za-z]", full.names = TRUE,
-                            recursive = FALSE)
-    log_filenames <- log_files[!file.info(log_files)$isdir]
-  } else{
-    log_files <- list.files(validated_log_path,
-                            pattern = "^20", full.names = TRUE,
-                            recursive = FALSE)
-    log_filenames <- log_files[!file.info(log_files)$isdir]
+    ## Get the validated logbooks from fishers as one file
+    if( by.year == FALSE ){
+      log_files <- list.files(validated_log_path,
+                              pattern = "^[A-Za-z]", full.names = TRUE,
+                              recursive = FALSE)
+      log_filenames <- log_files[!file.info(log_files)$isdir]
+    } else{
+      log_files <- list.files(validated_log_path,
+                              pattern = "^20", full.names = TRUE,
+                              recursive = FALSE)
+      log_filenames <- log_files[!file.info(log_files)$isdir]
+    }
+    list_validated_log <- lapply(log_filenames,
+                                 utils::read.csv,
+                                 header=TRUE, sep = ";",
+                                 stringsAsFactors = FALSE, quote = "")
+    names(list_validated_log) <- tolower(gsub(".*/(.+).csv.*", "\\1", log_files))
+
+    validated_log <- data.table::rbindlist(list_validated_log)
+    validated_log$date <- as.Date(validated_log$date,
+                                  format = "%d-%m-%Y",
+                                  tz = "Europe/Copenhagen")
+    data.table::setnames(validated_log,
+                         old = c("date",
+                                 "vessel",
+                                 "haul",
+                                 "mitigation",
+                                 "mitigation_type",
+                                 "soak",
+                                 "mesh"),
+                         new = c("date",
+                                 "Vesselid",
+                                 "haul_number",
+                                 "Treatment.Group",
+                                 "mitigation_type",
+                                 "Soak.Time.Estimated",
+                                 "Mesh.size") )
+    validated_log$Soak.Time.Estimated <- as.numeric(validated_log$Soak.Time.Estimated)
+    validated_log <- validated_log |>
+      tidyr::separate(date, c("y","m","d")) |>
+      tidyr::unite(col = date, c(d,m,y), sep = "-") |>
+      dplyr::mutate(Date = date)
+    validated_log$IDFD <- paste(validated_log$Vesselid,
+                                validated_log$Date,
+                                sep = ".")
+    validated_log$IDhaul <- paste(validated_log$IDFD,
+                                  validated_log$haul_number, sep = ".")
+    data.table::setDT(validated_log)
+
   }
-  list_validated_log <- lapply(log_filenames,
-                               utils::read.csv,
-                               header=TRUE, sep = ";",
-                               stringsAsFactors = FALSE, quote = "")
-  names(list_validated_log) <- tolower(gsub(".*/(.+).csv.*", "\\1", log_files))
-
-  validated_log <- data.table::rbindlist(list_validated_log)
-  validated_log$date <- as.Date(validated_log$date,
-                                format = "%d-%m-%Y",
-                                tz = "Europe/Copenhagen")
-  data.table::setnames(validated_log,
-                       old = c("date",
-                               "vessel",
-                               "haul",
-                               "mitigation",
-                               "mitigation_type",
-                               "soak",
-                               "mesh"),
-                       new = c("date",
-                               "Vesselid",
-                               "haul_number",
-                               "Treatment.Group",
-                               "mitigation_type",
-                               "Soak.Time.Estimated",
-                               "Mesh.size") )
-  validated_log$Soak.Time.Estimated <- as.numeric(validated_log$Soak.Time.Estimated)
-  validated_log <- validated_log |>
-    tidyr::separate(date, c("y","m","d")) |>
-    tidyr::unite(col = date, c(d,m,y), sep = "-") |>
-    dplyr::mutate(Date = date)
-  validated_log$IDFD <- paste(validated_log$Vesselid,
-                              validated_log$Date,
-                              sep = ".")
-  validated_log$IDhaul <- paste(validated_log$IDFD,
-                                validated_log$haul_number, sep = ".")
-  data.table::setDT(validated_log)
 
   ## Get all notes and annotations files together as one file #----
   if( by.year == FALSE ){
@@ -79,6 +87,11 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
 
   ### Map function  #----
   list_BBdata <- Map(function(x){ ## for testing purposes: x <- list_BBdata[[5]]
+
+    ## Gear filtering
+    if( keep.all.gears == FALSE ){
+      ## We keep only gillnet fishing if FALSE (default behaviour)
+      x <- x[grepl("^GN", x$Gear.type) | x$Gear.type == "", ] }
     if( is.null(x$Treatment.Group) ){ x$Treatment.Group <- NA_integer_ }
     if( is.logical(x$Treatment.Group) ){ x$Treatment.Group <- NA_integer_ }
     x <- x[!x$Vesselid == "",]
@@ -209,7 +222,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
          x$time.start[i] < x$time.start[i+1] &
          x$time.stop[i] > x$time.start[i+1] &
          x$Vesselid[i] == x$Vesselid[i+1]){
-        # x <- x[-i, ] ##Removes the row
+        # x <- x[-i, ] ## Removes the row
         x$IDhaul[i] <- x$IDhaul[i+1]
         x$haul_number[i] <- x$haul_number[i+1]
         x$Gear.type[i] <- x$Gear.type[i+1]
@@ -225,13 +238,34 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     }
 
     ## Info from logbooks: Complete the dataset with (some) participating fishers' logbook data #---
-    data.table::setDT(x)
-    x$Soak.Time.Estimated <- as.numeric(x$Soak.Time.Estimated)
-    x$Mesh.size <- as.numeric(x$Mesh.size)
-    x[validated_log, on="IDhaul", `:=` (Treatment.Group = i.Treatment.Group,
-                                        mitigation_type = i.mitigation_type,
-                                        Soak.Time.Estimated = i.Soak.Time.Estimated,
-                                        Mesh.size = i.Mesh.size)]
+    if( add.logbook.info == TRUE){
+
+      data.table::setDT(x)
+      x$Soak.Time.Estimated <- as.numeric(x$Soak.Time.Estimated)
+      x$Mesh.size <- as.numeric(x$Mesh.size)
+      # x[validated_log, on="IDhaul",
+      #   `:=` (
+      #     Treatment.Group = i.Treatment.Group,
+      #     mitigation_type = i.mitigation_type,
+      #     Soak.Time.Estimated = i.Soak.Time.Estimated,
+      #     Mesh.size = i.Mesh.size)]
+      x[validated_log, on = "IDhaul",
+        `:=` (
+          Treatment.Group = fifelse(is.na(Treatment.Group) | Treatment.Group == "",
+                                    i.Treatment.Group,
+                                    Treatment.Group),
+          mitigation_type = fifelse(is.na(mitigation_type) | mitigation_type == "",
+                                    i.mitigation_type,
+                                    mitigation_type),
+          Soak.Time.Estimated = fifelse(is.na(Soak.Time.Estimated) | Soak.Time.Estimated == "",
+                                        i.Soak.Time.Estimated,
+                                        Soak.Time.Estimated),
+          Mesh.size = fifelse(is.na(Mesh.size) | Mesh.size == "",
+                              i.Mesh.size,
+                              Mesh.size)
+        )
+      ]
+    }
 
     ## In cases where soak time (Soaking.time..h.) is not automatically estimated, use the manually inserted info from "Soak Time Estimated" #----
     x <- x |>
