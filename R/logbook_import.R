@@ -21,7 +21,7 @@ logbook_import <- function(x,
     ux[which.max(tabulate(match(x, ux)))]
   }
 
-  logbook <- load_data(x)
+  logbook <- ggle::load_data(x)
 
   ## Temporal dummy variables
   logbook$fngdato <- base::as.Date(strptime(logbook$fngdato, "%y%m%d"))
@@ -261,7 +261,7 @@ logbook_import <- function(x,
                                             no = square_ret)]
   ### 2. If there is no info on location of the effort, then use
   ###    the harbour location as a proxy
-  logbook[, icesrect := data.table::fifelse( icesrect == 'NONE' ,
+  logbook[, icesrect := data.table::fifelse( icesrect == 'NONE' | icesrect == '',
                                              yes = mapplots::ices.rect2(lon_home, lat_home),
                                              no = icesrect)]
   ### 3. If we still have no info on location of the effort (because we don't
@@ -269,7 +269,8 @@ logbook_import <- function(x,
   logbook[, icesrect := data.table::fcase( is.na(icesrect) & dfadfvd_ret == '3AI', '40G1',
                                            is.na(icesrect) & dfadfvd_ret == '4L', '42F9',
                                            is.na(icesrect) & dfadfvd_ret == '3C22', '39G0',
-                                           is.na(icesrect) & dfadfvd_ret == '3AN', '43F8'
+                                           is.na(icesrect) & dfadfvd_ret == '3AN', '43F8',
+                                           default = icesrect
   )]
   ## Register fishing location as centroid of ICES stat. rect.
   ices.rectangles <- readRDS('Q:/10-forskningsprojekter/faste-cctv-monitoring/data/GIS/ICES_rect.RDS')
