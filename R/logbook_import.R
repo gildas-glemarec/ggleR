@@ -21,7 +21,7 @@ logbook_import <- function(x,
     ux[which.max(tabulate(match(x, ux)))]
   }
 
-  logbook <- ggle::load_data(x)
+  logbook <- ggleR::load_data(x)
 
   ## Temporal dummy variables
   logbook$fngdato <- base::as.Date(strptime(logbook$fngdato, "%y%m%d"))
