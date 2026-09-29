@@ -8,7 +8,7 @@
 #' @export
 BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/blackbox extractions/annotations_notes/",
                      add.logbook.info = TRUE,
-                     validated_log_path  = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/processed data/validated logbooks/",
+                     validated_log_path = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/processed data/validated logbooks/",
                      by.year = TRUE,
                      keep.all.gears = FALSE ) {
   start <- end <- video_files <- yid <- xid <- . <- camera <- quality <- sealmarks <- Gear.type <- note.type <- review.info <- Id <- d <- m <- y <- Activity.type <- Note.type <- Color.name <- colour.name <- Haul.no <- Mesh.color <- Vesselid <- vessel <- time.start <- haul_number <- IDFD <- IDhaul <- haul.lon.start <- haul.lon.stop <- haul.lat.start <- haul.lat.stop <- Distance..m. <- Soaking.time..h. <- Review.info <- gps <- Start.longitude <- End.longitude <- Start.latitude <- End.latitude <- time.stop <- Note <- Activity.comment <- mitigation <- mitigation_type <- ID3 <- IDevent <- Treatment.Group <- NULL
@@ -86,7 +86,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
   names(list_BBdata) <- tolower(gsub(".*/(.+).csv.*", "\\1", filenames))
 
   ### Map function  #----
-  list_BBdata <- Map(function(x){ ## for testing purposes: x <- list_BBdata[[5]]
+  list_BBdata <- Map(function(x){ ## for testing purposes: x <- list_BBdata[[3]]
 
     ## Gear filtering
     if( keep.all.gears == FALSE ){
@@ -251,18 +251,18 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       #     Mesh.size = i.Mesh.size)]
       x[validated_log, on = "IDhaul",
         `:=` (
-          Treatment.Group = fifelse(is.na(Treatment.Group) | Treatment.Group == "",
-                                    i.Treatment.Group,
-                                    Treatment.Group),
-          mitigation_type = fifelse(is.na(mitigation_type) | mitigation_type == "",
-                                    i.mitigation_type,
-                                    mitigation_type),
-          Soak.Time.Estimated = fifelse(is.na(Soak.Time.Estimated) | Soak.Time.Estimated == "",
-                                        i.Soak.Time.Estimated,
-                                        Soak.Time.Estimated),
-          Mesh.size = fifelse(is.na(Mesh.size) | Mesh.size == "",
-                              i.Mesh.size,
-                              Mesh.size)
+          Treatment.Group = data.table::fifelse(is.na(Treatment.Group) | Treatment.Group == "",
+                                                i.Treatment.Group,
+                                                Treatment.Group),
+          mitigation_type = data.table::fifelse(is.na(mitigation_type) | mitigation_type == "",
+                                                i.mitigation_type,
+                                                mitigation_type),
+          Soak.Time.Estimated = data.table::fifelse(is.na(Soak.Time.Estimated) | Soak.Time.Estimated == "",
+                                                    i.Soak.Time.Estimated,
+                                                    Soak.Time.Estimated),
+          Mesh.size = data.table::fifelse(is.na(Mesh.size) | Mesh.size == "",
+                                          i.Mesh.size,
+                                          Mesh.size)
         )
       ]
     }
@@ -272,6 +272,16 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       dplyr::mutate( Soaking.time..h. = dplyr::if_else(!is.na(Soaking.time..h.),
                                                        Soaking.time..h.,
                                                        Soak.Time.Estimated) )
+
+    ## Check that Review.info is boolean and update if not
+    # table(x$Review.info, useNA = 'always')
+    x <- x |>
+      dplyr::mutate(Review.info = dplyr::case_when(
+        is.na(Review.info) ~ NA_character_,
+        Review.info == "" ~ "0",
+        !is.na(Review.info) &  Review.info != "0" ~ "1",
+        .default = Review.info)
+      )
 
     ## Fill the "notes" from the "activity". Fix the vector classes first
     x$Review.info <- as.numeric(x$Review.info)
