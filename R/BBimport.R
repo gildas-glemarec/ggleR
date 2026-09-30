@@ -278,8 +278,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     x$Review.info <- as.character(x$Review.info)
     x <- x |>
       dplyr::mutate(Review.info = dplyr::case_when(
-        is.na(Review.info) ~ NA,
-        Review.info == "" ~ "0",
+        Review.info == "" ~ NA_character_,
         !is.na(Review.info) &  Review.info != "0" ~ "1",
         .default = Review.info)
       )
