@@ -280,7 +280,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       dplyr::mutate(Review.info = dplyr::case_when(
         Review.info == "" ~ NA_character_,
         !is.na(Review.info) &  Review.info != "0" ~ "1",
-        .default = Review.info)
+        .default = NA_character_)
       )
 
     ## Fill the "notes" from the "activity". Fix the vector classes first
