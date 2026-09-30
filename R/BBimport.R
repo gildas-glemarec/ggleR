@@ -280,7 +280,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       dplyr::mutate(Review.info = dplyr::case_when(
         Review.info == "" ~ NA_character_,
         !is.na(Review.info) &  Review.info != "0" ~ "1",
-        .default = NA_character_)
+        .default = Review.info)
       )
 
     ## Fill the "notes" from the "activity". Fix the vector classes first
@@ -334,11 +334,11 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                     add.comments = Activity.comment,
                     VideoFileName = video_files
       ) |>
-      dplyr::mutate(review.info = dplyr::case_when(
-        is.na(review.info) & is.na(mesh.colour) ~ 0,
-        is.na(review.info) & !is.na(mesh.colour) ~ 1,
-        is.na(review.info) & !is.na(colour.name) ~ 1,
-        .default = review.info)) |>
+      # dplyr::mutate(review.info = dplyr::case_when(
+      #   is.na(review.info) & is.na(mesh.colour) ~ 0,
+      #   is.na(review.info) & !is.na(mesh.colour) ~ 1,
+      #   is.na(review.info) & !is.na(colour.name) ~ 1,
+      #   .default = review.info)) |>
       dplyr::group_by(IDhaul) |>
       dplyr::mutate(review.info = dplyr::if_else(rep(any(review.info == 1),
                                                      dplyr::n()), 1, review.info)
