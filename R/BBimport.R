@@ -334,11 +334,18 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                     add.comments = Activity.comment,
                     VideoFileName = video_files
       ) |>
-      # dplyr::mutate(review.info = dplyr::case_when(
-      #   is.na(review.info) & is.na(mesh.colour) ~ 0,
-      #   is.na(review.info) & !is.na(mesh.colour) ~ 1,
-      #   is.na(review.info) & !is.na(colour.name) ~ 1,
-      #   .default = review.info)) |>
+      dplyr::mutate(review.info = dplyr::case_when(
+        is.na(review.info) & !is.na(mesh.colour) ~ 1,
+        is.na(review.info) & mesh.colour != '' ~ 1,
+        review.info == '' & !is.na(mesh.colour) ~ 1,
+        review.info == '' & mesh.colour != '' ~ 1,
+
+        is.na(review.info) & !is.na(colour.name) ~ 1,
+        is.na(review.info) & colour.name != '' ~ 1,
+        review.info == '' & !is.na(colour.name) ~ 1,
+        review.info == '' & colour.name != '' ~ 1,
+
+        .default = review.info)) |>
       dplyr::group_by(IDhaul) |>
       dplyr::mutate(review.info = dplyr::if_else(rep(any(review.info == 1),
                                                      dplyr::n()), 1, review.info)
