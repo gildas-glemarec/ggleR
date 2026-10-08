@@ -86,7 +86,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
   names(list_BBdata) <- tolower(gsub(".*/(.+).csv.*", "\\1", filenames))
 
   ### Map function  #----
-  list_BBdata <- Map(function(x){ ## for testing purposes: x <- list_BBdata[[5]]
+  list_BBdata <- Map(function(x){ ## for testing purposes: x <- list_BBdata[[2]]
 
     ## Gear filtering
     if( keep.all.gears == FALSE ){
@@ -362,6 +362,10 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                                 "0",
                                                 mitigation)) |>
       dplyr::ungroup() |>
+    dplyr::mutate(
+      mitigation = if (any(mitigation == "1", na.rm = TRUE)) "1" else mitigation,
+      .by = IDhaul )
+    x <- x |>
       dplyr::mutate(mitigation_type = dplyr::case_when(
         mitigation == '1' & colour.name == "Yellow" ~ 'pinger',
         mitigation == '1' &
