@@ -376,6 +376,10 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
                                                      collapse = "|"),
                                                add.comments,
                                                ignore.case = TRUE)] ~ 'low nets',
+        mitigation == '1' &
+          add.comments == '' ~ 'not_recorded',
+        mitigation == '1' &
+          is.na(add.comments) ~ 'not_recorded',
         #colour.name == "colour-to-define" ~ 'some_mitigation_device',
         #colour.name == "colour-to-define" ~ 'other_mitigation',
         .default = NA)) |>
