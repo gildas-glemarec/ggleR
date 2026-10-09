@@ -393,7 +393,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
         #colour.name == "colour-to-define" ~ 'other_mitigation',
         .default = NA)) |>
       dplyr::group_by(IDhaul) |>
-      tidyr::fill(mitigation_type) |>
+      tidyr::fill(mitigation_type, .direction = "downup") |>
       dplyr::mutate(mitigation_type = dplyr::if_else(is.na(mitigation_type),
                                                      "no mitigation",
                                                      mitigation_type)) |>
