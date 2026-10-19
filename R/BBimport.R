@@ -369,9 +369,9 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
         is.na(mitigation),
         "0",
         mitigation))
-    x.copy <- data.table::copy(x)
+
     ### Precise the mitigation type(s) if any
-    y <- x |>
+    x <- x |>
       dplyr::mutate(mitigation_type = dplyr::case_when(
         ## Pinger only
         mitigation == '1' & colour.name == "Yellow" ~ "pinger",
