@@ -86,7 +86,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
   names(list_BBdata) <- tolower(gsub(".*/(.+).csv.*", "\\1", filenames))
 
   ### Map function  #----
-  list_BBdata <- Map(function(x){ ## for testing purposes: x <- list_BBdata[[2]]
+  list_BBdata <- Map(function(x){ ## for testing purposes: x <- list_BBdata[[5]]
 
     ## Gear filtering
     if( keep.all.gears == FALSE ){
@@ -211,8 +211,8 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
     ## Copy the haul characteristics (stored as Activity down in the corresponding Notes) #----
     x <- x |>
       dplyr::arrange(Vesselid, time.start) |>
-      dplyr::group_by(Vesselid) |>
-      tidyr::fill(IDhaul) |>
+      dplyr::group_by(Vesselid, Date) |>
+      tidyr::fill(IDhaul, .direction = "downup") |>
       dplyr::ungroup()
 
     ## Fix the problem where the first pinger appears before the beginning of the activity #----
