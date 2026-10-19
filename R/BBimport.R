@@ -352,33 +352,60 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
       ) |>
       dplyr::ungroup() |>
       ## Is there  mitigation in place? #----
-      ### Indicate that a row with some sort of mitigation is 1
-      dplyr::mutate(mitigation = dplyr::case_when(
-        colour.name == "Yellow" ~ '1',
-        treatment == 1 ~ '1',
-        .default = NA)) |>
+    ### Indicate that a row with some sort of mitigation is 1
+    dplyr::mutate(mitigation = dplyr::case_when(
+      colour.name == "Yellow" ~ '1',
+      treatment == 1 ~ '1',
+      .default = NA)) |>
       ### Fill up and down so that all rows within a haul with at least a 1 become 1
       dplyr::group_by(IDhaul) |>
       tidyr::fill(mitigation, .direction = "downup") |>
       dplyr::ungroup() |>
       dplyr::mutate(
         mitigation = if (any(mitigation == "1", na.rm = TRUE)) "1" else mitigation,
-        .by = IDhaul )
+        .by = IDhaul ) |>
       ### Replace remaining NA with zeros
       dplyr::mutate(mitigation = dplyr::if_else(
         is.na(mitigation),
         "0",
-        mitigation)) |>
-
-    x <- x |>
+        mitigation))
+    x.copy <- data.table::copy(x)
+    ### Precise the mitigation type(s) if any
+    y <- x |>
       dplyr::mutate(mitigation_type = dplyr::case_when(
-        mitigation == '1' & colour.name == "Yellow" ~ 'pinger',
+        ## Pinger only
+        mitigation == '1' & colour.name == "Yellow" ~ "pinger",
+        .default = NA)) |>
+      dplyr::mutate(
+        mitigation_type = if (any(mitigation_type == "pinger",
+                             na.rm = TRUE)) "pinger" else mitigation_type,
+        .by = IDhaul) |>
+
+      dplyr::mutate(mitigation_type = dplyr::case_when(
+        ## Pinger and thin-twine
+        mitigation == '1' &
+          mitigation_type == "pinger" &
+          add.comments %in% add.comments[grepl(paste(c("(^|[^a-zA-Z])tt([^a-zA-Z]|$)",
+                                                       "thin thread",
+                                                       "thin-thread"),
+                                                     collapse = "|"),
+                                               add.comments)] ~ 'thin-twine nets & pinger',
+        ## Thin-twine nets only
         mitigation == '1' &
           add.comments %in% add.comments[grepl(paste(c("(^|[^a-zA-Z])tt([^a-zA-Z]|$)",
                                                        "thin thread",
                                                        "thin-thread"),
                                                      collapse = "|"),
                                                add.comments)] ~ 'thin-twine nets',
+        ## Pinger and low nets
+        mitigation == '1' &
+          mitigation_type == "pinger" &
+          add.comments %in% add.comments[grepl(paste(c("low net", "low-net",
+                                                       'LAVE GARN', "L"),
+                                                     collapse = "|"),
+                                               add.comments,
+                                               ignore.case = TRUE)] ~ 'low nets & pinger',
+        ## Low nets only
         mitigation == '1' &
           add.comments %in% add.comments[grepl(paste(c("low net", "low-net",
                                                        'LAVE GARN', "L"),
@@ -391,7 +418,7 @@ BBimport <- function(x = "Q:/10-forskningsprojekter/faste-cctv-monitoring/data/b
           is.na(add.comments) ~ 'not_recorded',
         #colour.name == "colour-to-define" ~ 'some_mitigation_device',
         #colour.name == "colour-to-define" ~ 'other_mitigation',
-        .default = NA)) |>
+        .default = mitigation_type)) |>
       dplyr::group_by(IDhaul) |>
       tidyr::fill(mitigation_type, .direction = "downup") |>
       dplyr::mutate(mitigation_type = dplyr::if_else(is.na(mitigation_type),
