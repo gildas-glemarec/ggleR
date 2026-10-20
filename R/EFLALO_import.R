@@ -33,17 +33,17 @@ EFLALO_import <- function(x,
   logbook <- subset(logbook, stringr::str_starts(LE_MET, "GN") | LE_MET == "")
   logbook <- logbook[!(LE_MET == "" & LE_GEAR == "")]
 
+  ## Temporal dummy variables
+  logbook$LE_CDAT_ymd <- base::as.Date(strptime(logbook$LE_CDAT, "%d/%m/%Y"))
+  logbook$LE_CMONTH <- lubridate::month(logbook$LE_CDAT_ymd)
+  logbook$LE_CYEAR <- lubridate::year(logbook$LE_CDAT_ymd)
+
   #### What's the period (in years) of the dataset?
   if(is.null(study_period)){
     study_period <- c(min(logbook$LE_CYEAR, na.rm = T):max(logbook$LE_CYEAR,
                                                            na.rm = T))
   }else(study_period)
   logbook <- logbook[LE_CYEAR %in% study_period]
-
-  ## Temporal dummy variables
-  logbook$LE_CDAT_ymd <- base::as.Date(strptime(logbook$LE_CDAT, "%d/%m/%Y"))
-  logbook$LE_CMONTH <- lubridate::month(logbook$LE_CDAT_ymd)
-  logbook$LE_CYEAR <- lubridate::year(logbook$LE_CDAT_ymd)
 
   ## Reformat temporal variables to fit the format
   logbook$FT_DTIME <- format(strptime(logbook$FT_DTIME,
