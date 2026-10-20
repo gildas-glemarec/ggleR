@@ -25,15 +25,32 @@ EFLALO_import <- function(x,
     stop("Logbook data missing!")
   }
 
+  ## Replace single periods in cells with NA
+  logbook[logbook == "."] <- NA
+
   ### Keep only net fisheries and missing gears
   logbook <- subset(logbook, LE_GEAR %in% c('GN','GND','GNS','GTN','GTR',''))
   logbook <- subset(logbook, stringr::str_starts(LE_MET, "GN") | LE_MET == "")
   logbook <- logbook[!(LE_MET == "" & LE_GEAR == "")]
 
-  ## Temporal dummy variables
-  logbook$LE_CDAT_ymd <- base::as.Date(strptime(logbook$LE_CDAT, "%d/%m/%Y"))
-  logbook$LE_CMONTH <- lubridate::month(logbook$LE_CDAT_ymd)
-  logbook$LE_CYEAR <- lubridate::year(logbook$LE_CDAT_ymd)
+  # ## Temporal dummy variables
+  # logbook$LE_CDAT_ymd <- base::as.Date(strptime(logbook$LE_CDAT, "%d/%m/%Y"))
+  # logbook$LE_CMONTH <- lubridate::month(logbook$LE_CDAT_ymd)
+  # logbook$LE_CYEAR <- lubridate::year(logbook$LE_CDAT_ymd)
+
+  ## Reformat temporal variables to fit the format
+  logbook$FT_DTIME <- format(strptime(logbook$FT_DTIME,
+                                      format = "%H:%M"),
+                             "%H:%M")
+  logbook$FT_LTIME <- format(strptime(logbook$FT_LTIME,
+                                      format = "%H:%M"),
+                             "%H:%M")
+  logbook$LE_STIME <- format(strptime(logbook$LE_STIME,
+                                      format = "%H:%M"),
+                             "%H:%M")
+  logbook$LE_ETIME <- format(strptime(logbook$LE_ETIME,
+                                      format = "%H:%M"),
+                             "%H:%M")
 
   #### What's the period (in years) of the dataset?
   if(is.null(study_period)){
