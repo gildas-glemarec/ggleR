@@ -33,10 +33,17 @@ EFLALO_import <- function(x,
   logbook <- subset(logbook, stringr::str_starts(LE_MET, "GN") | LE_MET == "")
   logbook <- logbook[!(LE_MET == "" & LE_GEAR == "")]
 
-  # ## Temporal dummy variables
-  # logbook$LE_CDAT_ymd <- base::as.Date(strptime(logbook$LE_CDAT, "%d/%m/%Y"))
-  # logbook$LE_CMONTH <- lubridate::month(logbook$LE_CDAT_ymd)
-  # logbook$LE_CYEAR <- lubridate::year(logbook$LE_CDAT_ymd)
+  #### What's the period (in years) of the dataset?
+  if(is.null(study_period)){
+    study_period <- c(min(logbook$LE_CYEAR, na.rm = T):max(logbook$LE_CYEAR,
+                                                           na.rm = T))
+  }else(study_period)
+  logbook <- logbook[LE_CYEAR %in% study_period]
+
+  ## Temporal dummy variables
+  logbook$LE_CDAT_ymd <- base::as.Date(strptime(logbook$LE_CDAT, "%d/%m/%Y"))
+  logbook$LE_CMONTH <- lubridate::month(logbook$LE_CDAT_ymd)
+  logbook$LE_CYEAR <- lubridate::year(logbook$LE_CDAT_ymd)
 
   ## Reformat temporal variables to fit the format
   logbook$FT_DTIME <- format(strptime(logbook$FT_DTIME,
@@ -52,13 +59,6 @@ EFLALO_import <- function(x,
                                       format = "%H:%M"),
                              "%H:%M")
 
-  #### What's the period (in years) of the dataset?
-  if(is.null(study_period)){
-    study_period <- c(min(logbook$LE_CYEAR, na.rm = T):max(logbook$LE_CYEAR,
-                                                           na.rm = T))
-  }else(study_period)
-  logbook <- logbook[LE_CYEAR %in% study_period]
-
   ## Main target species (landed) per fishing day
   logbook[, FT_TARGET.KG := do.call(pmax, c(.SD, na.rm = TRUE)),
           .SDcols = patterns("^LE_KG_")]
@@ -73,7 +73,7 @@ EFLALO_import <- function(x,
                                                     nchar(FT_TARGET) - 2,
                                                     nchar(FT_TARGET)))]
   ##### Replace NA in FT_TARGET.KG with 0 for consistency
-  logbook[, FT_TARGET.KG := fifelse(is.na(FT_TARGET.KG), 0, FT_TARGET.KG)]
+  logbook[, FT_TARGET.KG := data.table::fifelse(is.na(FT_TARGET.KG), 0, FT_TARGET.KG)]
   ##### If lumpfish is landed and above 20kg, then we assume that lumpfish is
   ##### the main target species for that fishing day
   logbook[, FT_TARGET := data.table::fifelse(LE_KG_LUM > 20,
@@ -416,6 +416,9 @@ EFLALO_import <- function(x,
   ## do not appear to be correct. As a result, we could rarely have d2shore = 0
   ## Fix by forcing a minimum d2shore of 20 metres
   logbook[, LE_D2S := data.table::fifelse(LE_D2S == 0, 20, LE_D2S)]
+
+  ## Remove undefined (in the data format) variables
+  logbook[, c("LE_CDAT_ymd", "LE_CMONTH", "LE_CYEAR") := NULL]
 
   return(logbook)
 }
