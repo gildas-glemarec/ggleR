@@ -12,21 +12,29 @@ get_d2shore <- function(x = x,
 
   if( is.null(shapefile) ){
     ## If there is no shapefile called "coastline", then download it
-    zip_url <- "https://www.eea.europa.eu/data-and-maps/data/eea-coastline-for-analysis-2/gis-data/eea-coastline-polygon/at_download/file.zip"
+    # zip_url <- "https://www.eea.europa.eu/data-and-maps/data/eea-coastline-for-analysis-2/gis-data/eea-coastline-polygon/at_download/file.zip"
+    shp.url <- "https://sdi.eea.europa.eu/datashare/s/gcJSme8gWebRHBa/download"
     ## Create a temporary directory
     temp_dir <- tempdir()
     ## Define the path for the downloaded zip file
-    zip_file_path <- file.path(temp_dir, "data.zip")
+    # zip_file_path <- file.path(temp_dir, "data.zip")
+    shp_file_path <- file.path(temp_dir, "data.zip")
     ## Download the zip file
-    utils::download.file(zip_url, zip_file_path)
+    # utils::download.file(zip_url, zip_file_path)
+    utils::download.file(shp.url, shp_file_path,
+                         mode = "wb",
+                         method  = "libcurl",
+                         headers = c("User-Agent" = "Mozilla/5.0") )
     ## Unzip the file
-    utils::unzip(zip_file_path, exdir = temp_dir)
-    ## List the files in the temporary directory
-    unzipped_files <- list.files(temp_dir)
+    # utils::unzip(zip_file_path, exdir = temp_dir)
+    utils::unzip(shp_file_path, exdir = temp_dir)
     ## Read the shapefile
-    file_path <- file.path(temp_dir, unzipped_files)
-    shp_file <- grep(".shp$", file_path, value = TRUE)
-    shapefile <- sf::st_read(shp_file)}
+    shp_file <- list.files(temp_dir,
+                                 pattern = "\\.shp$",
+                                 full.names = TRUE,
+                                 recursive = TRUE)
+    shapefile <- sf::st_read(shp_file)
+    }
 
   crs_shp <- sf::st_crs(shapefile)
 
